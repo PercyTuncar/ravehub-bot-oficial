@@ -1,5 +1,6 @@
 const User = require('../../models/User');
 const Job = require('../../models/Job');
+const { xpTable, getLevelName, getEligibleJobs } = require('../../utils/levels');
 
 const jobs = [
   {
@@ -103,6 +104,24 @@ const jobs = [
     description: '📱 Publicaste fotos en vivo desde el set del DJ.',
     salary: 530,
     cooldown: 25
+  },
+  {
+    name: 'Stage manager en rave internacional',
+    description: '📋 Coordinaste todo el escenario para un festival de renombre mundial.',
+    salary: 700,
+    cooldown: 28
+  },
+  {
+    name: 'Coordinador de artistas internacionales',
+    description: '✈️ Gestionaste la logística y agenda de DJs como Hardwell o Armin van Buuren.',
+    salary: 850,
+    cooldown: 29
+  },
+  {
+    name: 'Productor musical para sello discográfico',
+    description: '🎵 Creaste un hit que sonó en todos los festivales del mundo.',
+    salary: 1200,
+    cooldown: 35
   }
 ];
 
@@ -128,7 +147,7 @@ const jobs = [
 
 module.exports = {
     name: 'work',
-    description: 'Trabaja para ganar dinero.',
+    description: 'Trabaja para ganar dinero y subir de nivel.',
     usage: '.work',
     category: 'economy',
     async execute(sock, message) {
@@ -138,20 +157,34 @@ module.exports = {
         try {
             let user = await User.findOne({ jid: senderJid });
             if (!user) {
-                user = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
+                user = new User({ 
+                    jid: senderJid, 
+                    name: message.pushName || senderJid.split('@')[0],
+                    level: 1,
+                    xp: 0,
+                    levelXp: xpTable[0]
+                });
             }
 
-            const availableJobs = await Job.find();
-            if (availableJobs.length === 0) {
+            const allJobs = await Job.find();
+            if (allJobs.length === 0) {
                 return sock.sendMessage(chatId, { text: 'No hay trabajos disponibles en este momento. Vuelve más tarde.' });
             }
 
-            // Asignar un trabajo aleatorio
-            const job = availableJobs[Math.floor(Math.random() * availableJobs.length)];
+            const eligibleJobs = getEligibleJobs(user.level, allJobs);
+
+            if (eligibleJobs.length === 0) {
+                if (user.level >= 10) {
+                     return sock.sendMessage(chatId, { text: `¡Felicidades! Has alcanzado el nivel máximo. ¡Eres un verdadero King de Kines! 🔥👑💰` });
+                }
+                return sock.sendMessage(chatId, { text: `¡No tienes trabajos disponibles en tu nivel actual! Sigue esforzándote para subir de nivel y desbloquear más oportunidades.` });
+            }
+
+            const job = eligibleJobs[Math.floor(Math.random() * eligibleJobs.length)];
 
             const lastWorkDate = user.lastWork;
             const cooldownMinutes = job.cooldown;
-            const cooldownMs = cooldownMinutes * 60 * 1000; // Convertir minutos a milisegundos
+            const cooldownMs = cooldownMinutes * 60 * 1000;
 
             if (lastWorkDate && (Date.now() - lastWorkDate.getTime()) < cooldownMs) {
                 const timeLeft = cooldownMs - (Date.now() - lastWorkDate.getTime());
@@ -160,14 +193,63 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: `Ya has trabajado recientemente. Debes esperar ${hours}h y ${minutes}m para volver a trabajar.` });
             }
 
+            const xpGained = Math.floor(job.salary / 4); 
             user.economy.wallet += job.salary;
+            user.xp += xpGained;
             user.lastWork = new Date();
+
+            let levelUp = false;
+            while (user.xp >= user.levelXp && user.level < 10) {
+                levelUp = true;
+                user.level++;
+                user.levelXp = xpTable[user.level -1];
+            }
+
             await user.save();
 
+            let workMessage = `*¡Chamba completada!* 💼
+
+`
+            workMessage += `*Puesto:* ${job.name}
+`;
+            workMessage += `*Descripción:* ${job.description}
+
+`;
+            workMessage += `*Salario:* +${job.salary} 💵
+`;
+            workMessage += `*Experiencia:* +${xpGained} XP
+
+`;
+            workMessage += `*Cartera actual:* ${user.economy.wallet} 💵`;
+
             await sock.sendMessage(chatId, {
-                text: `Trabajaste como *${job.name}* y ganaste ${job.salary} 💵.\n\n*Nuevo saldo en cartera:* ${user.economy.wallet} 💵`,
+                text: workMessage,
                 mentions: [senderJid]
             });
+
+            if (levelUp) {
+                let levelUpMessage = `*¡Felicidades, @${senderJid.split('@')[0]}!* 🎉
+
+`
+                levelUpMessage += `¡Has subido de nivel! Ahora eres ${getLevelName(user.level)}.
+
+`;
+
+                if (user.level === 10) {
+                    levelUpMessage += `*¡Beneficios de King de Kines desbloqueados!*
+`;
+                    levelUpMessage += `- Acceso a TODOS los trabajos.
+`;
+                    levelUpMessage += `- Respeto eterno en la comunidad RaveHub. 😎`;
+                } else {
+                    levelUpMessage += `¡Sigue así para desbloquear nuevos trabajos y recompensas!`;
+                }
+                
+                await sock.sendMessage(chatId, {
+                    text: levelUpMessage,
+                    mentions: [senderJid]
+                });
+            }
 
         } catch (error) {
             console.error('Error en el comando work:', error);
