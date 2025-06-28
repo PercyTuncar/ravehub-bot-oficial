@@ -47,7 +47,7 @@ module.exports = {
             await target.save();
 
             await sock.sendMessage(chatId, { 
-                text: `✅ ¡Yapeo exitoso! Le enviaste ${amount} 💵 a @${mentionedJid.split('@')[0]} desde tu banco.\n\nTu nuevo saldo en el banco es: ${sender.economy.bank} 💵`,
+                text: `✅ ¡Yapeo exitoso! Le yapeaste $ ${amount} 💵 a @${mentionedJid.split('@')[0]} desde tu banco.\n\nTu nuevo saldo en el banco es: $ ${sender.economy.bank} 💵`,
                 mentions: [senderJid, mentionedJid]
             });
 
