@@ -1,6 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
-const { getEligibleJobs } = require('../../utils/levels');
+const { getEligibleJobs, xpTable, getLevelName } = require('../../utils/levels');
 const Job = require('../../models/Job');
 
 const jobs = [
