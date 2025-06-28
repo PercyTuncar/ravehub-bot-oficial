@@ -156,18 +156,17 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         try {
-            // Refactorización: Usar la función centralizada para obtener el usuario.
-            let user = await findOrCreateUser(senderJid, message.pushName);
+            const user = await findOrCreateUser(senderJid, message.pushName);
+            const allJobs = await Job.find({});
 
-            // Corrección: Usar el nuevo campo de cooldown centralizado.
             if (user.cooldowns.work && user.cooldowns.work > new Date()) {
                 const timeLeft = (user.cooldowns.work.getTime() - new Date().getTime()) / 1000;
                 return sock.sendMessage(chatId, { text: `⏳ Debes esperar ${Math.ceil(timeLeft)} segundos más para volver a trabajar.` });
             }
 
-            const eligibleJobs = getEligibleJobs(user.level);
+            const eligibleJobs = getEligibleJobs(user.level, allJobs);
             if (eligibleJobs.length === 0) {
-                return sock.sendMessage(chatId, { text: 'No hay trabajos disponibles para tu nivel actual.' });
+                return sock.sendMessage(chatId, { text: 'No hay trabajos disponibles para tu nivel actual. ¡Sigue esforzándote!' });
             }
 
             const job = eligibleJobs[Math.floor(Math.random() * eligibleJobs.length)];
@@ -176,24 +175,27 @@ module.exports = {
 
             let netGain = earnings;
             let debtMessage = '';
-            let levelChangeMessage = '';
 
-            // Manejar la deuda judicial si existe.
             if (user.judicialDebt > 0) {
                 const result = handleDebtPayment(user, earnings);
                 netGain = result.remainingAmount;
                 debtMessage = result.debtMessage;
-                levelChangeMessage = result.levelChangeMessage;
             }
 
             user.economy.wallet += netGain;
             user.xp += xpGained;
 
-            // Aquí iría la lógica para verificar si el usuario sube de nivel
-            // const { levelUp, newLevelName } = checkLevelUp(user);
-            // if (levelUp) { ... }
+            // Lógica de subida de nivel
+            // (Esta parte se puede mover a una función en userUtils.js si se vuelve compleja)
+            let levelUpMessage = '';
+            const currentLevelXp = xpTable[user.level - 1] || 0;
+            const nextLevelXp = xpTable[user.level] || Infinity;
+            if (user.xp >= nextLevelXp) {
+                user.level++;
+                const newLevelName = getLevelName(user.level);
+                levelUpMessage = `\n\n🎉 ¡Felicidades! Has subido al ${newLevelName}.`;
+            }
 
-            // Corrección: Actualizar el cooldown usando el campo correcto.
             user.cooldowns.work = new Date(new Date().getTime() + job.cooldown * 60 * 1000);
             await user.save();
 
@@ -201,16 +203,13 @@ module.exports = {
             if (debtMessage) {
                 response += `\n\n${debtMessage}`;
             }
-            if (levelChangeMessage) {
-                response += `\n${levelChangeMessage}`;
-            }
-            response += `\n\n*Cartera actual:* ${user.economy.wallet} 💵`;
+            response += levelUpMessage;
 
-            sock.sendMessage(chatId, { text: response });
+            await sock.sendMessage(chatId, { text: response });
 
         } catch (error) {
             console.error('Error en el comando work:', error);
-            sock.sendMessage(chatId, { text: '❌ Ocurrió un error al intentar trabajar.' });
+            await sock.sendMessage(chatId, { text: '❌ Ocurrió un error al intentar trabajar.' });
         }
-    },
+    }
 };

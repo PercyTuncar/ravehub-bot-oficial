@@ -19,6 +19,8 @@ const jobsByLevel = {
     'Staff de limpieza en el festival',
     'Coordinador de accesos',
     'Editor de videos post-evento',
+    'Vendedor de merchandising',
+    'Responsable de guardarropas',
   ],
   2: [
     'Vendedor de merchandising',
@@ -48,22 +50,25 @@ function getLevelName(level) {
 }
 
 function getEligibleJobs(userLevel, allJobs) {
-  if (!allJobs) {
-    console.error('Error: La lista de trabajos (allJobs) no puede ser undefined.');
-    return []; // Devuelve un array vacío para evitar el crash
+  // Asegurarse de que allJobs es un array antes de usarlo
+  if (!Array.isArray(allJobs) || allJobs.length === 0) {
+    console.error('Error: La lista de trabajos (allJobs) está vacía o no es un array.');
+    return [];
   }
 
   if (userLevel >= 10) {
-    return allJobs; // Acceso a todos los trabajos
+    return allJobs; // Nivel 10+ tiene acceso a todos los trabajos
   }
 
   let eligibleJobNames = [];
+  // Acumula todos los trabajos desde el nivel 1 hasta el nivel del usuario
   for (let i = 1; i <= userLevel; i++) {
     if (jobsByLevel[i]) {
-      eligibleJobNames = eligibleJobNames.concat(jobsByLevel[i]);
+      eligibleJobNames.push(...jobsByLevel[i]);
     }
   }
 
+  // Filtra la lista completa de trabajos para devolver solo los que son elegibles
   return allJobs.filter(job => eligibleJobNames.includes(job.name));
 }
 
