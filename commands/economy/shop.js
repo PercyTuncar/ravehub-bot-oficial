@@ -169,8 +169,8 @@ module.exports = {
 
         if (categoryItems.length > 0) {
           categoryItems.forEach((item) => {
-            shopMessage += `*│* │ ${item.emoji} *${item.name}* - ${item.price} 🪙\n`;
-            shopMessage += `*│* │      _${item.description}_\n`;
+            shopMessage += `*│* │ ${item.emoji} *${item.name}* - $${item.price} 💵\n`;
+            shopMessage += `*│* │   _${item.description}_\n`;
           });
         } else {
           shopMessage += `*│* │ (No hay items en esta categoría)\n`;

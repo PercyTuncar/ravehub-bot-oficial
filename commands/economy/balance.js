@@ -19,11 +19,11 @@ module.exports = {
                 await user.save();
             }
 
-            const balanceMessage = `*Balance de* @${jid.split('@')[0]}\n\n*Cartera:* ${user.economy.wallet} 🪙\n*Banco:* ${user.economy.bank} 🏦`;
-            
-            await sock.sendMessage(chatId, { 
+            const balanceMessage = `*╭───≽ 💰 BALANCE ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│*\n*│* 💵 *Cartera:* $${user.economy.wallet}\n*│* 🏦 *Banco:* $${user.economy.bank}\n*│*\n*╰──────────≽*`;
+
+            await sock.sendMessage(chatId, {
                 text: balanceMessage,
-                mentions: [jid] 
+                mentions: [jid]
             });
 
         } catch (error) {

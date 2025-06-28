@@ -19,17 +19,23 @@ module.exports = {
             categories[command.category].push(command);
         });
 
-        let menu = `*🤖 MENÚ DE COMANDOS DE RAVEHUB BOT 🤖*\n\n`;
+        let menu = `*╭───≽ 🤖 MENÚ DE COMANDOS ≼───*\n*│*\n`;
 
         for (const category in categories) {
-            menu += `*${category.toUpperCase()}*\n`;
-            categories[category].forEach(command => {
-                menu += `  • *.${command.name}*: ${command.description}\n`;
+            const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+            let categoryIcon = "📁";
+            if (category === "economy") categoryIcon = "💰";
+            if (category === "admin") categoryIcon = "🛠️";
+            if (category === "utility") categoryIcon = "⚙️";
+
+            menu += `*│* ╭─≽ *${categoryIcon} ${categoryName}*\n`;
+            categories[category].forEach((command) => {
+                menu += `*│* │ • *.${command.name}*\n`;
             });
-            menu += `\n`;
+            menu += `*│* ╰─────────────────≽\n*│*\n`;
         }
-        menu += `_Para más información sobre un comando, usa .help <comando>_`;
+        menu += `*╰─ Usa .help <comando> para más info ─*`;
 
         sock.sendMessage(message.key.remoteJid, { text: menu });
-    }
+    },
 };
