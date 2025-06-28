@@ -1,0 +1,17 @@
+{
+  "name": "ravehub-bot",
+  "version": "1.0.0",
+  "description": "Bot de WhatsApp modular y escalable",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.5.0",
+    "dotenv": "^16.3.1",
+    "mongodb": "^6.17.0",
+    "mongoose": "^8.0.3",
+    "pino": "^8.17.2",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
