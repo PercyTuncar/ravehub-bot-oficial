@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const Job = require('../../models/Job');
 const { xpTable, getLevelName, getEligibleJobs } = require('../../utils/levels');
+const { handleDebtPayment } = require('../../utils/debtManager');
 
 const jobs = [
   {
@@ -213,22 +214,26 @@ module.exports = {
             user.cooldownEnds = new Date(now.getTime() + cooldownMinutes * 60 * 1000);
             user.currentJob = job.name; // Guardar el trabajo actual
 
-            const xpGained = Math.floor(job.salary / 4); 
             let salary = job.salary;
-            let debtMessage = '';
+            const xpGained = Math.floor(salary / 4);
+            let finalDebtMessage = '';
+            let finalLevelChangeMessage = '';
 
-            // --- Lógica de Deuda Judicial ---
+            // --- LÓGICA DE DEUDA JUDICIAL ---
             if (user.judicialDebt > 0) {
-                const debtPaid = Math.min(salary, user.judicialDebt);
-                user.judicialDebt -= debtPaid;
-                salary -= debtPaid; // El salario neto es lo que queda después de pagar la deuda
-                debtMessage = `\n\n⚖️ Se descontó automáticamente *${debtPaid} 💵* de tu salario para pagar tu deuda judicial.\n*Deuda restante:* ${user.judicialDebt} 💵`;
+                const { remainingAmount, debtMessage, levelChangeMessage } = handleDebtPayment(user, salary);
+                salary = remainingAmount; // El salario neto es lo que queda después de pagar la deuda
+                finalDebtMessage = debtMessage;
+                finalLevelChangeMessage = levelChangeMessage;
+                // Si pagó deuda, no gana XP del trabajo, solo la pierde por la deuda
+            } else {
+                user.xp += xpGained; // Gana XP solo si no tiene deudas
             }
-
+            
             user.economy.wallet += salary;
-            user.xp += xpGained;
 
             let levelUp = false;
+            const originalLevel = user.level;
             while (user.level < 10 && user.xp >= xpTable[user.level]) {
                 levelUp = true;
                 user.level++;
@@ -236,12 +241,21 @@ module.exports = {
 
             await user.save();
 
-            // 5. ENVIAR MENSAJE DE TRABAJO INICIADO
+            // 5. ENVIAR MENSAJE DE TRABAJO
             let workMessage = `*@${senderJid.split('@')[0]} ¡Has comenzado a trabajar!* 💼\n\n`;
             workMessage += `*Puesto:* ${job.name}\n`;
             workMessage += `*Descripción:* ${job.description}\n\n`;
-            workMessage += `*Salario Recibido:* +${salary} 💵\n`;
-            workMessage += `*Experiencia Ganada:* +${xpGained} XP\n\n`;
+            
+            if (finalDebtMessage) {
+                await sock.sendMessage(chatId, { text: finalDebtMessage, mentions: [senderJid] });
+                if (finalLevelChangeMessage) {
+                    await sock.sendMessage(chatId, { text: finalLevelChangeMessage, mentions: [senderJid] });
+                }
+            } else {
+                 workMessage += `*Salario Recibido:* +${salary} 💵\n`;
+                 workMessage += `*Experiencia Ganada:* +${xpGained} XP\n\n`;
+            }
+            
             workMessage += `*Cartera actual:* ${user.economy.wallet} 💵`;
 
             await sock.sendMessage(chatId, {
@@ -249,8 +263,8 @@ module.exports = {
                 mentions: [senderJid]
             });
 
-            // 6. ENVIAR MENSAJE DE SUBIDA DE NIVEL (SI APLICA)
-            if (levelUp) {
+            // 6. ENVIAR MENSAJE DE SUBIDA DE NIVEL (SI APLICA Y NO BAJÓ DE NIVEL)
+            if (levelUp && user.level > originalLevel) {
                 let levelUpMessage = `*¡Felicidades, @${senderJid.split('@')[0]}!* 🎉\n\n`;
                 levelUpMessage += `¡Has subido de nivel! Ahora eres ${getLevelName(user.level)}.\n\n`;
 
