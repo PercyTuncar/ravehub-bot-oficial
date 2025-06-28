@@ -1,33 +1,30 @@
 const User = require('../../models/User');
-const Economy = require('../../models/Economy');
 
 module.exports = {
     name: 'deposit',
-    description: 'Deposita dinero en tu banco para protegerlo de robos.',
+    description: 'Deposita dinero de tu cartera a tu banco.',
     category: 'economy',
+    aliases: ['depositar', 'bank'],
     async execute(sock, message, args) {
-        const senderId = message.key.participant || message.key.remoteJid;
+        const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
-        const senderName = message.pushName || 'Usuario Desconocido';
 
         try {
-            // Asegurar que el usuario y su cuenta de economía existan
-            let economy = await Economy.findOne({ userId: senderId });
-            if (!economy) {
-                await new User({ userId: senderId, name: senderName }).save();
-                economy = new Economy({ userId: senderId });
-                await economy.save();
+            let user = await User.findOne({ jid: senderJid });
+            if (!user) {
+                user = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
+                await user.save();
             }
 
             if (args.length === 0) {
-                return sock.sendMessage(chatId, { text: `Uso del comando:\n.deposit <cantidad>\n.deposit all _es para depositar todo_` });
+                return sock.sendMessage(chatId, { text: `Uso del comando:\n.deposit <cantidad>\n.deposit all` });
             }
 
             const amountToDepositStr = args[0].toLowerCase();
             let amountToDeposit;
 
             if (amountToDepositStr === 'all') {
-                amountToDeposit = economy.wallet;
+                amountToDeposit = user.economy.wallet;
             } else {
                 amountToDeposit = parseInt(amountToDepositStr);
                 if (isNaN(amountToDeposit) || amountToDeposit <= 0) {
@@ -35,27 +32,27 @@ module.exports = {
                 }
             }
 
-            if (economy.wallet < amountToDeposit) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${economy.wallet}` });
+            if (user.economy.wallet < amountToDeposit) {
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${user.economy.wallet} 🪙` });
             }
             
-            if (economy.bank + amountToDeposit > economy.bankCapacity) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente capacidad en tu banco. Capacidad restante: ${economy.bankCapacity - economy.bank}` });
+            if (amountToDeposit === 0) {
+                return sock.sendMessage(chatId, { text: 'No tienes dinero en tu cartera para depositar.' });
             }
 
-            economy.wallet -= amountToDeposit;
-            economy.bank += amountToDeposit;
+            user.economy.wallet -= amountToDeposit;
+            user.economy.bank += amountToDeposit;
 
-            await economy.save();
+            await user.save();
 
             const responseText = 
-`✅ Depósito exitoso de ${amountToDeposit}.\n\n*Nuevo Balance:*
-*Cartera:* ${economy.wallet}
-*Banco:* ${economy.bank}/${economy.bankCapacity}`;
+`✅ Depósito exitoso de ${amountToDeposit} 🪙.\n\n*Nuevo Balance:*
+*Cartera:* ${user.economy.wallet} 🪙
+*Banco:* ${user.economy.bank} 🏦`;
 
             await sock.sendMessage(chatId, { 
                 text: responseText,
-                mentions: [senderId]
+                mentions: [senderJid]
             });
 
         } catch (error) {

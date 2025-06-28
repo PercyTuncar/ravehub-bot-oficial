@@ -1,33 +1,29 @@
 const User = require('../../models/User');
-const Economy = require('../../models/Economy');
 
 module.exports = {
     name: 'balance',
     description: 'Muestra tu balance de economía.',
     category: 'economy',
     async execute(sock, message) {
-        const userId = message.key.participant || message.key.remoteJid;
+        const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
-        const senderName = message.pushName || 'Usuario Desconocido';
 
         try {
-            let user = await User.findOne({ userId });
-            let economy = await Economy.findOne({ userId });
+            let user = await User.findOne({ jid });
 
             if (!user) {
-                user = new User({ userId, name: senderName });
+                user = new User({
+                    jid,
+                    name: message.pushName || 'Usuario Desconocido',
+                });
                 await user.save();
             }
-            if (!economy) {
-                economy = new Economy({ userId });
-                await economy.save();
-            }
 
-            const balanceMessage = `*Balance de* @${userId.split('@')[0]}\n\nCartera: ${economy.wallet}\nBanco: ${economy.bank}`;
+            const balanceMessage = `*Balance de* @${jid.split('@')[0]}\n\n*Cartera:* ${user.economy.wallet} 🪙\n*Banco:* ${user.economy.bank} 🏦`;
             
             await sock.sendMessage(chatId, { 
                 text: balanceMessage,
-                mentions: [userId] 
+                mentions: [jid] 
             });
 
         } catch (error) {

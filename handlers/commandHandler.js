@@ -10,6 +10,11 @@ module.exports = () => {
         for (const file of commandFiles) {
             const command = require(`../commands/${folder}/${file}`);
             commands.set(command.name, command);
+            if (command.aliases && Array.isArray(command.aliases)) {
+                command.aliases.forEach(alias => {
+                    commands.set(alias, command);
+                });
+            }
         }
     }
 

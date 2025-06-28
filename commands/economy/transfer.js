@@ -1,14 +1,12 @@
 const User = require('../../models/User');
-const Economy = require('../../models/Economy');
 
 module.exports = {
     name: 'transfer',
-    description: 'Transfiere dinero a otro usuario.',
+    description: 'Transfiere dinero de tu cartera a otro usuario.',
     category: 'economy',
     async execute(sock, message, args) {
-        const senderId = message.key.participant || message.key.remoteJid;
+        const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
-        const senderName = message.pushName || 'Usuario Desconocido';
 
         const mentionedJid = message.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
         const amountStr = args.find(arg => !isNaN(parseInt(arg)));
@@ -18,44 +16,37 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'Formato incorrecto. Uso: .transfer @usuario <cantidad>' });
         }
 
-        const targetId = mentionedJid;
-
-        if (senderId === targetId) {
+        if (senderJid === mentionedJid) {
             return sock.sendMessage(chatId, { text: 'No puedes transferirte dinero a ti mismo.' });
         }
 
         try {
-            // Asegurar que el emisor (sender) exista en la DB
-            let senderEconomy = await Economy.findOne({ userId: senderId });
-            if (!senderEconomy) {
-                await new User({ userId: senderId, name: senderName }).save();
-                senderEconomy = new Economy({ userId: senderId });
-                await senderEconomy.save();
+            let sender = await User.findOne({ jid: senderJid });
+            if (!sender) {
+                sender = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
+                await sender.save();
             }
 
-            if (senderEconomy.wallet < amount) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero. Saldo actual: ${senderEconomy.wallet}` });
+            if (sender.economy.wallet < amount) {
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${sender.economy.wallet} 🪙` });
             }
 
-            // Asegurar que el receptor (target) exista en la DB, si no, lo crea
-            let targetEconomy = await Economy.findOne({ userId: targetId });
-            if (!targetEconomy) {
-                // No podemos obtener el pushName de alguien que no ha hablado, usamos su número.
-                const targetName = targetId.split('@')[0]; 
-                await new User({ userId: targetId, name: targetName }).save();
-                targetEconomy = new Economy({ userId: targetId });
-                await targetEconomy.save();
+            let target = await User.findOne({ jid: mentionedJid });
+            if (!target) {
+                const targetName = mentionedJid.split('@')[0];
+                target = new User({ jid: mentionedJid, name: targetName });
+                await target.save();
             }
 
-            senderEconomy.wallet -= amount;
-            targetEconomy.wallet += amount;
+            sender.economy.wallet -= amount;
+            target.economy.wallet += amount;
 
-            await senderEconomy.save();
-            await targetEconomy.save();
+            await sender.save();
+            await target.save();
 
             await sock.sendMessage(chatId, { 
-                text: `✅ Transferencia exitosa de ${amount} a @${targetId.split('@')[0]}.\n\nTu nuevo saldo es: ${senderEconomy.wallet}`,
-                mentions: [senderId, targetId]
+                text: `✅ Transferencia de cartera exitosa de ${amount} 🪙 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en cartera es: ${sender.economy.wallet} 🪙`,
+                mentions: [senderJid, mentionedJid]
             });
 
         } catch (error) {

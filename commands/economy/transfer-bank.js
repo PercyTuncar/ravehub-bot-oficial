@@ -1,9 +1,10 @@
 const User = require('../../models/User');
 
 module.exports = {
-    name: 'plinear',
-    description: 'Plinea dinero a otro usuario (transferencia de cartera).',
+    name: 'transfer-bank',
+    description: 'Transfiere dinero de tu banco a la cuenta de banco de otro usuario.',
     category: 'economy',
+    aliases: ['tbank'],
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
@@ -13,11 +14,11 @@ module.exports = {
         const amount = amountStr ? parseInt(amountStr) : 0;
 
         if (!mentionedJid || amount <= 0) {
-            return sock.sendMessage(chatId, { text: 'Formato incorrecto. Para plinear, usa: .plinear @usuario <monto>' });
+            return sock.sendMessage(chatId, { text: 'Formato incorrecto. Uso: .transfer-bank @usuario <cantidad>' });
         }
 
         if (senderJid === mentionedJid) {
-            return sock.sendMessage(chatId, { text: 'No te puedes plinear a ti mismo, ¡pasa la voz a un amigo!' });
+            return sock.sendMessage(chatId, { text: 'No puedes transferirte dinero a ti mismo.' });
         }
 
         try {
@@ -27,8 +28,8 @@ module.exports = {
                 await sender.save();
             }
 
-            if (sender.economy.wallet < amount) {
-                return sock.sendMessage(chatId, { text: `¡Saldo insuficiente! No tienes suficiente para este Plin. Saldo actual: ${sender.economy.wallet} 🪙` });
+            if (sender.economy.bank < amount) {
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${sender.economy.bank} 🏦` });
             }
 
             let target = await User.findOne({ jid: mentionedJid });
@@ -38,20 +39,20 @@ module.exports = {
                 await target.save();
             }
 
-            sender.economy.wallet -= amount;
-            target.economy.wallet += amount;
+            sender.economy.bank -= amount;
+            target.economy.bank += amount;
 
             await sender.save();
             await target.save();
 
             await sock.sendMessage(chatId, { 
-                text: `✅ ¡Plin exitoso! Le enviaste ${amount} 🪙 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en cartera es: ${sender.economy.wallet} 🪙`,
+                text: `✅ Transferencia bancaria exitosa de ${amount} 🏦 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${sender.economy.bank} 🏦`,
                 mentions: [senderJid, mentionedJid]
             });
 
         } catch (error) {
-            console.error('Error en el comando de plineo:', error);
-            await sock.sendMessage(chatId, { text: 'Hubo un problema al procesar tu Plin.' });
+            console.error('Error en la transferencia bancaria:', error);
+            await sock.sendMessage(chatId, { text: 'Ocurrió un error al realizar la transferencia bancaria.' });
         }
     }
 };

@@ -1,48 +1,53 @@
 const User = require('../../models/User');
-const Economy = require('../../models/Economy');
 
 module.exports = {
     name: 'me',
-    description: 'Muestra tu perfil.',
+    description: 'Muestra tu perfil de usuario con tu economía e inventario.',
     category: 'utility',
     async execute(sock, message) {
-        const userId = message.key.participant || message.key.remoteJid;
+        const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
-        const senderName = message.pushName || 'Usuario Desconocido';
 
         try {
-            let user = await User.findOne({ userId });
-            let economy = await Economy.findOne({ userId });
+            let user = await User.findOne({ jid }).populate('inventory.itemId');
 
             if (!user) {
                 user = new User({
-                    userId: userId,
-                    name: senderName
+                    jid,
+                    name: message.pushName || 'Usuario Desconocido',
                 });
                 await user.save();
             }
 
-            if (!economy) {
-                economy = new Economy({ userId });
-                await economy.save();
+            let inventoryList = 'Inventario vacío.';
+            if (user.inventory && user.inventory.length > 0) {
+                inventoryList = user.inventory.map(item => {
+                    const emoji = item.itemId?.emoji || '📦';
+                    return `${emoji} *${item.name}*: ${item.quantity}`;
+                }).join('\n');
             }
 
             const profileMessage =
 `*╭───≽ PERFIL DE USUARIO ≼───*
 *│*
-*│* 👤 *Usuario:* @${userId.split('@')[0]}
-*│* 💼 *Nombre:* ${user.name}
+*│* 👤 *Usuario:* @${jid.split('@')[0]}
+*│* 📛 *Nombre:* ${user.name}
+*│* ⚠️ *Advertencias:* ${user.warnings}
 *│*
 *│* ╭─≽ ECONOMÍA ≼
-*│* │ 💵 *Cartera:* ${economy.wallet}
-*│* │ 🏦 *Banco:* ${economy.bank}/${economy.bankCapacity}
+*│* │ 🪙 *Cartera:* ${user.economy.wallet}
+*│* │ 🏦 *Banco:* ${user.economy.bank}
+*│* ╰──────────≽
+*│*
+*│* ╭─≽ INVENTARIO ≼
+*│* │ ${inventoryList.replace(/\n/g, '\n*│* │ ')}
 *│* ╰──────────≽
 *│*
 *╰──────────≽*`;
 
             await sock.sendMessage(chatId, {
                 text: profileMessage,
-                mentions: [userId]
+                mentions: [jid]
             });
 
         } catch (error) {
