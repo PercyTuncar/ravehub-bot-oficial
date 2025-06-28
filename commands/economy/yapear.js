@@ -29,8 +29,8 @@ module.exports = {
                 await sender.save();
             }
 
-            if (sender.economy.wallet < amount) {
-                return sock.sendMessage(chatId, { text: `¡Saldo insuficiente! No tienes suficiente para este yapeo. Saldo actual: ${sender.economy.wallet} 💵` });
+            if (sender.economy.bank < amount) {
+                return sock.sendMessage(chatId, { text: `¡Saldo insuficiente en tu banco! No tienes suficiente para este yapeo. Saldo en banco: ${sender.economy.bank} 💵` });
             }
 
             let target = await User.findOne({ jid: mentionedJid });
@@ -40,14 +40,14 @@ module.exports = {
                 await target.save();
             }
 
-            sender.economy.wallet -= amount;
-            target.economy.wallet += amount;
+            sender.economy.bank -= amount;
+            target.economy.bank += amount;
 
             await sender.save();
             await target.save();
 
             await sock.sendMessage(chatId, { 
-                text: `✅ ¡Yapeo exitoso! Le enviaste ${amount} 💵 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en cartera es: ${sender.economy.wallet} 💵`,
+                text: `✅ ¡Yapeo exitoso! Le enviaste ${amount} 💵 a @${mentionedJid.split('@')[0]} desde tu banco.\n\nTu nuevo saldo en el banco es: ${sender.economy.bank} 💵`,
                 mentions: [senderJid, mentionedJid]
             });
 

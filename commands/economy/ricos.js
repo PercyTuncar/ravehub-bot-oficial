@@ -25,9 +25,9 @@ module.exports = {
 
             const mentions = [];
             let rankingMessage = [
-                `*╭───≽ 🏆 LOS MÁS RICOS RAVEHUB 🏆 ≼───*`,
+                `*╭───≽ 💵 LOS MÁS RICOS DE RAVEHUB 💵 ≼───*`,
                 `*│*`,
-                `*│* _Los 10 ravers con más 💵._`,
+                `*│* Top 10 pitucos de la comunidad 💵._`,
                 `*│*`
             ];
 
