@@ -10,35 +10,31 @@ module.exports = {
         const chatId = message.key.remoteJid;
         const senderName = message.pushName || 'Usuario Desconocido';
 
-        if (!args.length || !args[0].startsWith('@')) {
+        const mentionedJid = message.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+
+        if (!mentionedJid) {
             return sock.sendMessage(chatId, { text: 'Debes mencionar a un usuario para robarle. Ejemplo: .rob @usuario' });
         }
 
-        const targetId = `${args[0].slice(1)}@s.whatsapp.net`;
+        const targetId = mentionedJid;
+
+        if (senderId === targetId) {
+            return sock.sendMessage(chatId, { text: 'No puedes robarte a ti mismo.' });
+        }
 
         try {
             // Asegurar que el ladrón (sender) exista en la DB
-            let senderUser = await User.findOne({ userId: senderId });
-            if (!senderUser) {
-                senderUser = new User({ userId: senderId, name: senderName });
-                await senderUser.save();
-            }
             let senderEconomy = await Economy.findOne({ userId: senderId });
             if (!senderEconomy) {
+                await new User({ userId: senderId, name: senderName }).save();
                 senderEconomy = new Economy({ userId: senderId });
                 await senderEconomy.save();
             }
 
-            // Asegurar que la víctima (target) exista en la DB
-            let targetUser = await User.findOne({ userId: targetId });
-            if (!targetUser) {
-                // No se puede robar a alguien que nunca ha interactuado con el bot
-                return sock.sendMessage(chatId, { text: `No se puede robar a @${targetId.split('@')[0]}, no es un usuario registrado.`, mentions: [targetId] });
-            }
-            let targetEconomy = await Economy.findOne({ userId: targetId });
+            // La víctima (target) debe existir en la DB para poder robarle
+            const targetEconomy = await Economy.findOne({ userId: targetId });
             if (!targetEconomy) {
-                targetEconomy = new Economy({ userId: targetId });
-                await targetEconomy.save();
+                return sock.sendMessage(chatId, { text: `No se puede robar a @${targetId.split('@')[0]}, no es un usuario registrado.`, mentions: [targetId] });
             }
 
             if (targetEconomy.wallet <= 0) {
