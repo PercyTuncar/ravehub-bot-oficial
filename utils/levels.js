@@ -11,7 +11,7 @@ const levelNames = [
   { name: 'Nivel King de Kines', emoji: '🔥👑💰🦁💵💵💵' },
 ];
 
-const xpTable = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];
+const xpTable = [0, 500, 1000, 1800, 3000, 4500, 6300, 8400, 10800, 13500];
 
 const jobsByLevel = {
   1: [
