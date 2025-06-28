@@ -2,108 +2,126 @@ const User = require('../../models/User');
 const Job = require('../../models/Job');
 const { xpTable, getLevelName, getEligibleJobs } = require('../../utils/levels');
 
-const GLOBAL_COOLDOWN_MINUTES = 120; // 2 horas
-
 const jobs = [
   {
     name: 'DJ en Tomorrowland',
     description: '🎧 Hiciste bailar a miles con tu set en el Mainstage de Tomorrowland.',
     salary: 950,
+    cooldown: 60, // minutos
   },
   {
     name: 'Seguridad de Vastion Group',
     description: '🛡️ Controlaste accesos y protegiste a los artistas en el backstage.',
     salary: 200,
+    cooldown: 20,
   },
   {
     name: 'Seguridad de Ultra Perú',
     description: '🕶️ Aseguraste que todo fluya sin problemas en el ingreso del evento.',
     salary: 120,
+    cooldown: 20,
   },
   {
     name: 'Lector de QR en ingreso',
     description: '🎟️ Escaneaste los tickets de los ravers emocionados por entrar.',
     salary: 80,
+    cooldown: 10,
   },
   {
     name: 'Asistente de DJ',
     description: '🎚️ Ayudaste a preparar el setup antes del set del DJ principal.',
     salary: 380,
+    cooldown: 30,
   },
   {
     name: 'Camarógrafo en festival',
     description: '📸 Capturaste los mejores momentos de la noche rave.',
     salary: 200,
+    cooldown: 25,
   },
   {
     name: 'Reportero de RaveHub',
     description: '📰 Cubriste el evento entrevistando a ravers con mucha vibra.',
     salary: 450,
+    cooldown: 35,
   },
   {
     name: 'Entrevistador de RaveHub',
     description: '🎤 Le sacaste declaraciones exclusivas al DJ después de su set.',
     salary: 550,
+    cooldown: 45,
   },
   {
     name: 'Vendedor de merchandising',
     description: '🛍️ Vendiste pulseras, poleras y banderas a los fans.',
     salary: 150,
+    cooldown: 15,
   },
   {
     name: 'Montaje de escenario',
     description: '🔧 Ayudaste en la instalación de luces, pantallas y pirotecnia.',
     salary: 310,
+    cooldown: 30,
   },
   {
     name: 'Coordinador de accesos',
     description: '🚧 Organizaste las zonas VIP y los flujos de ingreso general.',
     salary: 70,
+    cooldown: 10,
   },
   {
     name: 'Fotógrafo de RaveHub',
     description: '📷 Sacaste fotos épicas para las redes oficiales del festival.',
     salary: 480,
+    cooldown: 40,
   },
   {
     name: 'Editor de videos post-evento',
     description: '🎞️ Editaste el aftermovie con los mejores momentos rave.',
     salary: 60,
+    cooldown: 10,
   },
   {
     name: 'DJ de warm-up en rave local',
     description: '🎶 Animaste al público mientras esperaban al headliner.',
     salary: 220,
+    cooldown: 25,
   },
   {
     name: 'Staff de limpieza en el festival',
     description: '🧹 Dejaste impecable el venue después de una noche de locura.',
     salary: 100,
+    cooldown: 15,
   },
   {
     name: 'Responsable de guardarropas',
     description: '🎒 Cuidaste las pertenencias de los asistentes durante el evento.',
     salary: 180,
+    cooldown: 20,
   },
   {
     name: 'Community manager de artista',
     description: '📱 Publicaste fotos en vivo desde el set del DJ.',
     salary: 530,
+    cooldown: 45,
   },
   {
     name: 'Stage manager en rave internacional',
     description: '📋 Coordinaste todo el escenario para un festival de renombre mundial.',
     salary: 700,
+    cooldown: 50,
   },
   {
     name: 'Coordinador de artistas internacionales',
     description: '✈️ Gestionaste la logística y agenda de DJs como Hardwell o Armin van Buuren.',
     salary: 850,
+    cooldown: 55,
   },
   {
     name: 'Productor musical para sello discográfico',
     description: '🎵 Creaste un hit que sonó en todos los festivales del mundo.',
     salary: 1200,
+    cooldown: 60,
   }
 ];
 
@@ -117,11 +135,10 @@ const jobs = [
 
         // 2. Actualizar o insertar los trabajos de la lista del archivo en la DB
         for (const jobData of jobs) {
-            // Se elimina la propiedad cooldown si existiera en la DB
-            await Job.findOneAndUpdate({ name: jobData.name }, { ...jobData, $unset: { cooldown: "" } }, { upsert: true });
+            await Job.findOneAndUpdate({ name: jobData.name }, jobData, { upsert: true });
         }
         
-        console.log('✅ La lista de trabajos ha sido sincronizada con la base de datos.');
+        console.log('✅ La lista de trabajos ha sido sincronizada con la base de datos (con cooldowns individuales).');
 
     } catch (error) {
         console.error('Error al sincronizar los trabajos:', error);
@@ -146,20 +163,19 @@ module.exports = {
                 });
             }
 
-            const cooldownEnds = user.cooldownEnds;
+            // --- INICIO DE LA LÓGICA DE COOLDOWN REFORZADA ---
 
-            // --- INICIO DE LA NUEVA LÓGICA ---
-
-            // 1. VERIFICAR SI EL USUARIO YA ESTÁ TRABAJANDO
-            if (cooldownEnds && cooldownEnds > Date.now()) {
-                const timeLeft = cooldownEnds - Date.now();
-                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+            // 1. VERIFICAR SI EL USUARIO TIENE UN COOLDOWN ACTIVO
+            if (user.cooldownEnds && user.cooldownEnds > new Date()) {
+                const now = new Date();
+                const timeLeft = user.cooldownEnds.getTime() - now.getTime();
+                const minutes = Math.floor(timeLeft / (1000 * 60));
+                const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 
                 const currentJobText = user.currentJob ? `Actualmente estás trabajando como *${user.currentJob}*.` : 'Ya has trabajado recientemente.';
 
                 return sock.sendMessage(chatId, { 
-                    text: `${currentJobText} Debes esperar *${hours}h y ${minutes}m* para tomar una nueva chamba.` 
+                    text: `${currentJobText} Debes esperar *${minutes}m y ${seconds}s* para tomar una nueva chamba.` 
                 });
             }
 
@@ -184,11 +200,14 @@ module.exports = {
             const job = eligibleJobs[Math.floor(Math.random() * eligibleJobs.length)];
 
             // 4. ACTUALIZAR DATOS DEL USUARIO
+            const now = new Date();
+            const cooldownMinutes = job.cooldown;
+            user.cooldownEnds = new Date(now.getTime() + cooldownMinutes * 60 * 1000);
+            user.currentJob = job.name; // Guardar el trabajo actual
+
             const xpGained = Math.floor(job.salary / 4); 
             user.economy.wallet += job.salary;
             user.xp += xpGained;
-            user.lastWork = new Date();
-            user.currentJob = job.name; // Guardar el trabajo actual
 
             let levelUp = false;
             while (user.level < 10 && user.xp >= xpTable[user.level]) {

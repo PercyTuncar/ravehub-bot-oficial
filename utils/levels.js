@@ -15,19 +15,27 @@ const xpTable = [0, 100, 300, 600, 1000, 1500, 2100, 2800, 3600, 4500];
 
 const jobsByLevel = {
   1: [
-    'Lector de QR',
-    'Staff de limpieza',
+    'Lector de QR en ingreso',
+    'Staff de limpieza en el festival',
     'Coordinador de accesos',
     'Editor de videos post-evento',
   ],
-  2: ['Responsable de guardarropas', 'Vendedor de merchandising'],
-  3: ['Seguridad de Ultra Perú', 'Montaje de escenario'],
-  4: ['Seguridad de Vastion Group', 'DJ de warm-up', 'Camarógrafo en festival'],
-  5: ['Reportero de RaveHub', 'Asistente de DJ'],
-  6: ['Fotógrafo de RaveHub', 'Community manager de artista'],
-  7: ['Entrevistador de RaveHub'],
-  8: ['DJ en evento privado', 'Stage manager en rave internacional'],
-  9: ['DJ en Tomorrowland', 'Coordinador de artistas internacionales'],
+  2: [
+    'Vendedor de merchandising',
+    'Responsable de guardarropas',
+    'Seguridad de Ultra Perú',
+  ],
+  3: [
+    'Montaje de escenario',
+    'Seguridad de Vastion Group',
+    'Camarógrafo en festival',
+  ],
+  4: ['DJ de warm-up en rave local', 'Asistente de DJ'],
+  5: ['Reportero de RaveHub', 'Fotógrafo de RaveHub'],
+  6: ['Community manager de artista', 'Entrevistador de RaveHub'],
+  7: ['Stage manager en rave internacional'],
+  8: ['Coordinador de artistas internacionales'],
+  9: ['DJ en Tomorrowland', 'Productor musical para sello discográfico'],
   10: [], // Nivel 10 tiene acceso a todos
 };
 
