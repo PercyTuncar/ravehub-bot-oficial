@@ -24,12 +24,15 @@ module.exports = {
         }
 
         try {
-            // Usar findOrCreateUser para ambos usuarios
+            // Usar findOrCreateUser para el ladrón para asegurar que exista
             const sender = await findOrCreateUser(senderJid, message.pushName);
-            const target = await findOrCreateUser(mentionedJid);
 
-            if (!target) { // Aunque findOrCreateUser debería crearlo, es una doble verificación.
-                 return sock.sendMessage(chatId, { text: '❌ No se pudo encontrar o crear al usuario objetivo.' });
+            // Forzar la re-lectura del objetivo desde la BD para tener los datos más frescos
+            const target = await findOrCreateUser(mentionedJid);
+            const freshTarget = await User.findOne({ jid: mentionedJid });
+
+            if (!freshTarget) { // Si después de todo no se encuentra, es un error.
+                 return sock.sendMessage(chatId, { text: '❌ No se pudo encontrar al usuario objetivo en la base de datos.' });
             }
 
             if (sender.judicialDebt > 0) {
@@ -57,8 +60,9 @@ Cualquier intento adicional de actividad ilícita podría resultar en tu **expul
                 });
             }
 
-            if (target.economy.wallet <= 0) {
-                return sock.sendMessage(chatId, { text: `💸 @${target.name} no tiene dinero en su cartera. ¡No hay nada que robar!`, mentions: [mentionedJid] });
+            // Usar los datos frescos de la víctima para la comprobación
+            if (freshTarget.economy.wallet <= 0) {
+                return sock.sendMessage(chatId, { text: `💸 @${freshTarget.name} no tiene dinero en su cartera. ¡No hay nada que robar!`, mentions: [mentionedJid] });
             }
 
             // Establecer cooldown inmediatamente
@@ -68,8 +72,8 @@ Cualquier intento adicional de actividad ilícita podría resultar en tu **expul
             const successChance = Math.random();
 
             if (successChance > 0.10) { // 90% de Éxito
-                const amountToSteal = Math.floor(target.economy.wallet * (Math.random() * 0.35 + 0.10)); // Robar entre 10% y 45%
-                target.economy.wallet -= amountToSteal;
+                const amountToSteal = Math.floor(freshTarget.economy.wallet * (Math.random() * 0.35 + 0.10)); // Robar entre 10% y 45%
+                freshTarget.economy.wallet -= amountToSteal;
 
                 let finalDebtMessage = '';
                 let finalLevelChangeMessage = '';
@@ -86,7 +90,7 @@ Cualquier intento adicional de actividad ilícita podría resultar en tu **expul
                 sender.economy.wallet += netGain;
 
                 await sender.save();
-                await target.save();
+                await freshTarget.save();
 
                 if (finalDebtMessage) {
                     await sock.sendMessage(chatId, { text: finalDebtMessage, mentions: [senderJid] });
@@ -95,12 +99,7 @@ Cualquier intento adicional de actividad ilícita podría resultar en tu **expul
                     }
                 }
 
-                const successMessage = `*💰 ¡ROBO EXITOSO! 💰*
-
-Le has robado *${amountToSteal} 💵* a @${target.name}.
-
-*Ganancia neta (después de deudas):* +${netGain} 💵
-*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
+                const successMessage = `*💰 ¡ROBO EXITOSO! 💰*\n\nLe has robado *${amountToSteal} 💵* a @${freshTarget.name}.\n\n*Ganancia neta (después de deudas):* +${netGain} 💵\n*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
                 await sock.sendMessage(chatId, { text: successMessage, mentions: [senderJid, mentionedJid] });
 
             } else { // 10% de Fallo
