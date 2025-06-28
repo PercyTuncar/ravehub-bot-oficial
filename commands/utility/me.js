@@ -6,20 +6,18 @@ module.exports = {
     description: 'Muestra tu perfil.',
     category: 'utility',
     async execute(message) {
-        const userId = message.key.remoteJid;
+        const userId = message.key.participant || message.key.remoteJid;
         try {
-            const [user, economy] = await Promise.all([
-                User.findOne({ userId }),
-                Economy.findOne({ userId })
-            ]);
+            let user = await User.findOne({ userId });
+            let economy = await Economy.findOne({ userId });
 
             if (!user) {
-                const newUser = new User({ userId, name: message.pushName || 'Nuevo Usuario' });
-                await newUser.save();
+                user = new User({ userId, name: message.pushName || 'Nuevo Usuario' });
+                await user.save();
             }
             if (!economy) {
-                const newEconomy = new Economy({ userId });
-                await newEconomy.save();
+                economy = new Economy({ userId });
+                await economy.save();
             }
 
             const profileMessage = `
@@ -28,10 +26,10 @@ Registrado: ${user.registeredAt.toLocaleDateString()}
 Cartera: ${economy.wallet}
 Banco: ${economy.bank}/${economy.bankCapacity}
             `;
-            this.sock.sendMessage(userId, { text: profileMessage });
+            this.sock.sendMessage(message.key.remoteJid, { text: profileMessage });
         } catch (error) {
             console.error('Error al obtener el perfil:', error);
-            this.sock.sendMessage(userId, { text: 'Ocurrió un error al obtener tu perfil.' });
+            this.sock.sendMessage(message.key.remoteJid, { text: 'Ocurrió un error al obtener tu perfil.' });
         }
     }
 };

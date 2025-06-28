@@ -6,7 +6,7 @@ module.exports = {
     description: 'Muestra tu balance de economía.',
     category: 'economy',
     async execute(message) {
-        const userId = message.key.remoteJid;
+        const userId = message.key.participant || message.key.remoteJid;
         try {
             let user = await User.findOne({ userId });
             let economy = await Economy.findOne({ userId });
@@ -20,12 +20,11 @@ module.exports = {
                 await economy.save();
             }
 
-            const balanceMessage = `*Balance de ${user.name}*
-Cartera: ${economy.wallet}\nBanco: ${economy.bank}`;
-            this.sock.sendMessage(userId, { text: balanceMessage });
+            const balanceMessage = `*Balance de ${user.name}*\nCartera: ${economy.wallet}\nBanco: ${economy.bank}`;
+            this.sock.sendMessage(message.key.remoteJid, { text: balanceMessage });
         } catch (error) {
             console.error('Error al obtener el balance:', error);
-            this.sock.sendMessage(userId, { text: 'Ocurrió un error al obtener tu balance.' });
+            this.sock.sendMessage(message.key.remoteJid, { text: 'Ocurrió un error al obtener tu balance.' });
         }
     }
 };
