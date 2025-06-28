@@ -10,7 +10,8 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         try {
-            const users = await User.find({});
+            // 1. Filtrar usuarios que no tienen JID o cuyo JID no es un string
+            const users = await User.find({ jid: { $exists: true, $type: 'string' } });
 
             if (users.length === 0) {
                 return sock.sendMessage(chatId, { text: 'Aún no hay usuarios registrados para mostrar un ranking.' });
@@ -31,9 +32,12 @@ module.exports = {
             ];
 
             rankedUsers.forEach((user, index) => {
-                const rankEmoji = ['🥇', '🥈', '🥉'][index] || `*${index + 1}.*`;
-                rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - $${user.totalWealth} 💵`);
-                mentions.push(user.jid);
+                // 2. Comprobación de seguridad adicional
+                if (user.jid && typeof user.jid === 'string') {
+                    const rankEmoji = ['🥇', '🥈', '🥉'][index] || `*${index + 1}.*`;
+                    rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - $${user.totalWealth} 💵`);
+                    mentions.push(user.jid);
+                }
             });
 
             rankingMessage.push(`*│*`);
