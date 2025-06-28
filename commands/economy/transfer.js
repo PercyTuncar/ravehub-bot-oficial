@@ -23,15 +23,15 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'La cantidad a transferir debe ser mayor que cero.' });
         }
 
+        if (senderId === targetId) {
+            return sock.sendMessage(chatId, { text: 'No puedes transferirte dinero a ti mismo.' });
+        }
+
         try {
             // Asegurar que el emisor (sender) exista en la DB
-            let senderUser = await User.findOne({ userId: senderId });
-            if (!senderUser) {
-                senderUser = new User({ userId: senderId, name: senderName });
-                await senderUser.save();
-            }
             let senderEconomy = await Economy.findOne({ userId: senderId });
             if (!senderEconomy) {
+                await new User({ userId: senderId, name: senderName }).save();
                 senderEconomy = new Economy({ userId: senderId });
                 await senderEconomy.save();
             }
@@ -40,13 +40,11 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: 'No tienes suficiente dinero en tu cartera para realizar esta transferencia.' });
             }
 
-            // Asegurar que el receptor (target) exista en la DB
-            let targetUser = await User.findOne({ userId: targetId });
-            if (!targetUser) {
-                return sock.sendMessage(chatId, { text: `No se puede transferir a @${targetId.split('@')[0]}, no es un usuario registrado.`, mentions: [targetId] });
-            }
+            // Asegurar que el receptor (target) exista en la DB, si no, lo crea
             let targetEconomy = await Economy.findOne({ userId: targetId });
             if (!targetEconomy) {
+                const targetName = targetId.split('@')[0]; // Usar el número como nombre provisional
+                await new User({ userId: targetId, name: targetName }).save();
                 targetEconomy = new Economy({ userId: targetId });
                 await targetEconomy.save();
             }
@@ -58,7 +56,7 @@ module.exports = {
             await targetEconomy.save();
 
             await sock.sendMessage(chatId, { 
-                text: `Has transferido ${amount} a @${targetId.split('@')[0]}. Tu nuevo saldo es ${senderEconomy.wallet}.`,
+                text: `✅ Transferencia exitosa de ${amount} a @${targetId.split('@')[0]}.\n\nTu nuevo saldo es: ${senderEconomy.wallet}`,
                 mentions: [senderId, targetId]
             });
 

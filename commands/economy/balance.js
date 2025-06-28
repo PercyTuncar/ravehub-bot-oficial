@@ -23,7 +23,7 @@ module.exports = {
                 await economy.save();
             }
 
-            const balanceMessage = `*Balance de @${userId.split('@')[0]}*\n\nCartera: ${economy.wallet}\nBanco: ${economy.bank}`;
+            const balanceMessage = `*Balance de* @${userId.split('@')[0]}\n\nCartera: ${economy.wallet}\nBanco: ${economy.bank}`;
             
             await sock.sendMessage(chatId, { 
                 text: balanceMessage,
