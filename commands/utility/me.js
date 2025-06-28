@@ -1,4 +1,5 @@
 const User = require('../../models/User');
+const { getLevelName, xpTable } = require('../../utils/levels');
 
 module.exports = {
     name: 'me',
@@ -30,12 +31,10 @@ module.exports = {
                     .join("\n*│* │ ");
             }
 
-            const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}
-*│* 📛 *Nombre:* ${user.name}
-*│* ⚠️ *Advertencias:* ${user.warnings}
-*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* $${user.economy.wallet}
-*│* │ 🏦 *Banco:* $${user.economy.bank}
-*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
+            const nextLevelXp = xpTable[user.level] || user.levelXp;
+            const xpProgress = `${user.xp}/${nextLevelXp}`;
+
+            const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* ⚠️ *Advertencias:* ${user.warnings}\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* $${user.economy.wallet}\n*│* │ 🏦 *Banco:* $${user.economy.bank}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
 
             await sock.sendMessage(
                 chatId,
