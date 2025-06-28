@@ -1,21 +1,80 @@
 const ShopItem = require('../../models/ShopItem');
 
-// Pre-llenar la tienda si está vacía
+const shopItems = [
+  // Productos graciosos y para regalar
+  {
+    name: 'Ramo de rosas',
+    description: 'Ideal para sorprender al/la especial 🌹✨',
+    price: 200,
+    emoji: '🌹'
+  },
+  {
+    name: 'Peluche rave-bebé',
+    description: 'Un peluchito bonito 🧸',
+    price: 350,
+    emoji: '🧸'
+  },
+  {
+    name: 'Cerveza fría',
+    description: 'Refresca cuerpo y alma después de bailar 🥵🍺',
+    price: 100,
+    emoji: '🍺'
+  },
+  {
+    name: 'Carta de amor rave',
+    description: '💌 “Desde que te vi con glitter, supe que eras tú...”',
+    price: 150,
+    emoji: '💌'
+  },
+  // Tickets de eventos
+  { name: 'Pase VIP Far Away Peru', description: '🎟️ Entrada VIP exclusiva para el evento Far Away en Perú.', price: 150, emoji: '🎟️' },
+  { name: 'Pase VIP Ultra Perú 2026', description: '🎟️ Acceso VIP a Ultra Perú 2026.', price: 350, emoji: '🎟️' },
+  { name: 'Ticket GA Ultra Perú 2026', description: '🎟️ Entrada general 1 día para Ultra Perú (S/ 190).', price: 190, emoji: '🎟️' },
+  { name: 'Ticket David Guetta Lima', description: '🎫 Reventa aproximada S/ 287 para show 8/oct/2025.', price: 287, emoji: '🎫' },
+  { name: 'Entrada Boris Brejcha General', description: '🎫 Entrada general para show 12/dic/2025 (S/ 130).', price: 130, emoji: '🎫' },
+  { name: 'Entrada Boris Brejcha VIP', description: '🎫 Acceso VIP para Boris Brejcha (S/ 200).', price: 200, emoji: '🎫' },
+  { name: 'Entrada Boris Brejcha Palco', description: '🎫 Palco Ultra VIP (S/ 300).', price: 300, emoji: '🎫' },
+  { name: 'Ticket DLDK Perú 2025', description: '🎟️ Registro obligatorio previo al precio oficial.', price: 120, emoji: '🎟️' },
+  // Temáticos de festivales de música electrónica
+ 
+  {
+    name: 'Camisa con logo de RaveHub',
+    description: 'Muestra tu orgullo por la comunidad 🔥💖',
+    price: 1000,
+    emoji: '👕'
+  },
+  {
+    name: 'Glitter mágico',
+    description: 'Con una sola aplicación atraes miradas ✨',
+    price: 300,
+    emoji: '✨'
+  },
+  
+  {
+    name: 'Perrito rave',
+    description: 'Baila contigo. No ladra, dice "¡Boom!" 🐶🎵',
+    price: 1000,
+    emoji: '🐶'
+  }
+];
+
+// Sincronizar items de la tienda con la base de datos al iniciar
 (async () => {
     try {
-        const count = await ShopItem.countDocuments();
-        if (count === 0) {
-            await ShopItem.insertMany([
-                { name: 'Café', description: 'Te da un impulso de energía.', price: 100, emoji: '☕' },
-                { name: 'Pizza', description: 'Una deliciosa pizza para compartir.', price: 300, emoji: '🍕' },
-                { name: 'Laptop', description: 'Necesaria para trabajos de programación.', price: 2000, emoji: '💻' },
-                { name: 'Caña de pescar', description: 'Para pescar y ganar dinero extra.', price: 500, emoji: '🎣' },
-                { name: 'Coche', description: 'Te permite viajar más rápido.', price: 10000, emoji: '🚗' },
-            ]);
-            console.log('Items iniciales de la tienda creados.');
+        const itemNamesFromFile = shopItems.map(i => i.name);
+
+        // 1. Eliminar items de la DB que no están en la lista del archivo
+        await ShopItem.deleteMany({ name: { $nin: itemNamesFromFile } });
+
+        // 2. Actualizar o insertar los items de la lista del archivo en la DB
+        for (const itemData of shopItems) {
+            await ShopItem.findOneAndUpdate({ name: itemData.name }, itemData, { upsert: true });
         }
+        
+        console.log('✅ La tienda ha sido sincronizada con la base de datos.');
+
     } catch (error) {
-        console.error('Error al crear items de la tienda:', error);
+        console.error('Error al sincronizar los items de la tienda:', error);
     }
 })();
 
