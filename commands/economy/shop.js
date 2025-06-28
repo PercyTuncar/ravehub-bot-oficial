@@ -4,32 +4,32 @@ const shopItems = [
   // Productos graciosos y para regalar
   {
     name: "Ramo de rosas",
-    description: "Ideal para sorprender al/la especial 🌹✨",
+    description: "Para esa persona especial 🌹✨",
     price: 200,
     emoji: "🌹",
   },
   {
     name: "Peluche rave-bebé",
-    description: "Un peluchito bonito 🧸",
+    description: "Un tierno compañero de festival 🧸",
     price: 350,
     emoji: "🧸",
   },
   {
     name: "Cerveza fría",
-    description: "Refresca cuerpo y alma después de bailar 🥵🍺",
+    description: "Ideal para refrescarse en el post-rave 🥵🍺",
     price: 100,
     emoji: "🍺",
   },
   {
     name: "Carta de amor rave",
-    description: " “Desde que te vi con glitter, supe que eras tú”",
+    description: "Una declaración de amor con mucho glitter ✨",
     price: 150,
     emoji: "💌",
   },
   // Tickets de eventos
   {
     name: "Pase VIP Far Away Peru",
-    description: "Entrada VIP para el evento Far Away en Perú.",
+    description: "Acceso VIP al evento Far Away en Perú.",
     price: 150,
     emoji: "🎟️",
   },
@@ -41,37 +41,37 @@ const shopItems = [
   },
   {
     name: "Ticket GA Ultra Perú 2026",
-    description: "Entrada general 1 día para Ultra Perú (S/ 190).",
+    description: "Entrada general para Ultra Perú (1 día).",
     price: 190,
     emoji: "🎟️",
   },
   {
     name: "Ticket David Guetta Lima",
-    description: "Reventa aproximada S/ 287 para show 8/oct/2025.",
+    description: "Ticket para el show de David Guetta en Lima.",
     price: 287,
     emoji: "🎫",
   },
   {
     name: "Entrada Boris Brejcha General",
-    description: "Entrada general para show 12/dic/25 (S/ 130).",
+    description: "Acceso general para Boris Brejcha.",
     price: 130,
     emoji: "🎫",
   },
   {
     name: "Entrada Boris Brejcha VIP",
-    description: "Acceso VIP para Boris Brejcha (S/ 200).",
+    description: "Acceso VIP para Boris Brejcha.",
     price: 200,
     emoji: "🎫",
   },
   {
     name: "Entrada Boris Brejcha Palco",
-    description: "Palco Ultra VIP (S/ 300).",
+    description: "Palco VIP para Boris.",
     price: 300,
     emoji: "🎫",
   },
   {
     name: "Ticket DLDK Perú 2025",
-    description: "Registro obligatorio previo al precio oficial.",
+    description: "Pre-registro para el evento DLDK en Perú.",
     price: 120,
     emoji: "🎟️",
   },
@@ -85,14 +85,14 @@ const shopItems = [
   },
   {
     name: "Glitter mágico",
-    description: "Con una sola aplicación atraes miradas ✨",
+    description: "Brilla toda la noche en la pista de baile ✨",
     price: 300,
     emoji: "✨",
   },
 
   {
     name: "Perrito rave",
-    description: 'Baila contigo. No ladra, dice "¡Boom!" 🐶🎵',
+    description: 'Tu compañero de baile  🐶🎵',
     price: 1000,
     emoji: "🐶",
   },
@@ -168,9 +168,12 @@ module.exports = {
         );
 
         if (categoryItems.length > 0) {
-          categoryItems.forEach((item) => {
+          categoryItems.forEach((item, index) => {
             shopMessage += `*│* ${item.emoji} *${item.name}* - $${item.price} 💵\n`;
             shopMessage += `*│*  _${item.description}_\n`;
+            if (index < categoryItems.length - 1) {
+              shopMessage += `*│*\n`; // Agrega un salto de línea entre productos
+            }
           });
         } else {
           shopMessage += `*│* (No hay items en esta categoría)\n`;
