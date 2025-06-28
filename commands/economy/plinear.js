@@ -28,7 +28,7 @@ module.exports = {
             }
 
             if (sender.economy.wallet < amount) {
-                return sock.sendMessage(chatId, { text: `¡Saldo insuficiente! No tienes suficiente para este Plin. Saldo actual: ${sender.economy.wallet} 🪙` });
+                return sock.sendMessage(chatId, { text: `¡Saldo insuficiente! No tienes suficiente para este Plin. Saldo actual: ${sender.economy.wallet} 💵` });
             }
 
             let target = await User.findOne({ jid: mentionedJid });
@@ -45,7 +45,7 @@ module.exports = {
             await target.save();
 
             await sock.sendMessage(chatId, { 
-                text: `✅ ¡Plin exitoso! Le enviaste ${amount} 🪙 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en cartera es: ${sender.economy.wallet} 🪙`,
+                text: `✅ ¡Plin exitoso! Le enviaste ${amount} 💵 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en cartera es: ${sender.economy.wallet} 💵`,
                 mentions: [senderJid, mentionedJid]
             });
 

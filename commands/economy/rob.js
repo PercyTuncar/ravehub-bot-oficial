@@ -39,7 +39,7 @@ module.exports = {
                 const fine = Math.floor(sender.economy.wallet * 0.1); // Multa del 10% de la cartera del ladrón
                 sender.economy.wallet -= fine;
                 await sender.save();
-                return sock.sendMessage(chatId, { text: `💀 ¡Fallaste! La policía te atrapó y te multó con ${fine} 🪙 por intentar robar a @${mentionedJid.split('@')[0]}.`, mentions: [senderJid, mentionedJid] });
+                return sock.sendMessage(chatId, { text: `💀 ¡Fallaste! La policía te atrapó y te multó con ${fine} 💵 por intentar robar a @${mentionedJid.split('@')[0]}.`, mentions: [senderJid, mentionedJid] });
             }
 
             const amountToSteal = Math.floor(target.economy.wallet * (Math.random() * 0.25 + 0.05)); // Robar entre 5% y 30%
@@ -49,7 +49,7 @@ module.exports = {
             await sender.save();
             await target.save();
 
-            await sock.sendMessage(chatId, { text: `💰 ¡Éxito! Has robado ${amountToSteal} 🪙 de la cartera de @${mentionedJid.split('@')[0]}!`, mentions: [senderJid, mentionedJid] });
+            await sock.sendMessage(chatId, { text: `💰 ¡Éxito! Has robado ${amountToSteal} 💵 de la cartera de @${mentionedJid.split('@')[0]}!`, mentions: [senderJid, mentionedJid] });
 
         } catch (error) {
             console.error('Error en el comando de robo:', error);

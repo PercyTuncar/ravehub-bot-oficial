@@ -29,7 +29,7 @@ module.exports = {
             }
 
             if (user.economy.wallet < itemToBuy.price) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar ${itemToBuy.name}. Necesitas ${itemToBuy.price} 🪙.` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar ${itemToBuy.name}. Necesitas ${itemToBuy.price} 💵.` });
             }
 
             user.economy.wallet -= itemToBuy.price;
@@ -49,7 +49,7 @@ module.exports = {
             await user.save();
 
             await sock.sendMessage(chatId, {
-                text: `¡Felicidades! Has comprado *${itemToBuy.name}* por ${itemToBuy.price} 🪙.`, 
+                text: `¡Felicidades! Has comprado *${itemToBuy.name}* por ${itemToBuy.price} 💵.`, 
                 mentions: [senderJid]
             });
 

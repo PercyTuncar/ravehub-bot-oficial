@@ -33,7 +33,7 @@ module.exports = {
             }
 
             if (user.economy.wallet < amountToDeposit) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${user.economy.wallet} 🪙` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${user.economy.wallet} 💵` });
             }
             
             if (amountToDeposit === 0) {
@@ -46,8 +46,8 @@ module.exports = {
             await user.save();
 
             const responseText = 
-`✅ Depósito exitoso de ${amountToDeposit} 🪙.\n\n*Nuevo Balance:*
-*Cartera:* ${user.economy.wallet} 🪙
+`✅ Depósito exitoso de ${amountToDeposit} 💵.\n\n*Nuevo Balance:*
+*Cartera:* ${user.economy.wallet} 💵
 *Banco:* ${user.economy.bank} 🏦`;
 
             await sock.sendMessage(chatId, { 

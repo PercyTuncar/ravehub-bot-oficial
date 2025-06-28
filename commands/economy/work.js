@@ -164,7 +164,7 @@ module.exports = {
             await user.save();
 
             await sock.sendMessage(chatId, {
-                text: `Trabajaste como *${job.name}* y ganaste ${job.salary} 🪙.\n\n*Nuevo saldo en cartera:* ${user.economy.wallet} 🪙`,
+                text: `Trabajaste como *${job.name}* y ganaste ${job.salary} 💵.\n\n*Nuevo saldo en cartera:* ${user.economy.wallet} 💵`,
                 mentions: [senderJid]
             });
 
