@@ -7,11 +7,12 @@ module.exports = (sock) => {
     const commands = commandHandler(sock);
 
     sock.ev.on('messages.upsert', async (m) => {
+        console.log('Evento messages.upsert recibido:', JSON.stringify(m, null, 2));
         const message = m.messages[0];
         if (!message.message) return;
 
-        const messageType = Object.keys(message.message)[0];
-        const messageContent = message.message[messageType].caption || message.message[messageType].text || '';
+        const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';
+        console.log('Contenido del mensaje extraído:', messageContent);
 
         // Anti-links
         const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -40,14 +41,22 @@ module.exports = (sock) => {
         }
 
         // Command handler
-        if (!messageContent.startsWith(process.env.PREFIX)) return;
+        if (!messageContent.startsWith(process.env.PREFIX)) {
+            console.log('El mensaje no es un comando.');
+            return;
+        }
 
+        console.log('Procesando como un comando...');
         const args = messageContent.slice(process.env.PREFIX.length).trim().split(/ +/);
         const commandName = args.shift().toLowerCase();
 
         const command = commands.get(commandName);
-        if (!command) return;
+        if (!command) {
+            console.log(`Comando no encontrado: ${commandName}`);
+            return;
+        }
 
+        console.log(`Ejecutando comando: ${commandName}`);
         const userId = message.key.participant || message.key.remoteJid;
         if (userCooldowns.has(userId)) {
             const lastCommandTime = userCooldowns.get(userId);
