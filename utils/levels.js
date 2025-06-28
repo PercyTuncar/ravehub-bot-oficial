@@ -48,6 +48,11 @@ function getLevelName(level) {
 }
 
 function getEligibleJobs(userLevel, allJobs) {
+  if (!allJobs) {
+    console.error('Error: La lista de trabajos (allJobs) no puede ser undefined.');
+    return []; // Devuelve un array vacío para evitar el crash
+  }
+
   if (userLevel >= 10) {
     return allJobs; // Acceso a todos los trabajos
   }
