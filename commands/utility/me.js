@@ -34,7 +34,7 @@ module.exports = {
             try {
                 profilePicUrl = await sock.profilePictureUrl(jid, 'image');
             } catch (e) {
-                profilePicUrl = 'https://asset.cloudinary.com/amadodedios/fcde81724e390a678f2d38d8603cc93a'; // URL de imagen por defecto
+                profilePicUrl = 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751131351/portadasinfoto_gz9kk2.jpg'; // URL de imagen por defecto corregida
             }
 
             const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} 💵\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* $${user.economy.wallet}\n*│* │ 🏦 *Banco:* $${user.economy.bank}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
