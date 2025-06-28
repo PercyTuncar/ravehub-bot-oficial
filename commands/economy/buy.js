@@ -23,6 +23,30 @@ module.exports = {
                 await user.save();
             }
 
+            // --- Lógica de Deuda Judicial ---
+            let debtMessage = '';
+            if (user.judicialDebt > 0) {
+                const debtToPay = user.judicialDebt;
+                let paidAmount = 0;
+
+                if (user.economy.wallet > 0) {
+                    const fromWallet = Math.min(user.economy.wallet, debtToPay - paidAmount);
+                    user.economy.wallet -= fromWallet;
+                    paidAmount += fromWallet;
+                }
+
+                if (paidAmount < debtToPay && user.economy.bank > 0) {
+                    const fromBank = Math.min(user.economy.bank, debtToPay - paidAmount);
+                    user.economy.bank -= fromBank;
+                    paidAmount += fromBank;
+                }
+
+                if (paidAmount > 0) {
+                    user.judicialDebt -= paidAmount;
+                    debtMessage = `⚖️ Se ha cobrado automáticamente *${paidAmount} 💵* de tus fondos para saldar tu deuda judicial.\n*Deuda restante:* ${user.judicialDebt} 💵\n\n`;
+                }
+            }
+
             const itemToBuy = await ShopItem.findOne({ name: new RegExp(`^${itemName}$`, 'i') });
 
             if (!itemToBuy) {
@@ -74,7 +98,7 @@ module.exports = {
             await user.save();
 
             await sock.sendMessage(chatId, {
-                text: `🛍️ *¡Compra exitosa!* 🛍️
+                text: `${debtMessage}🛍️ *¡Compra exitosa!* 🛍️
 
 ${paymentMessage}
 
