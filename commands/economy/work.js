@@ -167,21 +167,7 @@ module.exports = {
             const eligibleJobs = getEligibleJobs(user.level, allJobs);
             if (eligibleJobs.length === 0) {
                 return sock.sendMessage(chatId, { text: 'No hay trabajos disponibles para tu nivel actual. ¡Sigue esforzándote!' });
-            }            // Calcular el tiempo restante en minutos y segundos
-            const totalSecondsLeft = Math.ceil(timeLeft);
-            const minutesLeft = Math.floor(totalSecondsLeft / 60);
-            const secondsLeft = totalSecondsLeft % 60;
-
-            let timeMessage = '';
-            if (minutesLeft > 0) {
-                timeMessage += `${minutesLeft} minuto${minutesLeft > 1 ? 's' : ''}`;
             }
-            if (secondsLeft > 0) {
-                timeMessage += `${minutesLeft > 0 ? ' y ' : ''}${secondsLeft} segundo${secondsLeft > 1 ? 's' : ''}`;
-            }
-            
-            return sock.sendMessage(chatId, { text: `⏳ Debes esperar *${timeMessage}* para volver a trabajar.` });
-
 
             const job = eligibleJobs[Math.floor(Math.random() * eligibleJobs.length)];
             const earnings = job.salary;
