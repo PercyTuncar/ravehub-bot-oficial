@@ -12,7 +12,7 @@ module.exports = {
             const command = commands.get(commandName) || commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
 
             if (!command) {
-                return sock.sendMessage(chatId, { text: `🤔 Uhm... no encontré el comando \\`*.${commandName}*\\`. ¿Seguro que lo escribiste bien?` });
+                return sock.sendMessage(chatId, { text: `🤔 Uhm... no encontré el comando \\\`*.${commandName}*\\\`. ¿Seguro que lo escribiste bien?` });
             }
 
             let helpMessage = `*╭───≽ ℹ️ AYUDA: .${command.name.toUpperCase()} ≼───*\\n*│*\\n`;
