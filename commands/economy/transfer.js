@@ -10,18 +10,15 @@ module.exports = {
         const chatId = message.key.remoteJid;
         const senderName = message.pushName || 'Usuario Desconocido';
 
-        const [mention, amountStr] = args;
+        const mentionedJid = message.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+        const amountStr = args.find(arg => !isNaN(parseInt(arg)));
+        const amount = amountStr ? parseInt(amountStr) : 0;
 
-        if (!mention || !mention.startsWith('@') || !amountStr || isNaN(parseInt(amountStr))) {
+        if (!mentionedJid || amount <= 0) {
             return sock.sendMessage(chatId, { text: 'Formato incorrecto. Uso: .transfer @usuario <cantidad>' });
         }
 
-        const amount = parseInt(amountStr);
-        const targetId = `${mention.slice(1)}@s.whatsapp.net`;
-
-        if (amount <= 0) {
-            return sock.sendMessage(chatId, { text: 'La cantidad a transferir debe ser mayor que cero.' });
-        }
+        const targetId = mentionedJid;
 
         if (senderId === targetId) {
             return sock.sendMessage(chatId, { text: 'No puedes transferirte dinero a ti mismo.' });
@@ -37,13 +34,14 @@ module.exports = {
             }
 
             if (senderEconomy.wallet < amount) {
-                return sock.sendMessage(chatId, { text: 'No tienes suficiente dinero en tu cartera para realizar esta transferencia.' });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero. Saldo actual: ${senderEconomy.wallet}` });
             }
 
             // Asegurar que el receptor (target) exista en la DB, si no, lo crea
             let targetEconomy = await Economy.findOne({ userId: targetId });
             if (!targetEconomy) {
-                const targetName = targetId.split('@')[0]; // Usar el número como nombre provisional
+                // No podemos obtener el pushName de alguien que no ha hablado, usamos su número.
+                const targetName = targetId.split('@')[0]; 
                 await new User({ userId: targetId, name: targetName }).save();
                 targetEconomy = new Economy({ userId: targetId });
                 await targetEconomy.save();
