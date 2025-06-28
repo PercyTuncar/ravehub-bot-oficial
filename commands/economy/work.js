@@ -199,13 +199,16 @@ module.exports = {
             user.cooldowns.work = new Date(new Date().getTime() + job.cooldown * 60 * 1000);
             await user.save();
 
-            let response = `💼 *¡A trabajar!* 💼\n\n${job.description}\n\n*Ganaste:* ${earnings} 💵\n*XP Obtenida:* +${xpGained} XP`;
+            let response = `💼 *¡A trabajar @${senderJid.split('@')[0]}!* 💼\n\n${job.description}\n\n*Ganaste:* ${earnings} 💵\n*XP Obtenida:* +${xpGained} XP`;
             if (debtMessage) {
                 response += `\n\n${debtMessage}`;
             }
             response += levelUpMessage;
 
-            await sock.sendMessage(chatId, { text: response });
+            await sock.sendMessage(chatId, { 
+                text: response,
+                mentions: [senderJid]
+            });
 
         } catch (error) {
             console.error('Error en el comando work:', error);
