@@ -1,4 +1,6 @@
 const commandHandler = require('./commandHandler');
+const { handleGameMessage } = require('./gameHandler');
+const { getGameSession } = require('../utils/gameUtils');
 const GroupSettings = require('../models/GroupSettings');
 const { sock } = require('../index');
 const userCooldowns = new Map();
@@ -10,6 +12,16 @@ module.exports = (sock) => {
         console.log('Evento messages.upsert recibido:', JSON.stringify(m, null, 2));
         const message = m.messages[0];
         if (!message.message) return;
+
+        const jid = message.key.participant || message.key.remoteJid;
+
+        // --- Game Handler Integration ---
+        if (getGameSession(jid)) {
+            const gameHandled = await handleGameMessage(sock, message);
+            if (gameHandled) {
+                return; // Detener el procesamiento si el mensaje fue manejado por el juego
+            }
+        }
 
         const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';
         console.log('Contenido del mensaje extraído:', messageContent);
