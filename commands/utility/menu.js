@@ -2,10 +2,8 @@ module.exports = {
     name: 'menu',
     description: 'Muestra el menú de comandos.',
     category: 'utility',
-    execute(message, args, commands) {
-        let menu = `╭───≽ *MENU DE COMANDOS* ≼───╮
-│
-`;
+    execute(sock, message, args, commands) {
+        let menu = `╭───≽ *MENÚ DE COMANDOS* ≼───╮\n│\n`;
         const categories = {};
 
         commands.forEach(command => {
@@ -23,6 +21,6 @@ module.exports = {
         }
         menu += `│\n╰──────────≽`;
 
-        this.sock.sendMessage(message.key.remoteJid, { text: menu });
+        sock.sendMessage(message.key.remoteJid, { text: menu });
     }
 };
