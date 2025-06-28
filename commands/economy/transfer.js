@@ -42,6 +42,16 @@ module.exports = {
             sender.economy.wallet -= amount;
             target.economy.wallet += amount;
 
+            // --- Lógica de Deuda Judicial ---
+            if (target.judicialDebt > 0) {
+                const debtPaid = Math.min(amount, target.judicialDebt);
+                target.judicialDebt -= debtPaid;
+                await sock.sendMessage(chatId, {
+                    text: `⚖️ Se ha descontado automáticamente *${debtPaid} 💵* de la transferencia recibida por @${mentionedJid.split('@')[0]} para pagar su deuda judicial.\n*Deuda restante:* ${target.judicialDebt} 💵`,
+                    mentions: [mentionedJid]
+                });
+            }
+
             await sender.save();
             await target.save();
 

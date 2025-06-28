@@ -11,6 +11,7 @@ const userSchema = new mongoose.Schema({
     wallet: { type: Number, default: 0 },
     bank: { type: Number, default: 0 },
   },
+  judicialDebt: { type: Number, default: 0 },
   inventory: [{
     itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'ShopItem' },
     name: { type: String, required: true },

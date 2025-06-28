@@ -67,14 +67,15 @@ module.exports = {
                     failureMessage = `*☠️ ¡BANCARROTA TOTAL! ☠️*\n\nTu intento de robo fue tan desastroso que alertó a las autoridades fiscales. Te han embargado **TODO**.\n\n*Resultado:*\n- Cartera: 0 💵\n- Banco: 0 💵`;
                     sender.economy.wallet = 0;
                     sender.economy.bank = 0;
+                    sender.judicialDebt = 0; // Limpiar deudas previas en bancarrota
                 } else if (failureType < 0.4) { // 30% de Multa Grave
                     fine = Math.max(75, Math.floor(totalWealth * 0.35));
-                    sender.economy.wallet -= fine;
-                    failureMessage = `*👮‍♂️ ¡ATRAPADO CON LAS MANOS EN LA MASA! 👮‍♂️*\n\nLa policía te capturó. Te enfrentas a una multa severa por tu crimen.\n\n*Multa:* -${fine} 💵\n*Nuevo saldo en cartera:* ${sender.economy.wallet} 💵`;
+                    sender.judicialDebt += fine;
+                    failureMessage = `*👮‍♂️ ¡ATRAPADO CON LAS MANOS EN LA MASA! 👮‍♂️*\n\nLa policía te capturó. Has acumulado una deuda judicial por tu crimen.\n\n*Multa añadida a tu deuda:* +${fine} 💵\n*Deuda judicial total:* ${sender.judicialDebt} 💵`;
                 } else { // 60% de Multa Leve
                     fine = 55;
-                    sender.economy.wallet -= fine;
-                    failureMessage = `* clumsy  clumsy ¡QUÉ TORPE!  clumsy*\n\nFallaste el robo de la manera más tonta y te descubrieron. Tienes que pagar una pequeña multa.\n\n*Multa:* -${fine} 💵\n*Nuevo saldo en cartera:* ${sender.economy.wallet} 💵`;
+                    sender.judicialDebt += fine;
+                    failureMessage = `*🤡 ¡QUÉ TORPE! 🤡*\n\nFallaste el robo y ahora tienes una deuda con la justicia.\n\n*Multa añadida a tu deuda:* +${fine} 💵\n*Deuda judicial total:* ${sender.judicialDebt} 💵`;
                 }
 
                 await sender.save();
