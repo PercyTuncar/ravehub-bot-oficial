@@ -69,7 +69,7 @@ module.exports = (sock) => {
         userCooldowns.set(userId, Date.now());
 
         try {
-            command.execute(message, args, commands);
+            command.execute(sock, message, args, commands);
         } catch (error) {
             console.error('Error al ejecutar el comando:', error);
             sock.sendMessage(message.key.remoteJid, { text: 'Ocurrió un error al ejecutar el comando.' });
