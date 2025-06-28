@@ -42,6 +42,10 @@ module.exports = {
             const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
             const target = await findOrCreateUser(mentionedJid, targetName);
 
+            // Poblar el inventario del emisor para acceder al emoji del item
+            await sender.populate('inventory.itemId');
+            const populatedItem = sender.inventory.find(item => item.name.toLowerCase() === itemName);
+
             // Quitar item del inventario del emisor
             itemInInventory.quantity -= quantity;
             if (itemInInventory.quantity === 0) {
@@ -63,8 +67,56 @@ module.exports = {
             await sender.save();
             await target.save();
 
+            // --- Mensaje de Regalo Mejorado ---
+            const senderName = sender.name.split(' ')[0];
+            const targetNameForMsg = target.name.split(' ')[0];
+            const giftedItemName = itemInInventory.name;
+            const itemEmoji = populatedItem.itemId.emoji || '🎁';
+
+            let giftMessage = '';
+            const itemNameLower = giftedItemName.toLowerCase();
+
+            // Usar un switch para manejar los mensajes personalizados
+            switch (itemNameLower) {
+                case 'ramo de rosas':
+                    giftMessage = `🌹✨ ¡Hola @${target.jid.split('@')[0]}! ✨🌹\n\n💌 @${sender.jid.split('@')[0]} te ha regalado ${quantity > 1 ? `un hermoso ramo de ${quantity} rosas` : 'una hermosa rosa'} ${itemEmoji.repeat(quantity)}\n¡Qué detalle tan romántico! 🥰💖`;
+                    break;
+                case 'peluche rave-bebé':
+                    giftMessage = `🧸 ¡Asu, qué ternura! 🧸\n\n¡Oe @${target.jid.split('@')[0]}! @${sender.jid.split('@')[0]} un *Peluche rave-bebé* para que te abrace. ¡Cuídalo bien!`;
+                    break;
+                case 'cerveza fría':
+                    giftMessage = `🍻 ¡Salud, compadre! 🍻\n\n¡@${target.jid.split('@')[0]}! @${sender.jid.split('@')[0]} te invita ${quantity > 1 ? `unas chelas` : 'una chelita'} bien heladitas para la sed!`;
+                    break;
+                case 'carta de amor rave':
+                    giftMessage = `💌 ¡Uyuyuy, qué romántico! 💌\n\n@${target.jid.split('@')[0]}, el gran @${sender.jid.split('@')[0]} te mandó una *Carta de amor rave*.`;
+                    break;
+                case 'pase vip far away peru':
+                case 'pase vip ultra perú 2026':
+                case 'ticket ga ultra perú 2026':
+                case 'ticket david guetta lima':
+                case 'entrada boris brejcha general':
+                case 'entrada boris brejcha vip':
+                case 'entrada boris brejcha palco':
+                case 'ticket dldk perú 2025':
+                    giftMessage = `🎟️ ¡Nos vamos de tono! 🎟️\n\n¡Habla, @${target.jid.split('@')[0]}! @${sender.jid.split('@')[0]} te acaba de regalar *${quantity} ${giftedItemName}*. ¡A bailar hasta que el cuerpo aguante!`;
+                    break;
+                case 'camisa con logo de ravehub':
+                    giftMessage = `👕 ¡Qué elegancia! 👕\n\n@${target.jid.split('@')[0]}, mira la joyita que te regaló @${sender.jid.split('@')[0]}: una *Camisa con logo de RaveHub*.`;
+                    break;
+                case 'glitter mágico':
+                    giftMessage = `✨ ¡A brillar más que sol de verano! ✨\n\n¡@${target.jid.split('@')[0]}! @${sender.jid.split('@')[0]} te mandó *Glitter mágico* para que ilumines la pista de baile. ¡Que nadie te opaque!`;
+                    break;
+                case 'perrito rave':
+                    giftMessage = `🐶 ¡Wof, wof, mi causa! 🐶\n\n¡@${target.jid.split('@')[0]}! @${sender.jid.split('@')[0]} te adoptó un *Perrito rave*. ¡Tu nuevo compañero para todas las juergas!`;
+                    break;
+                default:
+                    // Mensaje genérico mejorado para otros items
+                    giftMessage = `🎉 ¡Regalo especial para @${target.jid.split('@')[0]}! 🎉\n\n💌 @${sender.jid.split('@')[0]} te ha regalado *${quantity} ${giftedItemName}* ${itemEmoji}.\n\n¡Que lo disfrutes! 😊`;
+                    break;
+            }
+
             await sock.sendMessage(chatId, {
-                text: `🎁 @${senderJid.split('@')[0]} le ha regalado *${quantity} ${itemInInventory.name}* a @${mentionedJid.split('@')[0]}.`,
+                text: giftMessage,
                 mentions: [senderJid, mentionedJid]
             });
 
