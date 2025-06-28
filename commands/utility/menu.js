@@ -12,23 +12,30 @@ module.exports = {
             const command = commands.get(commandName) || commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
 
             if (!command) {
-                return sock.sendMessage(chatId, { text: `🤔 Uhm... no encontré el comando \\\`*.${commandName}*\\\`. ¿Seguro que lo escribiste bien?` });
+                return sock.sendMessage(chatId, { text: `🤔 Uhm... no encontré el comando *.${commandName}*. ¿Seguro que lo escribiste bien?` });
             }
 
-            let helpMessage = `*╭───≽ ℹ️ AYUDA: .${command.name.toUpperCase()} ≼───*\\n*│*\\n`;
-            helpMessage += `*│* 📝 *Descripción:* ${command.description}\\n`;
+            const helpMessage = [
+                `*╭───≽ ℹ️ AYUDA: .${command.name.toUpperCase()} ≼───*`,
+                `*│*`,
+                `*│* 📝 *Descripción:* ${command.description}`,
+            ];
+
             if (command.aliases && command.aliases.length > 0) {
-                helpMessage += `*│* 🔄 *Alias:* ${command.aliases.map(a => `*.${a}*`).join(', ')}\n`;
+                helpMessage.push(`*│* 🔄 *Alias:* ${command.aliases.map(a => `*.${a}*`).join(', ')}`);
             }
-            if (command.usage) {
-                helpMessage += `*│* 💡 *Ejemplo de uso:*\n`;
-                helpMessage += `*│*   _${command.usage}_\n`;
-            } else {
-                helpMessage += `*│* 💡 *Ejemplo de uso:* .${command.name}\n`;
-            }
-            helpMessage += `*│*\n*╰─────────────────≽*`;
 
-            return sock.sendMessage(chatId, { text: helpMessage });
+            if (command.usage) {
+                helpMessage.push(`*│* 💡 *Ejemplo de uso:*`);
+                helpMessage.push(`*│*   _${command.usage}_`);
+            } else {
+                helpMessage.push(`*│* 💡 *Ejemplo de uso:* .${command.name}`);
+            }
+
+            helpMessage.push(`*│*`);
+            helpMessage.push(`*╰─────────────────≽*`);
+
+            return sock.sendMessage(chatId, { text: helpMessage.join('\n') });
         }
 
         // Si no se especifica comando, mostrar el menú completo
