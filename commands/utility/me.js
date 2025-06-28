@@ -29,12 +29,21 @@ module.exports = {
             const nextLevelXp = xpTable[user.level] || Infinity; // Evitar errores si el nivel es el máximo
             const xpProgress = `${user.xp}/${nextLevelXp}`;
 
+            // --- Obtener la foto de perfil ---
+            let profilePicUrl;
+            try {
+                profilePicUrl = await sock.profilePictureUrl(jid, 'image');
+            } catch (e) {
+                profilePicUrl = 'https://asset.cloudinary.com/amadodedios/fcde81724e390a678f2d38d8603cc93a'; // URL de imagen por defecto
+            }
+
             const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} 💵\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* $${user.economy.wallet}\n*│* │ 🏦 *Banco:* $${user.economy.bank}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
 
             await sock.sendMessage(
                 chatId,
                 {
-                    text: profileMessage,
+                    image: { url: profilePicUrl },
+                    caption: profileMessage,
                     mentions: [jid]
                 }
             );
