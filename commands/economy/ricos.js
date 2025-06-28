@@ -2,7 +2,7 @@ const User = require('../../models/User');
 
 module.exports = {
     name: 'ricos',
-    description: 'Muestra a los 10 usuarios más ricos del bot.',
+    description: 'Muestra a los 10 usuarios más ricos.',
     usage: '.ricos',
     category: 'economy',
     aliases: ['ranking', 'topricos'],
@@ -22,22 +22,27 @@ module.exports = {
                 totalWealth: user.economy.wallet + user.economy.bank
             })).sort((a, b) => b.totalWealth - a.totalWealth).slice(0, 10);
 
+            const mentions = [];
             let rankingMessage = [
-                `*╭───≽ 🏆 RANKING DE RICOS RAVEHUB 🏆 ≼───*`,
+                `*╭───≽ 🏆 LOS MÁS RICOS RAVEHUB 🏆 ≼───*`,
                 `*│*`,
-                `*│* _Los 10 ravers con más 💵 en el juego._`,
+                `*│* _Los 10 ravers con más 💵._`,
                 `*│*`
             ];
 
             rankedUsers.forEach((user, index) => {
                 const rankEmoji = ['🥇', '🥈', '🥉'][index] || `*${index + 1}.*`;
-                rankingMessage.push(`*│* ${rankEmoji} *${user.name}* - $${user.totalWealth} 💵`);
+                rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - $${user.totalWealth} 💵`);
+                mentions.push(user.jid);
             });
 
             rankingMessage.push(`*│*`);
             rankingMessage.push(`*╰─────────────────≽*`);
 
-            await sock.sendMessage(chatId, { text: rankingMessage.join('\n') });
+            await sock.sendMessage(chatId, { 
+                text: rankingMessage.join('\n'),
+                mentions 
+            });
 
         } catch (error) {
             console.error('Error en el comando ricos:', error);
