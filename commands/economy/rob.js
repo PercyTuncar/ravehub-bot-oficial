@@ -48,8 +48,8 @@ module.exports = {
 
             let target = await User.findOne({ jid: mentionedJid });
             if (!target) {
-                // Creación robusta de usuario objetivo
-                const targetName = (await sock.getContact(mentionedJid))?.name || mentionedJid.split('@')[0];
+                // Si el objetivo no existe, se crea uno nuevo con un nombre por defecto.
+                const targetName = mentionedJid.split('@')[0];
                 target = new User({ jid: mentionedJid, name: targetName });
                 await target.save();
             }
