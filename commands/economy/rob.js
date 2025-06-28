@@ -1,64 +1,70 @@
+const User = require('../../models/User');
 const Economy = require('../../models/Economy');
-const mongoose = require('mongoose');
 
 module.exports = {
     name: 'rob',
-    description: 'Roba dinero a otro usuario.',
+    description: 'Intenta robar a otro usuario.',
     category: 'economy',
-    async execute(message, args) {
-        const userId = message.key.remoteJid;
-        const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+    async execute(sock, message, args) {
+        const senderId = message.key.participant || message.key.remoteJid;
+        const chatId = message.key.remoteJid;
+        const senderName = message.pushName || 'Usuario Desconocido';
 
-        if (!mentionedJid) {
-            return this.sock.sendMessage(userId, { text: 'Debes mencionar a un usuario para robarle.' });
+        if (!args.length || !args[0].startsWith('@')) {
+            return sock.sendMessage(chatId, { text: 'Debes mencionar a un usuario para robarle. Ejemplo: .rob @usuario' });
         }
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
+        const targetId = `${args[0].slice(1)}@s.whatsapp.net`;
 
         try {
-            const robber = await Economy.findOne({ userId }).session(session);
-            const victim = await Economy.findOne({ userId: mentionedJid }).session(session);
-
-            if (!robber || !victim) {
-                await session.abortTransaction();
-                session.endSession();
-                return this.sock.sendMessage(userId, { text: 'No se pudo encontrar a uno de los usuarios.' });
+            // Asegurar que el ladrón (sender) exista en la DB
+            let senderUser = await User.findOne({ userId: senderId });
+            if (!senderUser) {
+                senderUser = new User({ userId: senderId, name: senderName });
+                await senderUser.save();
+            }
+            let senderEconomy = await Economy.findOne({ userId: senderId });
+            if (!senderEconomy) {
+                senderEconomy = new Economy({ userId: senderId });
+                await senderEconomy.save();
             }
 
-            const now = new Date();
-            const cooldown = 30 * 60 * 1000; // 30 minutos
-            if (robber.lastRob && now - robber.lastRob < cooldown) {
-                await session.abortTransaction();
-                session.endSession();
-                const timeLeft = Math.ceil((cooldown - (now - robber.lastRob)) / 60000);
-                return this.sock.sendMessage(userId, { text: `Debes esperar ${timeLeft} minutos para volver a robar.` });
+            // Asegurar que la víctima (target) exista en la DB
+            let targetUser = await User.findOne({ userId: targetId });
+            if (!targetUser) {
+                // No se puede robar a alguien que nunca ha interactuado con el bot
+                return sock.sendMessage(chatId, { text: `No se puede robar a @${targetId.split('@')[0]}, no es un usuario registrado.`, mentions: [targetId] });
+            }
+            let targetEconomy = await Economy.findOne({ userId: targetId });
+            if (!targetEconomy) {
+                targetEconomy = new Economy({ userId: targetId });
+                await targetEconomy.save();
             }
 
-            if (victim.wallet <= 0) {
-                await session.abortTransaction();
-                session.endSession();
-                return this.sock.sendMessage(userId, { text: 'El usuario no tiene dinero en su cartera.' });
+            if (targetEconomy.wallet <= 0) {
+                return sock.sendMessage(chatId, { text: `@${targetId.split('@')[0]} no tiene dinero en su cartera para robar.`, mentions: [targetId] });
             }
 
-            const amount = Math.floor(Math.random() * victim.wallet);
-            robber.wallet += amount;
-            victim.wallet -= amount;
-            robber.lastRob = now;
+            const robChance = Math.random();
+            if (robChance < 0.6) { // 60% de probabilidad de fallo
+                const fine = Math.floor(senderEconomy.wallet * 0.1); // Multa del 10% de la cartera del ladrón
+                senderEconomy.wallet -= fine;
+                await senderEconomy.save();
+                return sock.sendMessage(chatId, { text: `¡Fallaste! Te han multado con ${fine} por intentar robar a @${targetId.split('@')[0]}.`, mentions: [senderId, targetId] });
+            }
 
-            await robber.save({ session });
-            await victim.save({ session });
+            const amountToSteal = Math.floor(targetEconomy.wallet * (Math.random() * 0.25 + 0.05)); // Robar entre 5% y 30%
+            senderEconomy.wallet += amountToSteal;
+            targetEconomy.wallet -= amountToSteal;
 
-            await session.commitTransaction();
-            session.endSession();
+            await senderEconomy.save();
+            await targetEconomy.save();
 
-            this.sock.sendMessage(userId, { text: `Robaste ${amount} a ${victim.name}!` });
+            await sock.sendMessage(chatId, { text: `¡Has robado ${amountToSteal} a @${targetId.split('@')[0]}!`, mentions: [senderId, targetId] });
 
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
-            console.error('Error al robar:', error);
-            this.sock.sendMessage(userId, { text: 'Ocurrió un error al intentar robar.' });
+            console.error('Error en el comando de robo:', error);
+            await sock.sendMessage(chatId, { text: 'Ocurrió un error durante el robo.' });
         }
     }
 };

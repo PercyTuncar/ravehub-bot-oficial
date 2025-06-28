@@ -1,54 +1,70 @@
+const User = require('../../models/User');
 const Economy = require('../../models/Economy');
-const mongoose = require('mongoose');
 
 module.exports = {
     name: 'transfer',
     description: 'Transfiere dinero a otro usuario.',
     category: 'economy',
-    async execute(message, args) {
-        const userId = message.key.remoteJid;
-        const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-        const amount = parseInt(args[1]);
+    async execute(sock, message, args) {
+        const senderId = message.key.participant || message.key.remoteJid;
+        const chatId = message.key.remoteJid;
+        const senderName = message.pushName || 'Usuario Desconocido';
 
-        if (!mentionedJid || !amount || isNaN(amount) || amount <= 0) {
-            return this.sock.sendMessage(userId, { text: 'Uso: .transfer @usuario <cantidad>' });
+        const [mention, amountStr] = args;
+
+        if (!mention || !mention.startsWith('@') || !amountStr || isNaN(parseInt(amountStr))) {
+            return sock.sendMessage(chatId, { text: 'Formato incorrecto. Uso: .transfer @usuario <cantidad>' });
         }
 
-        const session = await mongoose.startSession();
-        session.startTransaction();
+        const amount = parseInt(amountStr);
+        const targetId = `${mention.slice(1)}@s.whatsapp.net`;
+
+        if (amount <= 0) {
+            return sock.sendMessage(chatId, { text: 'La cantidad a transferir debe ser mayor que cero.' });
+        }
 
         try {
-            const sender = await Economy.findOne({ userId }).session(session);
-            const receiver = await Economy.findOne({ userId: mentionedJid }).session(session);
-
-            if (!sender || !receiver) {
-                await session.abortTransaction();
-                session.endSession();
-                return this.sock.sendMessage(userId, { text: 'No se pudo encontrar a uno de los usuarios.' });
+            // Asegurar que el emisor (sender) exista en la DB
+            let senderUser = await User.findOne({ userId: senderId });
+            if (!senderUser) {
+                senderUser = new User({ userId: senderId, name: senderName });
+                await senderUser.save();
+            }
+            let senderEconomy = await Economy.findOne({ userId: senderId });
+            if (!senderEconomy) {
+                senderEconomy = new Economy({ userId: senderId });
+                await senderEconomy.save();
             }
 
-            if (sender.wallet < amount) {
-                await session.abortTransaction();
-                session.endSession();
-                return this.sock.sendMessage(userId, { text: 'No tienes suficiente dinero en tu cartera.' });
+            if (senderEconomy.wallet < amount) {
+                return sock.sendMessage(chatId, { text: 'No tienes suficiente dinero en tu cartera para realizar esta transferencia.' });
             }
 
-            sender.wallet -= amount;
-            receiver.wallet += amount;
+            // Asegurar que el receptor (target) exista en la DB
+            let targetUser = await User.findOne({ userId: targetId });
+            if (!targetUser) {
+                return sock.sendMessage(chatId, { text: `No se puede transferir a @${targetId.split('@')[0]}, no es un usuario registrado.`, mentions: [targetId] });
+            }
+            let targetEconomy = await Economy.findOne({ userId: targetId });
+            if (!targetEconomy) {
+                targetEconomy = new Economy({ userId: targetId });
+                await targetEconomy.save();
+            }
 
-            await sender.save({ session });
-            await receiver.save({ session });
+            senderEconomy.wallet -= amount;
+            targetEconomy.wallet += amount;
 
-            await session.commitTransaction();
-            session.endSession();
+            await senderEconomy.save();
+            await targetEconomy.save();
 
-            this.sock.sendMessage(userId, { text: `Transferiste ${amount} a ${receiver.name}!` });
+            await sock.sendMessage(chatId, { 
+                text: `Has transferido ${amount} a @${targetId.split('@')[0]}. Tu nuevo saldo es ${senderEconomy.wallet}.`,
+                mentions: [senderId, targetId]
+            });
 
         } catch (error) {
-            await session.abortTransaction();
-            session.endSession();
-            console.error('Error al transferir:', error);
-            this.sock.sendMessage(userId, { text: 'Ocurrió un error al realizar la transferencia.' });
+            console.error('Error en la transferencia:', error);
+            await sock.sendMessage(chatId, { text: 'Ocurrió un error al realizar la transferencia.' });
         }
     }
 };
