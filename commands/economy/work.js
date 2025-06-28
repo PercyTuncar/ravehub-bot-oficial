@@ -190,7 +190,7 @@ module.exports = {
                 const timeLeft = cooldownMs - (Date.now() - lastWorkDate.getTime());
                 const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                 const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                return sock.sendMessage(chatId, { text: `Ya has trabajado recientemente. Debes esperar ${hours}h y ${minutes}m para volver a trabajar.` });
+                return sock.sendMessage(chatId, { text: `Ya has trabajado recientemente. Debes esperar ${minutes} minutos para volver a trabajar.` });
             }
 
             const xpGained = Math.floor(job.salary / 4); 
