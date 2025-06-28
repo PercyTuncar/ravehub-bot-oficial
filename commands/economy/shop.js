@@ -22,7 +22,7 @@ const shopItems = [
   },
   {
     name: "Carta de amor rave",
-    description: " “Desde que te vi con glitter, supe que eras tú...”",
+    description: " “Desde que te vi con glitter, supe que eras tú”",
     price: 150,
     emoji: "💌",
   },
@@ -53,7 +53,7 @@ const shopItems = [
   },
   {
     name: "Entrada Boris Brejcha General",
-    description: "Entrada general para show 12/dic/2025 (S/ 130).",
+    description: "Entrada general para show 12/dic/25 (S/ 130).",
     price: 130,
     emoji: "🎫",
   },
@@ -169,11 +169,11 @@ module.exports = {
 
         if (categoryItems.length > 0) {
           categoryItems.forEach((item) => {
-            shopMessage += `*│* │ ${item.emoji} *${item.name}* - $${item.price} 💵\n`;
-            shopMessage += `*│* │   _${item.description}_\n`;
+            shopMessage += `*│* ${item.emoji} *${item.name}* - $${item.price} 💵\n`;
+            shopMessage += `*│*  _${item.description}_\n`;
           });
         } else {
-          shopMessage += `*│* │ (No hay items en esta categoría)\n`;
+          shopMessage += `*│* (No hay items en esta categoría)\n`;
         }
         shopMessage += `*│* ╰─────────────────≽\n*│*\n`;
       }
