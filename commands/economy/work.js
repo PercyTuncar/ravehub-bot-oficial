@@ -218,7 +218,7 @@ module.exports = {
             await user.save();
 
             // 5. ENVIAR MENSAJE DE TRABAJO INICIADO
-            let workMessage = `*¡Has comenzado a trabajar!* 💼\n\n`;
+            let workMessage = `*@${senderJid.split('@')[0]} ¡Has comenzado a trabajar!* 💼\n\n`;
             workMessage += `*Puesto:* ${job.name}\n`;
             workMessage += `*Descripción:* ${job.description}\n\n`;
             workMessage += `*Salario Recibido:* +${job.salary} 💵\n`;
