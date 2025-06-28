@@ -62,6 +62,7 @@ module.exports = {
             if (category === "economy") categoryIcon = "💰";
             if (category === "admin") categoryIcon = "🛠️";
             if (category === "utility") categoryIcon = "⚙️";
+            if (category === "games") categoryIcon = "🎮";
 
             menu += `*│* ╭─≽ *${categoryIcon} ${categoryName}*\n`;
             categories[category].forEach((command) => {

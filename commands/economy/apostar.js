@@ -6,9 +6,9 @@ const MAX_BET = 5000;
 
 module.exports = {
     name: 'apostar',
-    description: 'Inicia un juego de Carta Mayor apostando dinero de tu cartera.',
+    description: 'Inicia un juego de Carta Mayor. Apuesta dinero de tu cartera y elige un lado (Izquierda o Derecha). Si tu carta es más alta que la del bot, ganas el doble de tu apuesta. Si es más baja, pierdes lo apostado. En caso de empate, se te devuelve la apuesta.',
     usage: '.apostar <cantidad>',
-    category: 'economy',
+    category: 'games',
     async execute(sock, message, args) {
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
