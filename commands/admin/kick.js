@@ -1,4 +1,3 @@
-
 const { sock } = require('../../index');
 
 module.exports = {
@@ -16,20 +15,22 @@ module.exports = {
         const sender = groupMetadata.participants.find(p => p.id === message.key.participant);
 
         if (sender.admin !== 'admin' && sender.admin !== 'superadmin') {
-            return sock.sendMessage(chatId, { text: 'No tienes permisos para usar este comando.' });
+            return this.sock.sendMessage(chatId, { text: 'No tienes permisos para usar este comando.' });
         }
 
-        const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-        if (!mentionedJid) {
-            return sock.sendMessage(chatId, { text: 'Debes mencionar a un usuario para expulsarlo.' });
+        const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid;
+        if (!mentionedJid.length) {
+            return this.sock.sendMessage(chatId, { text: 'Debes mencionar a un usuario para expulsarlo.' });
         }
 
         try {
-            await sock.groupParticipantsUpdate(chatId, [mentionedJid], 'remove');
-            sock.sendMessage(chatId, { text: `El usuario ha sido expulsado.` });
+            for (const mentionedId of mentionedJid) {
+                await this.sock.groupParticipantsUpdate(chatId, [mentionedId], 'remove');
+            }
+            this.sock.sendMessage(chatId, { text: 'Usuarios expulsados correctamente.' });
         } catch (error) {
-            console.error('Error al expulsar al usuario:', error);
-            sock.sendMessage(chatId, { text: 'Ocurrió un error al intentar expulsar al usuario.' });
+            console.error('Error al expulsar usuarios:', error);
+            this.sock.sendMessage(chatId, { text: 'Ocurrió un error al intentar expulsar a los usuarios.' });
         }
     }
 };

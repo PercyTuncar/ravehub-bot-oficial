@@ -1,4 +1,3 @@
-
 const Economy = require('../../models/Economy');
 const mongoose = require('mongoose');
 
@@ -11,7 +10,7 @@ module.exports = {
         const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
 
         if (!mentionedJid) {
-            return sock.sendMessage(userId, { text: 'Debes mencionar a un usuario para robarle.' });
+            return this.sock.sendMessage(userId, { text: 'Debes mencionar a un usuario para robarle.' });
         }
 
         const session = await mongoose.startSession();
@@ -24,7 +23,7 @@ module.exports = {
             if (!robber || !victim) {
                 await session.abortTransaction();
                 session.endSession();
-                return sock.sendMessage(userId, { text: 'No se pudo encontrar a uno de los usuarios.' });
+                return this.sock.sendMessage(userId, { text: 'No se pudo encontrar a uno de los usuarios.' });
             }
 
             const now = new Date();
@@ -33,13 +32,13 @@ module.exports = {
                 await session.abortTransaction();
                 session.endSession();
                 const timeLeft = Math.ceil((cooldown - (now - robber.lastRob)) / 60000);
-                return sock.sendMessage(userId, { text: `Debes esperar ${timeLeft} minutos para volver a robar.` });
+                return this.sock.sendMessage(userId, { text: `Debes esperar ${timeLeft} minutos para volver a robar.` });
             }
 
             if (victim.wallet <= 0) {
                 await session.abortTransaction();
                 session.endSession();
-                return sock.sendMessage(userId, { text: 'El usuario no tiene dinero en su cartera.' });
+                return this.sock.sendMessage(userId, { text: 'El usuario no tiene dinero en su cartera.' });
             }
 
             const amount = Math.floor(Math.random() * victim.wallet);
@@ -53,13 +52,13 @@ module.exports = {
             await session.commitTransaction();
             session.endSession();
 
-            sock.sendMessage(userId, { text: `Robaste ${amount} a ${victim.name}!` });
+            this.sock.sendMessage(userId, { text: `Robaste ${amount} a ${victim.name}!` });
 
         } catch (error) {
             await session.abortTransaction();
             session.endSession();
             console.error('Error al robar:', error);
-            sock.sendMessage(userId, { text: 'Ocurrió un error al intentar robar.' });
+            this.sock.sendMessage(userId, { text: 'Ocurrió un error al intentar robar.' });
         }
     }
 };

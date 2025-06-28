@@ -1,4 +1,3 @@
-
 const User = require('../../models/User');
 const Economy = require('../../models/Economy');
 
@@ -21,15 +20,12 @@ module.exports = {
                 await economy.save();
             }
 
-            const balanceMessage = `
-*Balance de ${user.name}*
-Cartera: ${economy.wallet}
-Banco: ${economy.bank}/${economy.bankCapacity}
-            `;
-            sock.sendMessage(userId, { text: balanceMessage });
+            const balanceMessage = `*Balance de ${user.name}*
+Cartera: ${economy.wallet}\nBanco: ${economy.bank}`;
+            this.sock.sendMessage(userId, { text: balanceMessage });
         } catch (error) {
             console.error('Error al obtener el balance:', error);
-            sock.sendMessage(userId, { text: 'Ocurrió un error al obtener tu balance.' });
+            this.sock.sendMessage(userId, { text: 'Ocurrió un error al obtener tu balance.' });
         }
     }
 };

@@ -1,4 +1,3 @@
-
 const Economy = require('../../models/Economy');
 const mongoose = require('mongoose');
 
@@ -12,7 +11,7 @@ module.exports = {
         const amount = parseInt(args[1]);
 
         if (!mentionedJid || !amount || isNaN(amount) || amount <= 0) {
-            return sock.sendMessage(userId, { text: 'Uso: .transfer @usuario <cantidad>' });
+            return this.sock.sendMessage(userId, { text: 'Uso: .transfer @usuario <cantidad>' });
         }
 
         const session = await mongoose.startSession();
@@ -25,13 +24,13 @@ module.exports = {
             if (!sender || !receiver) {
                 await session.abortTransaction();
                 session.endSession();
-                return sock.sendMessage(userId, { text: 'No se pudo encontrar a uno de los usuarios.' });
+                return this.sock.sendMessage(userId, { text: 'No se pudo encontrar a uno de los usuarios.' });
             }
 
             if (sender.wallet < amount) {
                 await session.abortTransaction();
                 session.endSession();
-                return sock.sendMessage(userId, { text: 'No tienes suficiente dinero en tu cartera.' });
+                return this.sock.sendMessage(userId, { text: 'No tienes suficiente dinero en tu cartera.' });
             }
 
             sender.wallet -= amount;
@@ -43,13 +42,13 @@ module.exports = {
             await session.commitTransaction();
             session.endSession();
 
-            sock.sendMessage(userId, { text: `Transferiste ${amount} a ${receiver.name}!` });
+            this.sock.sendMessage(userId, { text: `Transferiste ${amount} a ${receiver.name}!` });
 
         } catch (error) {
             await session.abortTransaction();
             session.endSession();
             console.error('Error al transferir:', error);
-            sock.sendMessage(userId, { text: 'Ocurrió un error al realizar la transferencia.' });
+            this.sock.sendMessage(userId, { text: 'Ocurrió un error al realizar la transferencia.' });
         }
     }
 };

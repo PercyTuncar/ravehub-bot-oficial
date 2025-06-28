@@ -21,9 +21,8 @@ module.exports = {
                 menu += `│ ╰» .${commandName}\n`;
             });
         }
-        menu += `│
-╰──────────≽`;
+        menu += `│\n╰──────────≽`;
 
-        sock.sendMessage(message.key.remoteJid, { text: menu });
+        this.sock.sendMessage(message.key.remoteJid, { text: menu });
     }
 };
