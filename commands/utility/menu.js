@@ -18,15 +18,15 @@ module.exports = {
             let helpMessage = `*╭───≽ ℹ️ AYUDA: .${command.name.toUpperCase()} ≼───*\\n*│*\\n`;
             helpMessage += `*│* 📝 *Descripción:* ${command.description}\\n`;
             if (command.aliases && command.aliases.length > 0) {
-                helpMessage += `*│* 🔄 *Alias:* ${command.aliases.map(a => `*.${a}*`).join(', ')}\\n`;
+                helpMessage += `*│* 🔄 *Alias:* ${command.aliases.map(a => `*.${a}*`).join(', ')}\n`;
             }
             if (command.usage) {
-                helpMessage += `*│* 💡 *Ejemplo de uso:*\\n`;
-                helpMessage += `*│*   \`${command.usage}\`\\n`;
+                helpMessage += `*│* 💡 *Ejemplo de uso:*\n`;
+                helpMessage += `*│*   _${command.usage}_\n`;
             } else {
-                helpMessage += `*│* 💡 *Ejemplo de uso:* .${command.name}\\n`;
+                helpMessage += `*│* 💡 *Ejemplo de uso:* .${command.name}\n`;
             }
-            helpMessage += `*│*\\n*╰─────────────────≽*`;
+            helpMessage += `*│*\n*╰─────────────────≽*`;
 
             return sock.sendMessage(chatId, { text: helpMessage });
         }
