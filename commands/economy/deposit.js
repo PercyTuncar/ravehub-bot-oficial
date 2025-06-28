@@ -20,7 +20,7 @@ module.exports = {
             }
 
             if (args.length === 0) {
-                return sock.sendMessage(chatId, { text: `Uso del comando:\n.deposit <cantidad>\n.deposit all` });
+                return sock.sendMessage(chatId, { text: `Uso del comando:\n.deposit <cantidad>\n.deposit all _es para depositar todo_` });
             }
 
             const amountToDepositStr = args[0].toLowerCase();
