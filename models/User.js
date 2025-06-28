@@ -5,8 +5,9 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   level: { type: Number, default: 1 },
   xp: { type: Number, default: 0 },
+  currentJob: { type: String, default: null },
   economy: {
-    wallet: { type: Number, default: 100 },
+    wallet: { type: Number, default: 0 },
     bank: { type: Number, default: 0 },
   },
   inventory: [{
