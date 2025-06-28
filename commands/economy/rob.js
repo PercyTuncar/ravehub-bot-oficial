@@ -1,7 +1,8 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
 
 const COOLDOWN_MINUTES = 10;
+const FAILURE_FINE = 150; // Multa fija por fallar el robo
 
 module.exports = {
     name: 'rob',
@@ -23,10 +24,12 @@ module.exports = {
         }
 
         try {
-            let sender = await User.findOne({ jid: senderJid });
-            if (!sender) {
-                sender = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
-                await sender.save();
+            // Usar findOrCreateUser para ambos usuarios
+            const sender = await findOrCreateUser(senderJid, message.pushName);
+            const target = await findOrCreateUser(mentionedJid);
+
+            if (!target) { // Aunque findOrCreateUser debería crearlo, es una doble verificación.
+                 return sock.sendMessage(chatId, { text: '❌ No se pudo encontrar o crear al usuario objetivo.' });
             }
 
             if (sender.judicialDebt > 0) {
@@ -45,51 +48,27 @@ module.exports = {
             // --- Verificación de Deuda Límite ---
             const totalWealth = sender.economy.wallet + sender.economy.bank;
             if (totalWealth <= -200) {
-                return sock.sendMessage(chatId, { text: `🚨 *¡ALERTA DE DELITO GRAVE!* 🚨\n\n@${senderJid.split('@')[0]}, has alcanzado una deuda crítica de *${totalWealth} 💵*.\n\nCualquier intento adicional de actividad ilícita podría resultar en tu **expulsión inmediata** del grupo. Te recomendamos saldar tus deudas.`,
+                return sock.sendMessage(chatId, { text: `🚨 *¡ALERTA DE DELITO GRAVE!* 🚨
+
+@${senderJid.split('@')[0]}, has alcanzado una deuda crítica de *${totalWealth} 💵*.
+
+Cualquier intento adicional de actividad ilícita podría resultar en tu **expulsión inmediata** del grupo. Te recomendamos saldar tus deudas.`,
                     mentions: [senderJid]
                 });
             }
 
-            let target = await User.findOne({ jid: mentionedJid });
-            if (!target) {
-                // Si el objetivo no existe, se crea uno nuevo con un nombre por defecto.
-                const targetName = mentionedJid.split('@')[0];
-                target = new User({ jid: mentionedJid, name: targetName });
-                await target.save();
-            }
-
             if (target.economy.wallet <= 0) {
-                return sock.sendMessage(chatId, { text: `💸 @${mentionedJid.split('@')[0]} no tiene dinero en su cartera. ¡No hay nada que robar!`, mentions: [mentionedJid] });
+                return sock.sendMessage(chatId, { text: `💸 @${target.name} no tiene dinero en su cartera. ¡No hay nada que robar!`, mentions: [mentionedJid] });
             }
 
+            // Establecer cooldown inmediatamente
             sender.cooldowns.rob = new Date(new Date().getTime() + COOLDOWN_MINUTES * 60 * 1000);
-            const robChance = Math.random();
 
-            if (robChance < 0.6) { // Fallo
-                const failureType = Math.random();
-                let fine;
-                let failureMessage;
+            // Nueva lógica de robo: 90% de éxito si la víctima tiene dinero, 10% de fallo.
+            const successChance = Math.random();
 
-                if (failureType < 0.1) { // 10% de Bancarrota Total
-                    failureMessage = `*☠️ ¡BANCARROTA TOTAL! ☠️*\n\nTu intento de robo fue tan desastroso que alertó a las autoridades fiscales. Te han embargado **TODO**.\n\n*Resultado:*\n- Cartera: 0 💵\n- Banco: 0 💵`;
-                    sender.economy.wallet = 0;
-                    sender.economy.bank = 0;
-                    sender.judicialDebt = 0; // Limpiar deudas previas en bancarrota
-                } else if (failureType < 0.4) { // 30% de Multa Grave
-                    fine = Math.max(75, Math.floor(totalWealth * 0.35));
-                    sender.judicialDebt += fine;
-                    failureMessage = `*👮‍♂️ ¡ATRAPADO CON LAS MANOS EN LA MASA! 👮‍♂️*\n\nLa policía te capturó. Has acumulado una deuda judicial por tu crimen.\n\n*Multa añadida a tu deuda:* +${fine} 💵\n*Deuda judicial total:* ${sender.judicialDebt} 💵`;
-                } else { // 60% de Multa Leve
-                    fine = 55;
-                    sender.judicialDebt += fine;
-                    failureMessage = `*🤡 ¡QUÉ TORPE! 🤡*\n\nFallaste el robo y ahora tienes una deuda con la justicia.\n\n*Multa añadida a tu deuda:* +${fine} 💵\n*Deuda judicial total:* ${sender.judicialDebt} 💵`;
-                }
-
-                await sender.save();
-                return sock.sendMessage(chatId, { text: failureMessage, mentions: [senderJid, mentionedJid] });
-
-            } else { // Éxito
-                const amountToSteal = Math.floor(target.economy.wallet * (Math.random() * 0.25 + 0.05)); // Robar entre 5% y 30%
+            if (successChance > 0.10) { // 90% de Éxito
+                const amountToSteal = Math.floor(target.economy.wallet * (Math.random() * 0.35 + 0.10)); // Robar entre 10% y 45%
                 target.economy.wallet -= amountToSteal;
 
                 let finalDebtMessage = '';
@@ -116,8 +95,25 @@ module.exports = {
                     }
                 }
 
-                const successMessage = `*💰 ¡ROBO EXITOSO! 💰*\n\nHas robado *${amountToSteal} 💵* a @${mentionedJid.split('@')[0]}.\n\n*Ganancia neta (después de deudas):* +${netGain} 💵\n*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
+                const successMessage = `*💰 ¡ROBO EXITOSO! 💰*
+
+Le has robado *${amountToSteal} 💵* a @${target.name}.
+
+*Ganancia neta (después de deudas):* +${netGain} 💵
+*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
                 await sock.sendMessage(chatId, { text: successMessage, mentions: [senderJid, mentionedJid] });
+
+            } else { // 10% de Fallo
+                sender.judicialDebt += FAILURE_FINE;
+                await sender.save();
+
+                const failureMessage = `*👮‍♂️ ¡QUÉ TORPE! 👮‍♂️*
+
+Fallaste el robo y fuiste atrapado. Ahora tienes una nueva deuda con la justicia.
+
+*Multa añadida a tu deuda:* +${FAILURE_FINE} 💵
+*Deuda judicial total:* ${sender.judicialDebt} 💵`;
+                return sock.sendMessage(chatId, { text: failureMessage, mentions: [senderJid, mentionedJid] });
             }
 
         } catch (error) {
