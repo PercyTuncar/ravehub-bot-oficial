@@ -146,14 +146,13 @@ module.exports = {
                 });
             }
 
-            const cooldownMs = GLOBAL_COOLDOWN_MINUTES * 60 * 1000;
-            const lastWorkDate = user.lastWork;
+            const cooldownEnds = user.cooldownEnds;
 
             // --- INICIO DE LA NUEVA LÓGICA ---
 
             // 1. VERIFICAR SI EL USUARIO YA ESTÁ TRABAJANDO
-            if (lastWorkDate && (Date.now() - lastWorkDate.getTime()) < cooldownMs) {
-                const timeLeft = cooldownMs - (Date.now() - lastWorkDate.getTime());
+            if (cooldownEnds && cooldownEnds > Date.now()) {
+                const timeLeft = cooldownEnds - Date.now();
                 const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                 const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
                 
