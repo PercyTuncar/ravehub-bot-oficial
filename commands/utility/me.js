@@ -1,4 +1,3 @@
-
 const User = require('../../models/User');
 const Economy = require('../../models/Economy');
 
@@ -29,10 +28,10 @@ Registrado: ${user.registeredAt.toLocaleDateString()}
 Cartera: ${economy.wallet}
 Banco: ${economy.bank}/${economy.bankCapacity}
             `;
-            sock.sendMessage(userId, { text: profileMessage });
+            this.sock.sendMessage(userId, { text: profileMessage });
         } catch (error) {
             console.error('Error al obtener el perfil:', error);
-            sock.sendMessage(userId, { text: 'Ocurrió un error al obtener tu perfil.' });
+            this.sock.sendMessage(userId, { text: 'Ocurrió un error al obtener tu perfil.' });
         }
     }
 };
