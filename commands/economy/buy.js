@@ -4,6 +4,7 @@ const ShopItem = require('../../models/ShopItem');
 module.exports = {
     name: 'buy',
     description: 'Compra un item de la tienda.',
+    usage: '.buy <nombre del item>',
     category: 'economy',
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;

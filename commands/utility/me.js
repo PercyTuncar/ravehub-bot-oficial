@@ -3,6 +3,7 @@ const User = require('../../models/User');
 module.exports = {
     name: 'me',
     description: 'Muestra tu perfil de usuario con tu economía e inventario.',
+    usage: '.me',
     category: 'utility',
     async execute(sock, message) {
         const jid = message.key.participant || message.key.remoteJid;

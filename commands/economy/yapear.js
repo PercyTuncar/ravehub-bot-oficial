@@ -2,8 +2,10 @@ const User = require('../../models/User');
 
 module.exports = {
     name: 'yapear',
-    description: 'Yapea dinero a otro usuario (transferencia de cartera).',
+    description: 'Transfiere dinero a otro usuario usando Yape.',
+    usage: '.yapear <monto> @usuario',
     category: 'economy',
+    aliases: ['yape'],
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;

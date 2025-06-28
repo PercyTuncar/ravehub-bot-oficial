@@ -122,6 +122,7 @@ const shopItems = [
 module.exports = {
   name: "shop",
   description: "Muestra la tienda de items.",
+  usage: ".shop",
   category: "economy",
   async execute(sock, message) {
     const chatId = message.key.remoteJid;

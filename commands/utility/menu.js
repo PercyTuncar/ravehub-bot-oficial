@@ -12,15 +12,21 @@ module.exports = {
             const command = commands.get(commandName) || commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
 
             if (!command) {
-                return sock.sendMessage(chatId, { text: `No se encontró el comando \`*.${commandName}*\`.` });
+                return sock.sendMessage(chatId, { text: `🤔 Uhm... no encontré el comando \\`*.${commandName}*\\`. ¿Seguro que lo escribiste bien?` });
             }
 
-            let helpMessage = `*╭───≽ ℹ️ AYUDA: .${command.name.toUpperCase()} ≼───*\n*│*\n`;
-            helpMessage += `*│* 📝 *Descripción:* ${command.description}\n`;
+            let helpMessage = `*╭───≽ ℹ️ AYUDA: .${command.name.toUpperCase()} ≼───*\\n*│*\\n`;
+            helpMessage += `*│* 📝 *Descripción:* ${command.description}\\n`;
             if (command.aliases && command.aliases.length > 0) {
-                helpMessage += `*│* 🔄 *Alias:* ${command.aliases.map(a => `*.${a}*`).join(', ')}\n`;
+                helpMessage += `*│* 🔄 *Alias:* ${command.aliases.map(a => `*.${a}*`).join(', ')}\\n`;
             }
-            helpMessage += `*│*\n*╰─────────────────≽*`;
+            if (command.usage) {
+                helpMessage += `*│* 💡 *Ejemplo de uso:*\\n`;
+                helpMessage += `*│*   \`${command.usage}\`\\n`;
+            } else {
+                helpMessage += `*│* 💡 *Ejemplo de uso:* .${command.name}\\n`;
+            }
+            helpMessage += `*│*\\n*╰─────────────────≽*`;
 
             return sock.sendMessage(chatId, { text: helpMessage });
         }

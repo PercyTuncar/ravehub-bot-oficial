@@ -2,8 +2,10 @@ const User = require('../../models/User');
 
 module.exports = {
     name: 'plinear',
-    description: 'Plinea dinero a otro usuario (transferencia de cartera).',
+    description: 'Transfiere dinero a otro usuario usando Plin.',
+    usage: '.plinear <monto> @usuario',
     category: 'economy',
+    aliases: ['plin'],
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;

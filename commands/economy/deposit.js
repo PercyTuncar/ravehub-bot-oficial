@@ -3,6 +3,7 @@ const User = require('../../models/User');
 module.exports = {
     name: 'deposit',
     description: 'Deposita dinero de tu cartera a tu banco.',
+    usage: '.deposit <cantidad>',
     category: 'economy',
     aliases: ['depositar', 'bank'],
     async execute(sock, message, args) {

@@ -3,6 +3,7 @@ const User = require('../../models/User');
 module.exports = {
     name: 'give',
     description: 'Regala un item de tu inventario a otro usuario.',
+    usage: '.give @usuario <cantidad> <nombre del item>',
     category: 'economy',
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;

@@ -3,6 +3,7 @@ const User = require('../../models/User');
 module.exports = {
     name: 'transfer',
     description: 'Transfiere dinero de tu cartera a otro usuario.',
+    usage: '.transfer <monto> @usuario',
     category: 'economy',
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;

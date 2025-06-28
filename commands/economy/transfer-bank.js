@@ -3,6 +3,7 @@ const User = require('../../models/User');
 module.exports = {
     name: 'transfer-bank',
     description: 'Transfiere dinero de tu banco a la cuenta de banco de otro usuario.',
+    usage: '.transfer-bank <monto> @usuario',
     category: 'economy',
     aliases: ['tbank'],
     async execute(sock, message, args) {

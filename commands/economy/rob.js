@@ -2,7 +2,8 @@ const User = require('../../models/User');
 
 module.exports = {
     name: 'rob',
-    description: 'Intenta robar a otro usuario.',
+    description: 'Intenta robar dinero de la cartera de otro usuario.',
+    usage: '.rob @usuario',
     category: 'economy',
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;

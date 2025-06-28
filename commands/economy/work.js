@@ -129,6 +129,7 @@ const jobs = [
 module.exports = {
     name: 'work',
     description: 'Trabaja para ganar dinero.',
+    usage: '.work',
     category: 'economy',
     async execute(sock, message) {
         const senderJid = message.key.participant || message.key.remoteJid;
