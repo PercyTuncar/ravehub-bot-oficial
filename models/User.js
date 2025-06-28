@@ -5,8 +5,10 @@ const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
   level: { type: Number, default: 1 },
   xp: { type: Number, default: 0 },
-  currentJob: { type: String, default: null },
-  cooldownEnds: { type: Date, default: null },
+  cooldowns: {
+    work: { type: Date, default: null },
+    rob: { type: Date, default: null },
+  },
   economy: {
     wallet: { type: Number, default: 0 },
     bank: { type: Number, default: 0 },
@@ -21,10 +23,6 @@ const userSchema = new mongoose.Schema({
   lastWork: { type: Date, default: null },
   isBanned: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
-  lastRob: {
-    type: Date,
-    default: null,
-  },
 }, {
   timestamps: true,
 });

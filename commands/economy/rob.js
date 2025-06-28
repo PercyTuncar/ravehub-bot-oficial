@@ -29,10 +29,14 @@ module.exports = {
                 await sender.save();
             }
 
+            if (sender.judicialDebt > 0) {
+                return sock.sendMessage(chatId, { text: `⚖️ Tienes una deuda judicial pendiente de *${sender.judicialDebt} 💵*. No puedes robar hasta que la saldes.` });
+            }
+
             // --- Verificación de Cooldown ---
-            if (sender.robCooldownEnds && sender.robCooldownEnds > new Date()) {
+            if (sender.cooldowns.rob && sender.cooldowns.rob > new Date()) {
                 const now = new Date();
-                const timeLeft = sender.robCooldownEnds.getTime() - now.getTime();
+                const timeLeft = sender.cooldowns.rob.getTime() - now.getTime();
                 const minutes = Math.floor(timeLeft / (1000 * 60));
                 const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 return sock.sendMessage(chatId, { text: `⏳ Debes esperar *${minutes}m y ${seconds}s* para volver a intentar un robo.` });
@@ -58,7 +62,7 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: `💸 @${mentionedJid.split('@')[0]} no tiene dinero en su cartera. ¡No hay nada que robar!`, mentions: [mentionedJid] });
             }
 
-            sender.robCooldownEnds = new Date(new Date().getTime() + COOLDOWN_MINUTES * 60 * 1000);
+            sender.cooldowns.rob = new Date(new Date().getTime() + COOLDOWN_MINUTES * 60 * 1000);
             const robChance = Math.random();
 
             if (robChance < 0.6) { // Fallo
