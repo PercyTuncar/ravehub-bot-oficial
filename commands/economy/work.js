@@ -172,10 +172,18 @@ module.exports = {
                 const minutes = Math.floor(timeLeft / (1000 * 60));
                 const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
                 
-                const currentJobText = user.currentJob ? `Actualmente estás trabajando como *${user.currentJob}*.` : 'Ya has trabajado recientemente.';
+                let cooldownMessage = `*¡Hey, @${senderJid.split('@')[0]}!* 🕒\n\n`;
+                if (user.currentJob) {
+                    cooldownMessage += `Aún estás en tu turno como *${user.currentJob}*.`;
+                } else {
+                    cooldownMessage += `Tomaste un descanso hace poco.`;
+                }
+                cooldownMessage += `\n\nDebes esperar *${minutes}m y ${seconds}s* para volver a trabajar.`;
+
 
                 return sock.sendMessage(chatId, { 
-                    text: `${currentJobText} Debes esperar *${minutes}m y ${seconds}s* para tomar una nueva chamba.` 
+                    text: cooldownMessage,
+                    mentions: [senderJid]
                 });
             }
 
