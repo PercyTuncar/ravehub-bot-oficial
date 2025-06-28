@@ -6,6 +6,7 @@ const userSchema = new mongoose.Schema({
   level: { type: Number, default: 1 },
   xp: { type: Number, default: 0 },
   currentJob: { type: String, default: null },
+  cooldownEnds: { type: Date, default: null },
   economy: {
     wallet: { type: Number, default: 0 },
     bank: { type: Number, default: 0 },
