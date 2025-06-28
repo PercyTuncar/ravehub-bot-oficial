@@ -1,4 +1,5 @@
 const User = require('../../models/User');
+const { handleDebtPayment } = require('../../utils/debtManager');
 
 const COOLDOWN_MINUTES = 10;
 
@@ -45,20 +46,22 @@ module.exports = {
                 });
             }
 
-            const target = await User.findOne({ jid: mentionedJid });
+            let target = await User.findOne({ jid: mentionedJid });
             if (!target) {
-                return sock.sendMessage(chatId, { text: `🤔 No se puede robar a @${mentionedJid.split('@')[0]}, no tiene una cuenta.`, mentions: [mentionedJid] });
+                // Creación robusta de usuario objetivo
+                const targetName = (await sock.getContact(mentionedJid))?.name || mentionedJid.split('@')[0];
+                target = new User({ jid: mentionedJid, name: targetName });
+                await target.save();
             }
 
             if (target.economy.wallet <= 0) {
                 return sock.sendMessage(chatId, { text: `💸 @${mentionedJid.split('@')[0]} no tiene dinero en su cartera. ¡No hay nada que robar!`, mentions: [mentionedJid] });
             }
 
-            // --- Lógica de Robo ---
             sender.robCooldownEnds = new Date(new Date().getTime() + COOLDOWN_MINUTES * 60 * 1000);
             const robChance = Math.random();
 
-            if (robChance < 0.6) { // 60% de probabilidad de fallo
+            if (robChance < 0.6) { // Fallo
                 const failureType = Math.random();
                 let fine;
                 let failureMessage;
@@ -81,15 +84,35 @@ module.exports = {
                 await sender.save();
                 return sock.sendMessage(chatId, { text: failureMessage, mentions: [senderJid, mentionedJid] });
 
-            } else { // 40% de probabilidad de éxito
+            } else { // Éxito
                 const amountToSteal = Math.floor(target.economy.wallet * (Math.random() * 0.25 + 0.05)); // Robar entre 5% y 30%
-                sender.economy.wallet += amountToSteal;
                 target.economy.wallet -= amountToSteal;
+
+                let finalDebtMessage = '';
+                let finalLevelChangeMessage = '';
+                let netGain = amountToSteal;
+
+                // --- LÓGICA DE DEUDA JUDICIAL PARA EL LADRÓN ---
+                if (sender.judicialDebt > 0) {
+                    const { remainingAmount, debtMessage, levelChangeMessage } = handleDebtPayment(sender, amountToSteal);
+                    netGain = remainingAmount;
+                    finalDebtMessage = debtMessage.replace('¡Deuda Cobrada!', '¡Botín Embargado!').replace('Se interceptaron', 'Se usaron');
+                    finalLevelChangeMessage = levelChangeMessage;
+                }
+
+                sender.economy.wallet += netGain;
 
                 await sender.save();
                 await target.save();
 
-                const successMessage = `*💰 ¡ROBO EXITOSO! 💰*\n\nCon sigilo y astucia, has logrado robar a @${mentionedJid.split('@')[0]}.\n\n*Botín:* +${amountToSteal} 💵\n*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
+                if (finalDebtMessage) {
+                    await sock.sendMessage(chatId, { text: finalDebtMessage, mentions: [senderJid] });
+                    if (finalLevelChangeMessage) {
+                        await sock.sendMessage(chatId, { text: finalLevelChangeMessage, mentions: [senderJid] });
+                    }
+                }
+
+                const successMessage = `*💰 ¡ROBO EXITOSO! 💰*\n\nHas robado *${amountToSteal} 💵* a @${mentionedJid.split('@')[0]}.\n\n*Ganancia neta (después de deudas):* +${netGain} 💵\n*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
                 await sock.sendMessage(chatId, { text: successMessage, mentions: [senderJid, mentionedJid] });
             }
 
