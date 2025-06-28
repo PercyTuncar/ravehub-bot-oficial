@@ -214,7 +214,18 @@ module.exports = {
             user.currentJob = job.name; // Guardar el trabajo actual
 
             const xpGained = Math.floor(job.salary / 4); 
-            user.economy.wallet += job.salary;
+            let salary = job.salary;
+            let debtMessage = '';
+
+            // --- Lógica de Deuda Judicial ---
+            if (user.judicialDebt > 0) {
+                const debtPaid = Math.min(salary, user.judicialDebt);
+                user.judicialDebt -= debtPaid;
+                salary -= debtPaid; // El salario neto es lo que queda después de pagar la deuda
+                debtMessage = `\n\n⚖️ Se descontó automáticamente *${debtPaid} 💵* de tu salario para pagar tu deuda judicial.\n*Deuda restante:* ${user.judicialDebt} 💵`;
+            }
+
+            user.economy.wallet += salary;
             user.xp += xpGained;
 
             let levelUp = false;
@@ -229,7 +240,7 @@ module.exports = {
             let workMessage = `*@${senderJid.split('@')[0]} ¡Has comenzado a trabajar!* 💼\n\n`;
             workMessage += `*Puesto:* ${job.name}\n`;
             workMessage += `*Descripción:* ${job.description}\n\n`;
-            workMessage += `*Salario Recibido:* +${job.salary} 💵\n`;
+            workMessage += `*Salario Recibido:* +${salary} 💵\n`;
             workMessage += `*Experiencia Ganada:* +${xpGained} XP\n\n`;
             workMessage += `*Cartera actual:* ${user.economy.wallet} 💵`;
 
