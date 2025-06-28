@@ -1,4 +1,4 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'yapear',
@@ -23,22 +23,13 @@ module.exports = {
         }
 
         try {
-            let sender = await User.findOne({ jid: senderJid });
-            if (!sender) {
-                sender = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
-                await sender.save();
-            }
+            const sender = await findOrCreateUser(senderJid, message.pushName);
 
             if (sender.economy.bank < amount) {
                 return sock.sendMessage(chatId, { text: `¡Saldo insuficiente en tu banco! No tienes suficiente para este yapeo. Saldo en banco: ${sender.economy.bank} 💵` });
             }
 
-            let target = await User.findOne({ jid: mentionedJid });
-            if (!target) {
-                const targetName = mentionedJid.split('@')[0];
-                target = new User({ jid: mentionedJid, name: targetName });
-                await target.save();
-            }
+            const target = await findOrCreateUser(mentionedJid);
 
             sender.economy.bank -= amount;
             target.economy.bank += amount;

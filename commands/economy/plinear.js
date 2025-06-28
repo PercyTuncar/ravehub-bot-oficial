@@ -1,4 +1,4 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'plinear',
@@ -15,7 +15,7 @@ module.exports = {
         const amount = amountStr ? parseInt(amountStr) : 0;
 
         if (!mentionedJid || amount <= 0) {
-            return sock.sendMessage(chatId, { text: 'Formato incorrecto. Para plinear, usa: .plinear @usuario <monto>' });
+            return sock.sendMessage(chatId, { text: 'Formato incorrecto. Uso: .pline @usuario <cantidad>' });
         }
 
         if (senderJid === mentionedJid) {
@@ -23,47 +23,31 @@ module.exports = {
         }
 
         try {
-            let sender = await User.findOne({ jid: senderJid });
-            if (!sender) {
-                sender = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
-                await sender.save();
-            }
+            // Refactorización: Usar la función centralizada para obtener el emisor.
+            const sender = await findOrCreateUser(senderJid, message.pushName);
 
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: `¡Saldo insuficiente en tu banco! No tienes suficiente para este Plin. Saldo en banco: ${sender.economy.bank} 💵` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${sender.economy.bank} 💵` });
             }
 
-            let target = await User.findOne({ jid: mentionedJid });
-            if (!target) {
-                const targetName = mentionedJid.split('@')[0];
-                target = new User({ jid: mentionedJid, name: targetName });
-                await target.save();
-            }
+            // Refactorización: Usar la función centralizada para obtener el receptor.
+            const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
+            const target = await findOrCreateUser(mentionedJid, targetName);
 
             sender.economy.bank -= amount;
             target.economy.bank += amount;
-
-            // --- Lógica de Deuda Judicial ---
-            if (target.judicialDebt > 0) {
-                const debtPaid = Math.min(amount, target.judicialDebt);
-                target.judicialDebt -= debtPaid;
-                await sock.sendMessage(chatId, {
-                    text: `⚖️ Se ha descontado automáticamente *${debtPaid} 💵* del plineo recibido por @${mentionedJid.split('@')[0]} para pagar su deuda judicial.\n*Deuda restante:* ${target.judicialDebt} 💵`,
-                    mentions: [mentionedJid]
-                });
-            }
 
             await sender.save();
             await target.save();
 
             await sock.sendMessage(chatId, { 
-                text: `✅ ¡Plin exitoso! Le enviaste ${amount} 💵 a @${mentionedJid.split('@')[0]} desde tu banco.\n\nTu nuevo saldo en el banco es: ${sender.economy.bank} 💵`,
+                text: `✅ Plin exitoso de ${amount} 💵 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${sender.economy.bank} 💵`,
                 mentions: [senderJid, mentionedJid]
             });
 
         } catch (error) {
-            console.error('Error en el comando de plineo:', error);
-            await sock.sendMessage(chatId, { text: 'Hubo un problema al procesar tu Plin.' });
+            console.error('Error en el plineo:', error);
+            await sock.sendMessage(chatId, { text: 'Ocurrió un error al realizar el plineo.' });
         }
     }
 };

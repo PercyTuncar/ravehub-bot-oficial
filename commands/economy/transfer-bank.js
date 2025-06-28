@@ -1,4 +1,4 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'transfer-bank',
@@ -23,22 +23,12 @@ module.exports = {
         }
 
         try {
-            let sender = await User.findOne({ jid: senderJid });
-            if (!sender) {
-                sender = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
-                await sender.save();
-            }
-
+            const sender = await findOrCreateUser(senderJid, message.pushName);
             if (sender.economy.bank < amount) {
                 return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${sender.economy.bank} 🏦` });
             }
 
-            let target = await User.findOne({ jid: mentionedJid });
-            if (!target) {
-                const targetName = mentionedJid.split('@')[0];
-                target = new User({ jid: mentionedJid, name: targetName });
-                await target.save();
-            }
+            const target = await findOrCreateUser(mentionedJid);
 
             sender.economy.bank -= amount;
             target.economy.bank += amount;
@@ -46,7 +36,7 @@ module.exports = {
             await sender.save();
             await target.save();
 
-            await sock.sendMessage(chatId, { 
+            await sock.sendMessage(chatId, {
                 text: `✅ Transferencia bancaria exitosa de ${amount} 🏦 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${sender.economy.bank} 🏦`,
                 mentions: [senderJid, mentionedJid]
             });

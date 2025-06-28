@@ -1,4 +1,4 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'give',
@@ -29,10 +29,8 @@ module.exports = {
         }
 
         try {
-            let sender = await User.findOne({ jid: senderJid });
-            if (!sender) {
-                return sock.sendMessage(chatId, { text: 'No tienes una cuenta para poder regalar items.' });
-            }
+            // Refactorización: Usar la función centralizada para obtener el emisor.
+            const sender = await findOrCreateUser(senderJid, message.pushName);
 
             const itemInInventory = sender.inventory.find(item => item.name.toLowerCase() === itemName);
 
@@ -40,10 +38,9 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: `No tienes suficientes "${itemName}" en tu inventario. Tienes ${itemInInventory ? itemInInventory.quantity : 0}.` });
             }
 
-            let target = await User.findOne({ jid: mentionedJid });
-            if (!target) {
-                target = new User({ jid: mentionedJid, name: message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0] });
-            }
+            // Refactorización: Usar la función centralizada para obtener el receptor.
+            const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
+            const target = await findOrCreateUser(mentionedJid, targetName);
 
             // Quitar item del inventario del emisor
             itemInInventory.quantity -= quantity;

@@ -1,4 +1,4 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'deposit',
@@ -11,11 +11,8 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         try {
-            let user = await User.findOne({ jid: senderJid });
-            if (!user) {
-                user = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
-                await user.save();
-            }
+            // Refactorización: Usar la función centralizada para obtener el usuario.
+            let user = await findOrCreateUser(senderJid, message.pushName);
 
             if (args.length === 0) {
                 return sock.sendMessage(chatId, { text: `Uso del comando:\n.deposit <cantidad>\n.deposit all` });
@@ -47,9 +44,7 @@ module.exports = {
             await user.save();
 
             const responseText = 
-`✅ Depósito exitoso de ${amountToDeposit} 💵.\n\n*Nuevo Balance:*
-*Cartera:* ${user.economy.wallet} 💵
-*Banco:* ${user.economy.bank} 🏦`;
+`✅ Depósito exitoso de ${amountToDeposit} 💵.\n\n*Nuevo Balance:*\n*Cartera:* ${user.economy.wallet} 💵\n*Banco:* ${user.economy.bank} 🏦`;
 
             await sock.sendMessage(chatId, { 
                 text: responseText,

@@ -1,4 +1,4 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
 const { getLevelName, xpTable } = require('../../utils/levels');
 
 module.exports = {
@@ -11,15 +11,10 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         try {
-            let user = await User.findOne({ jid }).populate('inventory.itemId');
-
-            if (!user) {
-                user = new User({
-                    jid,
-                    name: message.pushName || 'Usuario Desconocido',
-                });
-                await user.save();
-            }
+            // Refactorización: Usar la función centralizada para obtener el usuario.
+            let user = await findOrCreateUser(jid, message.pushName);
+            // Poblar el inventario después de asegurarse de que el usuario existe.
+            user = await user.populate('inventory.itemId');
 
             let inventoryList = "Inventario vacío.";
             if (user.inventory && user.inventory.length > 0) {
@@ -31,10 +26,10 @@ module.exports = {
                     .join("\n*│* │ ");
             }
 
-            const nextLevelXp = xpTable[user.level] || user.levelXp;
+            const nextLevelXp = xpTable[user.level] || Infinity; // Evitar errores si el nivel es el máximo
             const xpProgress = `${user.xp}/${nextLevelXp}`;
 
-            const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* ⚠️ *Advertencias:* ${user.warnings}\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* $${user.economy.wallet}\n*│* │ 🏦 *Banco:* $${user.economy.bank}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
+            const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} 💵\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* $${user.economy.wallet}\n*│* │ 🏦 *Banco:* $${user.economy.bank}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
 
             await sock.sendMessage(
                 chatId,

@@ -1,4 +1,4 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'transfer',
@@ -22,22 +22,16 @@ module.exports = {
         }
 
         try {
-            let sender = await User.findOne({ jid: senderJid });
-            if (!sender) {
-                sender = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
-                await sender.save();
-            }
+            // Refactorización: Usar la función centralizada para obtener el emisor.
+            const sender = await findOrCreateUser(senderJid, message.pushName);
 
             if (sender.economy.wallet < amount) {
                 return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${sender.economy.wallet} 💵` });
             }
 
-            let target = await User.findOne({ jid: mentionedJid });
-            if (!target) {
-                const targetName = mentionedJid.split('@')[0];
-                target = new User({ jid: mentionedJid, name: targetName });
-                await target.save();
-            }
+            // Refactorización: Usar la función centralizada para obtener el receptor.
+            const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
+            const target = await findOrCreateUser(mentionedJid, targetName);
 
             sender.economy.wallet -= amount;
             target.economy.wallet += amount;

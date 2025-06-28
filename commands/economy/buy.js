@@ -1,4 +1,5 @@
-const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils');
+const { handleDebtPayment } = require('../../utils/debtManager');
 const ShopItem = require('../../models/ShopItem');
 
 module.exports = {
@@ -17,35 +18,8 @@ module.exports = {
         const itemName = args.join(' ').toLowerCase();
 
         try {
-            let user = await User.findOne({ jid: senderJid });
-            if (!user) {
-                user = new User({ jid: senderJid, name: message.pushName || senderJid.split('@')[0] });
-                await user.save();
-            }
-
-            // --- Lógica de Deuda Judicial ---
-            let debtMessage = '';
-            if (user.judicialDebt > 0) {
-                const debtToPay = user.judicialDebt;
-                let paidAmount = 0;
-
-                if (user.economy.wallet > 0) {
-                    const fromWallet = Math.min(user.economy.wallet, debtToPay - paidAmount);
-                    user.economy.wallet -= fromWallet;
-                    paidAmount += fromWallet;
-                }
-
-                if (paidAmount < debtToPay && user.economy.bank > 0) {
-                    const fromBank = Math.min(user.economy.bank, debtToPay - paidAmount);
-                    user.economy.bank -= fromBank;
-                    paidAmount += fromBank;
-                }
-
-                if (paidAmount > 0) {
-                    user.judicialDebt -= paidAmount;
-                    debtMessage = `⚖️ Se ha cobrado automáticamente *${paidAmount} 💵* de tus fondos para saldar tu deuda judicial.\n*Deuda restante:* ${user.judicialDebt} 💵\n\n`;
-                }
-            }
+            // Refactorización: Usar la función centralizada para obtener el usuario.
+            let user = await findOrCreateUser(senderJid, message.pushName);
 
             const itemToBuy = await ShopItem.findOne({ name: new RegExp(`^${itemName}$`, 'i') });
 
@@ -54,16 +28,29 @@ module.exports = {
             }
 
             const price = itemToBuy.price;
+
+            // Corrección: Usar la función centralizada para manejar la deuda.
+            if (user.judicialDebt > 0) {
+                const { remainingAmount, debtMessage, levelChangeMessage } = handleDebtPayment(user, price);
+                
+                if (debtMessage) {
+                    await sock.sendMessage(chatId, { text: debtMessage + (levelChangeMessage ? `\n${levelChangeMessage}` : '') });
+                    if (remainingAmount <= 0) {
+                         await user.save();
+                         return;
+                    }
+                }
+            }
+
             const wallet = user.economy.wallet;
             const bank = user.economy.bank;
             let paymentMessage = '';
 
             if (wallet + bank < price) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero ni en la cartera ni en el banco para comprar *${itemToBuy.name}*. Necesitas ${price} 💵.` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar *${itemToBuy.name}*. Necesitas ${price} 💵.` });
             }
 
             if (wallet >= price) {
-                // Pago completo con cartera (efectivo)
                 user.economy.wallet -= price;
                 paymentMessage = `Has pagado en efectivo *${price} 💵* por tu *${itemToBuy.name}*.`;
             } else {
@@ -71,13 +58,11 @@ module.exports = {
                 const randomMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
                 
                 if (wallet > 0) {
-                    // Pago mixto: parte cartera, parte banco
                     const fromBank = price - wallet;
                     user.economy.wallet = 0;
                     user.economy.bank -= fromBank;
                     paymentMessage = `Pagaste *${wallet} 💵* en efectivo y ${randomMethod} *${fromBank} 💵* desde tu banco para comprar tu *${itemToBuy.name}*.`;
                 } else {
-                    // Pago completo con banco
                     user.economy.bank -= price;
                     paymentMessage = `Has ${randomMethod} *${price} 💵* desde tu banco para comprar tu *${itemToBuy.name}*.`;
                 }
@@ -98,18 +83,12 @@ module.exports = {
             await user.save();
 
             await sock.sendMessage(chatId, {
-                text: `${debtMessage}🛍️ *¡Compra exitosa!* 🛍️
-
-${paymentMessage}
-
-*Nuevo saldo en cartera:* ${user.economy.wallet} 💵
-*Nuevo saldo en banco:* ${user.economy.bank} 💵`, 
-                mentions: [senderJid]
+                text: `🛍️ ¡Compra exitosa! 🛍️\n\n${paymentMessage}\n\n*Balance actual:*\n*Cartera:* ${user.economy.wallet} 💵\n*Banco:* ${user.economy.bank} 💵`
             });
 
         } catch (error) {
             console.error('Error en el comando buy:', error);
-            await sock.sendMessage(chatId, { text: 'Ocurrió un error al intentar comprar el item.' });
+            sock.sendMessage(chatId, { text: '❌ Ocurrió un error al procesar tu compra.' });
         }
-    }
+    },
 };
