@@ -2,7 +2,7 @@ const User = require('../../models/User');
 
 module.exports = {
     name: 'give',
-    description: 'Regala un item de tu inventario a otro usuario.',
+    description: 'Regala uno o más items de tu inventario a otro usuario.',
     usage: '.give @usuario <cantidad> <nombre del item>',
     category: 'economy',
     async execute(sock, message, args) {
@@ -10,14 +10,22 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         const mentionedJid = message.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-        const itemName = args.filter(arg => !arg.startsWith('@')).join(' ').toLowerCase();
+        
+        // Extraer cantidad y nombre del item
+        const quantityArg = args.find(arg => !isNaN(parseInt(arg)));
+        const quantity = quantityArg ? parseInt(quantityArg) : 1; // Por defecto es 1 si no se especifica
+        const itemName = args.filter(arg => arg !== quantityArg && !arg.startsWith('@')).join(' ').toLowerCase();
 
         if (!mentionedJid || !itemName) {
-            return sock.sendMessage(chatId, { text: 'Formato incorrecto. Uso: .give @usuario <nombre del item>' });
+            return sock.sendMessage(chatId, { text: `Formato incorrecto. Uso: *.give @usuario <cantidad> <nombre del item>*` });
+        }
+
+        if (quantity <= 0 || !Number.isInteger(quantity)) {
+            return sock.sendMessage(chatId, { text: 'La cantidad debe ser un número entero y positivo.' });
         }
 
         if (senderJid === mentionedJid) {
-            return sock.sendMessage(chatId, { text: 'No puedes regalarte items a ti mismo.' });
+            return sock.sendMessage(chatId, { text: 'No puedes regalar items a ti mismo.' });
         }
 
         try {
@@ -28,17 +36,17 @@ module.exports = {
 
             const itemInInventory = sender.inventory.find(item => item.name.toLowerCase() === itemName);
 
-            if (!itemInInventory || itemInInventory.quantity <= 0) {
-                return sock.sendMessage(chatId, { text: `No tienes "${itemName}" en tu inventario.` });
+            if (!itemInInventory || itemInInventory.quantity < quantity) {
+                return sock.sendMessage(chatId, { text: `No tienes suficientes "${itemName}" en tu inventario. Tienes ${itemInInventory ? itemInInventory.quantity : 0}.` });
             }
 
             let target = await User.findOne({ jid: mentionedJid });
             if (!target) {
-                target = new User({ jid: mentionedJid, name: mentionedJid.split('@')[0] });
+                target = new User({ jid: mentionedJid, name: message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0] });
             }
 
             // Quitar item del inventario del emisor
-            itemInInventory.quantity -= 1;
+            itemInInventory.quantity -= quantity;
             if (itemInInventory.quantity === 0) {
                 sender.inventory = sender.inventory.filter(item => item.name.toLowerCase() !== itemName);
             }
@@ -46,12 +54,12 @@ module.exports = {
             // Añadir item al inventario del receptor
             const targetItem = target.inventory.find(item => item.itemId.equals(itemInInventory.itemId));
             if (targetItem) {
-                targetItem.quantity += 1;
+                targetItem.quantity += quantity;
             } else {
                 target.inventory.push({
                     itemId: itemInInventory.itemId,
                     name: itemInInventory.name,
-                    quantity: 1,
+                    quantity: quantity,
                 });
             }
 
@@ -59,7 +67,7 @@ module.exports = {
             await target.save();
 
             await sock.sendMessage(chatId, {
-                text: `🎁 @${senderJid.split('@')[0]} le ha regalado *1 ${itemInInventory.name}* a @${mentionedJid.split('@')[0]}.`,
+                text: `🎁 @${senderJid.split('@')[0]} le ha regalado *${quantity} ${itemInInventory.name}* a @${mentionedJid.split('@')[0]}.`,
                 mentions: [senderJid, mentionedJid]
             });
 
