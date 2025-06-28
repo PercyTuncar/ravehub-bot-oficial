@@ -161,7 +161,19 @@ module.exports = {
 
             if (user.cooldowns.work && user.cooldowns.work > new Date()) {
                 const timeLeft = (user.cooldowns.work.getTime() - new Date().getTime()) / 1000;
-                return sock.sendMessage(chatId, { text: `⏳ Debes esperar ${Math.ceil(timeLeft)} segundos más para volver a trabajar.` });
+                const minutes = Math.floor(timeLeft / 60);
+                const seconds = Math.ceil(timeLeft % 60);
+
+                let timeString = '';
+                if (minutes > 0) {
+                    timeString += `${minutes} minuto(s)`;
+                }
+                if (seconds > 0) {
+                    if (minutes > 0) timeString += ' y ';
+                    timeString += `${seconds} segundo(s)`;
+                }
+
+                return sock.sendMessage(chatId, { text: `⏳ Debes esperar ${timeString} más para volver a trabajar.` });
             }
 
             const eligibleJobs = getEligibleJobs(user.level, allJobs);
