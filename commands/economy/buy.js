@@ -29,11 +29,35 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: `El item "${itemName}" no existe en la tienda.` });
             }
 
-            if (user.economy.wallet < itemToBuy.price) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar ${itemToBuy.name}. Necesitas ${itemToBuy.price} 💵.` });
+            const price = itemToBuy.price;
+            const wallet = user.economy.wallet;
+            const bank = user.economy.bank;
+            let paymentMessage = '';
+
+            if (wallet + bank < price) {
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero ni en la cartera ni en el banco para comprar *${itemToBuy.name}*. Necesitas ${price} 💵.` });
             }
 
-            user.economy.wallet -= itemToBuy.price;
+            if (wallet >= price) {
+                // Pago completo con cartera (efectivo)
+                user.economy.wallet -= price;
+                paymentMessage = `Has pagado en efectivo *${price} 💵* por tu *${itemToBuy.name}*.`;
+            } else {
+                const paymentMethods = ['yapeaste', 'plineaste', 'transferiste'];
+                const randomMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+                
+                if (wallet > 0) {
+                    // Pago mixto: parte cartera, parte banco
+                    const fromBank = price - wallet;
+                    user.economy.wallet = 0;
+                    user.economy.bank -= fromBank;
+                    paymentMessage = `Pagaste *${wallet} 💵* en efectivo y ${randomMethod} *${fromBank} 💵* desde tu banco para comprar tu *${itemToBuy.name}*.`;
+                } else {
+                    // Pago completo con banco
+                    user.economy.bank -= price;
+                    paymentMessage = `Has ${randomMethod} *${price} 💵* desde tu banco para comprar tu *${itemToBuy.name}*.`;
+                }
+            }
 
             const existingItem = user.inventory.find(invItem => invItem.itemId.equals(itemToBuy._id));
 
@@ -50,7 +74,12 @@ module.exports = {
             await user.save();
 
             await sock.sendMessage(chatId, {
-                text: `¡Felicidades! Has comprado *${itemToBuy.name}* por ${itemToBuy.price} 💵.`, 
+                text: `🛍️ *¡Compra exitosa!* 🛍️
+
+${paymentMessage}
+
+*Nuevo saldo en cartera:* ${user.economy.wallet} 💵
+*Nuevo saldo en banco:* ${user.economy.bank} 💵`, 
                 mentions: [senderJid]
             });
 
