@@ -29,7 +29,7 @@ const shopItems = [
   // Tickets de eventos
   {
     name: "Pase VIP Far Away Peru",
-    description: "Entrada VIP exclusiva para el evento Far Away en Perú.",
+    description: "Entrada VIP para el evento Far Away en Perú.",
     price: 150,
     emoji: "🎟️",
   },
