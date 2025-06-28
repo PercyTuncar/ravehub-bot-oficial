@@ -3,7 +3,10 @@ const path = require('path');
 
 module.exports = () => {
     const commands = new Map();
-    const commandFolders = ['admin', 'economy', 'utility'];
+    const commandPath = path.join(__dirname, '..', 'commands');
+    const commandFolders = fs.readdirSync(commandPath).filter(folder => 
+        fs.statSync(path.join(commandPath, folder)).isDirectory()
+    );
 
     for (const folder of commandFolders) {
         const commandFiles = fs.readdirSync(path.join(__dirname, '..', 'commands', folder)).filter(file => file.endsWith('.js'));
