@@ -6,7 +6,7 @@ const MAX_BET = 5000;
 
 module.exports = {
     name: 'apostar',
-    description: 'Inicia un juego de Carta Mayor. Apuesta dinero de tu cartera y elige un lado (Izquierda o Derecha). Si tu carta es más alta que la del bot, ganas el doble de tu apuesta. Si es más baja, pierdes lo apostado. En caso de empate, se te devuelve la apuesta.',
+    description: 'Inicia un juego de Carta Mayor. Apuesta a Izquierda, Derecha o Empate. Si tu carta es más alta, ganas x2. Si aciertas al empate, ganas x5.',
     usage: '.apostar <cantidad>',
     category: 'games',
     async execute(sock, message, args) {
@@ -50,7 +50,7 @@ module.exports = {
             startGameSession(jid, betAmount);
 
             await sock.sendMessage(chatId, {
-                text: `💰 @${jid.split('@')[0]}, ¡bienvenido al Casino Las Vegas! 💰\n\nTu apuesta de *${betAmount} 💵* ha sido aceptada.\n\nAhora, la decisión más importante... elige un lado para tu carta:\n\nResponde con *Izquierda* o *Derecha*.\n\n(Tienes 30 segundos para decidir)`,
+                text: `💰 @${jid.split('@')[0]}, ¡bienvenido al Casino RaveHub! 💰\n\nTu apuesta de *${betAmount} 💵* ha sido aceptada.\n\nElige tu jugada:\nResponde con *Izquierda*, *Derecha* o *Empate*.\n\n- *Izquierda/Derecha*: Ganas el doble (x2) si tu carta es mayor.\n- *Empate*: ¡Ganas 5 veces (x5) tu apuesta si las cartas son iguales!\n\n(Tienes 30 segundos para decidir)`,
                 mentions: [jid]
             });
 
