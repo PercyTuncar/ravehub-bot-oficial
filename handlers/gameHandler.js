@@ -48,11 +48,6 @@ async function handleGameMessage(sock, message) {
         const leftCardName = `${leftCard.rank} de ${leftCard.suit}`;
         const rightCardName = `${rightCard.rank} de ${rightCard.suit}`;
 
-        // Determinar la carta del jugador y de la casa según la elección
-        const playerChoiceIsLeft = messageText === 'izquierda';
-        const playerCard = playerChoiceIsLeft ? leftCard : rightCard;
-        const houseCard = playerChoiceIsLeft ? rightCard : leftCard;
-
         // Mensaje 1: Revela ambas cartas
         await sock.sendMessage(chatId, {
             text: `✨ ¡Cartas a la vista! ✨\n\n🎴 Izquierda: *${leftCardName}*\n🎴 Derecha: *${rightCardName}*\n\nAnalizando el resultado...`,
@@ -81,21 +76,27 @@ async function handleGameMessage(sock, message) {
         }
         // CASO 2: NO HAY EMPATE
         else {
-            const userWon = playerCard.value > houseCard.value;
             if (messageText === 'empate') {
                 // Apostó a empate pero no ocurrió
-                resultMessage = `😢 *¡NO HUBO EMPATE!* 😢\n\n@${jid.split('@')[0]}, apostaste todo al empate, pero una carta fue superior.`;
+                resultMessage = `😢 *¡NO HUBO EMPATE!* 😢\n\n@${jid.split('@')[0]}, apostaste todo al empate, pero las cartas no fueron iguales.`;
                 finalMessage = `❌ Has perdido tu apuesta de *${session.bet} 💵*.\n\nGracias por jugar en el Casino RaveHub.`;
-            } else if (userWon) {
-                // Ganó la apuesta a Izquierda/Derecha
-                const winnings = session.bet * 2;
-                user.economy.wallet += winnings;
-                resultMessage = `🎉 *¡GANASTE!* 🎉\n\n@${jid.split('@')[0]}, tu carta fue la más alta. ¡Felicidades!`;
-                finalMessage = `✅ Se han añadido *${winnings} 💵* a tu cartera.\n\nGracias por jugar en el Casino RaveHub.`;
             } else {
-                // Perdió la apuesta a Izquierda/Derecha
-                resultMessage = `😢 *¡PERDISTE!* 😢\n\n@${jid.split('@')[0]}, la carta de la casa fue superior. Más suerte para la próxima.`;
-                finalMessage = `❌ Has perdido tu apuesta de *${session.bet} 💵*.\n\nGracias por jugar en el Casino RaveHub.`;
+                // El usuario eligió Izquierda o Derecha
+                const playerCard = messageText === 'izquierda' ? leftCard : rightCard;
+                const houseCard = messageText === 'izquierda' ? rightCard : leftCard;
+                const userWon = playerCard.value > houseCard.value;
+
+                if (userWon) {
+                    // Ganó la apuesta a Izquierda/Derecha
+                    const winnings = session.bet * 2;
+                    user.economy.wallet += winnings;
+                    resultMessage = `🎉 *¡GANASTE!* 🎉\n\n@${jid.split('@')[0]}, tu carta fue la más alta. ¡Felicidades!`;
+                    finalMessage = `✅ Se han añadido *${winnings} 💵* a tu cartera.\n\nGracias por jugar en el Casino RaveHub.`;
+                } else {
+                    // Perdió la apuesta a Izquierda/Derecha
+                    resultMessage = `😢 *¡PERDISTE!* 😢\n\n@${jid.split('@')[0]}, la carta de la casa fue superior. Más suerte para la próxima.`;
+                    finalMessage = `❌ Has perdido tu apuesta de *${session.bet} 💵*.\n\nGracias por jugar en el Casino RaveHub.`;
+                }
             }
         }
 
