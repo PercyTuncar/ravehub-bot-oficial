@@ -69,9 +69,9 @@ async function handleGameMessage(sock, message) {
             if (leftCard.value === rightCard.value) {
                 const winnings = session.bet * 5;
                 user.economy.wallet += winnings;
-                finalMessage = `🤯 *¡EMPATE PERFECTO, @${jid.split('@')[0]}!*\nTu predicción fue correcta.\n\n*Premio:* *${winnings} 💵*`;
+                finalMessage = `🤯 *¡EMPATE PERFECTO, @${jid.split('@')[0]}!*\nTu predicción fue correcta.\n\n*Premio:* $ *${winnings} 💵*`;
             } else {
-                finalMessage = `😢 *NO HUBO EMPATE, @${jid.split('@')[0]}!*\nLas cartas no coincidieron.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
+                finalMessage = `😢 *NO HUBO EMPATE, @${jid.split('@')[0]}!*\nLas cartas no coincidieron.\n\n*Apuesta perdida:* $ *${session.bet} 💵*`;
             }
         }
         // CASO 2: El usuario apostó a 'izquierda' o 'derecha'
@@ -94,11 +94,11 @@ async function handleGameMessage(sock, message) {
             if (playerCard.value > houseCard.value) {
                 const winnings = session.bet * 2;
                 user.economy.wallet += winnings;
-                finalMessage = `🎉 *¡GANASTE, @${jid.split('@')[0]}!*\nTu carta fue la más alta.\n\n*Premio:* *${winnings} 💵*`;
+                finalMessage = `🎉 *¡GANASTE, @${jid.split('@')[0]}!*\nTu carta fue la más alta.\n\n*Premio:* $ *${winnings} 💵*`;
             } else if (playerCard.value < houseCard.value) {
-                finalMessage = `😢 *¡PERDISTE, @${jid.split('@')[0]}!*\nLa carta de la casa fue superior.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
+                finalMessage = `😢 *¡PERDISTE, @${jid.split('@')[0]}!*\nLa carta de la casa fue superior.\n\n*Apuesta perdida:* $ *${session.bet} 💵*`;
             } else { // Empate inesperado: el jugador no apostó a Empate, por lo tanto pierde.
-                finalMessage = `😐 *¡EMPATE INESPERADO, @${jid.split('@')[0]}!*\nLas cartas fueron idénticas.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
+                finalMessage = `😐 *¡EMPATE INESPERADO, @${jid.split('@')[0]}!*\nLas cartas fueron idénticas.\n\n*Apuesta perdida:* $ *${session.bet} 💵*`;
             }
         }
 
