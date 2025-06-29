@@ -2,7 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'retirar',
-    description: 'Retira dinero de tu cuenta bancaria a tu cartera.',
+    description: 'Retira 💵 del banco a tu cartera.',
     aliases: ['withdraw'],
     usage: '.retirar <cantidad|all>',
     category: 'economy',
