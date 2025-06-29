@@ -66,7 +66,8 @@ module.exports = {
             user.cooldowns.work = new Date(new Date().getTime() + job.cooldown * 60 * 1000);
             await user.save();
 
-            let response = `💼 *¡A trabajar @${senderJid.split('@')[0]}!* 💼\n\n${job.description}\n\n*Ganaste:* ${earnings} 💵\n*XP Obtenida:* +${xpGained} XP`;
+            let response = `*╭───≽ 💼 TRABAJO REALIZADO ≼───*\n*│*\n*│* 👤 *Trabajador:* @${senderJid.split('@')[0]}\n*│* 🏢 *Puesto:* ${job.name}\n*│* 📝 *Reporte:* _\"${job.description}\"_\n*│*\n*│* 💵 *Salario:* ${earnings} 💵\n*│* ✨ *Experiencia:* +${xpGained} XP\n*│*\n*╰─────────────────≽*`;
+
             if (debtMessage) {
                 response += `\n\n${debtMessage}`;
             }
