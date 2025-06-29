@@ -101,7 +101,7 @@ async function handleGameMessage(sock, message) {
                 finalMessage = `💰 ¡Te llevas $*${winnings} 💵*!`;
             } else if (playerCard.value < houseCard.value) {
                 resultMessage = `😢 *¡PERDISTE!* 😢\n\nLa carta de la casa es superior, @${jid.split('@')[0]}.`;
-                finalMessage = `❌ Perdiste tu apuesta de *${session.bet} 💵*.`;
+                finalMessage = `❌ Perdiste tu apuesta de $*${session.bet} 💵*.`;
             } else { // Empate inesperado
                 user.economy.wallet += session.bet; // Devolver apuesta
                 resultMessage = `😐 *¡ES UN EMPATE!* 😐\n\nLas cartas son idénticas, @${jid.split('@')[0]}.`;
