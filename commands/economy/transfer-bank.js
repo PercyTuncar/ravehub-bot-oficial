@@ -2,7 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'transfer-bank',
-    description: 'Transferir a un banco.',
+    description: 'Transfiere 💵 a un banco.',
     usage: '.transfer-bank <monto> @usuario',
     category: 'economy',
     aliases: ['tbank'],
