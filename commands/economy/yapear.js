@@ -2,7 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'yapear',
-    description: 'Enviar dinero fácil.',
+    description: 'Enviar 💵 usando Yape.',
     aliases: ['yape'],
     usage: '.yapear <monto> @usuario',
     category: 'economy',
