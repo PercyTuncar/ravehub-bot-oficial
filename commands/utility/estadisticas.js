@@ -3,6 +3,7 @@ const moment = require('moment');
 
 module.exports = {
     name: 'estadisticas',
+    aliases: ['estadísticas'],
     description: 'Muestra las estadísticas de un juego en las últimas 24 horas.',
     usage: '.estadisticas <nombre del juego>',
     category: 'utility',
@@ -89,8 +90,8 @@ function generateTrendAnalysis(results) {
 
     if (leftRatio > 1.8) return '📈 Se observa una fuerte tendencia hacia la *Izquierda*.';
     if (rightRatio > 1.8) return '📈 Se observa una fuerte tendencia hacia la *Derecha*.';
-    if (izquierda > derecha * 1.3) return ' тенденция a la *Izquierda*.';
-    if (derecha > izquierda * 1.3) return ' тенденция a la *Derecha*.';
+    if (izquierda > derecha * 1.3) return ' tendencia a la *Izquierda*.';
+    if (derecha > izquierda * 1.3) return ' tendencia a la *Derecha*.';
 
     return '📉 Los resultados parecen estar distribuidos de manera equilibrada.';
 }
