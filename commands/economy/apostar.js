@@ -50,7 +50,7 @@ module.exports = {
             startGameSession(jid, betAmount);
 
             await sock.sendMessage(chatId, {
-                image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/v1751216834/portada_de_casino_ravehub-min_mdkotz.jpg' },
+                image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/v1751218082/actualizado_casino_ravehub-min_rrojpr.jpg' },
                 caption: `*¡Bienvenido al Casino RaveHub, @${jid.split('@')[0]}!* 🎰\n\nTu apuesta de $ *${betAmount} 💵* ha sido aceptada.\n\n*Elige tu jugada:*\n> • *Izquierda* o *Derecha*: Gana x2 si tu carta es mayor.\n> • *Empate*: Gana x5 si las cartas son iguales.\n\nResponde con tu elección. ¡Tienes 30 segundos!`,
                 mentions: [jid]
             });
