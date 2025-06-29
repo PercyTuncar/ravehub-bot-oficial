@@ -4,12 +4,11 @@ const qrcode = require('qrcode-terminal');
 const pino = require('pino');
 const connectDB = require('./config/database');
 const eventHandler = require('./handlers/eventHandler');
+const loadCommands = require('./handlers/commandHandler');
 require('dotenv').config();
 
 let sock;
 let firstConnection = true;
-
-const loadCommands = require('./handlers/commandHandler');
 
 // Cargar todos los comandos y sus alias
 const commands = loadCommands();
