@@ -36,7 +36,7 @@ async function handleGameMessage(sock, message) {
 
         const choice = messageText.charAt(0).toUpperCase() + messageText.slice(1);
         await sock.sendMessage(chatId, {
-            text: `🃏 @${jid.split('@')[0]}, has elegido *${choice}*. ¡Una elección audaz!\n\nEl crupier coloca las cartas sobre la mesa. El suspenso es total...\n\n🎴 [Izquierda] vs. 🎴 [Derecha]\n\nRevelando las cartas en 3... 2... 1...`,
+            text: `🃏 @${jid.split('@')[0]}, has elegido *${choice}*.\n\nEl crupier baraja las cartas y las coloca sobre la mesa. ¡Mucha suerte!`,
             mentions: [jid]
         });
 
@@ -47,65 +47,72 @@ async function handleGameMessage(sock, message) {
         const leftCard = getRandomCard();
         const rightCard = getRandomCard();
 
-        const leftCardName = `${leftCard.rank} de ${leftCard.suit}`;
-        const rightCardName = `${rightCard.rank} de ${rightCard.suit}`;
+        const leftCardName = `*${leftCard.rank} de ${leftCard.suit}*`;
+        const rightCardName = `*${rightCard.rank} de ${rightCard.suit}*`;
 
-        // Mensaje 1: Revela ambas cartas
-        await sock.sendMessage(chatId, {
-            text: `✨ ¡Cartas a la vista! ✨\n\n🎴 Izquierda: *${leftCardName}*\n🎴 Derecha: *${rightCardName}*\n\nAnalizando el resultado...`,
-            mentions: [jid]
-        });
-
-        await delay(3000); // Más suspenso
-
-        // Mensaje 2: Anunciar el resultado
         const user = await findOrCreateUser(jid);
         let resultMessage = '';
         let finalMessage = '';
 
-        // CASO 1: EMPATE
-        if (leftCard.value === rightCard.value) {
-            if (messageText === 'empate') {
+        // --- Lógica de revelación y resultado ---
+
+        // CASO 1: El usuario apostó a 'empate'
+        if (messageText === 'empate') {
+            await sock.sendMessage(chatId, { text: `Revelando la primera carta... 🎴` });
+            await delay(2000);
+            await sock.sendMessage(chatId, { text: `> Carta Izquierda: ${leftCardName}` });
+            await delay(2000);
+            await sock.sendMessage(chatId, { text: `Ahora, la segunda carta... ¿Será igual? 🤔` });
+            await delay(3000);
+            await sock.sendMessage(chatId, { text: `> Carta Derecha: ${rightCardName}` });
+            await delay(2000);
+
+            if (leftCard.value === rightCard.value) {
                 const winnings = session.bet * 5;
                 user.economy.wallet += winnings;
-                resultMessage = `🤯 *¡EMPATE EXACTO!* 🤯\n\n@${jid.split('@')[0]}, ¡has acertado al empate! Una jugada maestra.`;
-                finalMessage = `✅ ¡Premio mayor! Se han añadido *${winnings} 💵* a tu cartera.\n\nGracias por jugar en el Casino RaveHub.`;
+                resultMessage = `🤯 *¡EMPATE PERFECTO!* 🤯\n\n¡Felicidades, @${jid.split('@')[0]}! Tu predicción fue correcta.`;
+                finalMessage = `💰 ¡Ganaste un premio de $*${winnings} 💵*!`;
             } else {
-                user.economy.wallet += session.bet; // Devolver la apuesta
-                resultMessage = `😐 *¡ES UN EMPATE!* 😐\n\n@${jid.split('@')[0]}, las cartas son idénticas. Ni ganas, ni pierdes.`;
-                finalMessage = `✅ Se ha devuelto tu apuesta de *${session.bet} 💵* a tu cartera.\n\nGracias por jugar en el Casino RaveHub.`;
+                resultMessage = `😢 *NO HUBO EMPATE* 😢\n\n@${jid.split('@')[0]}, las cartas no coincidieron.`;
+                finalMessage = `❌ Perdiste tu apuesta de $*${session.bet} 💵*.`;
             }
         }
-        // CASO 2: NO HAY EMPATE
+        // CASO 2: El usuario apostó a 'izquierda' o 'derecha'
         else {
-            if (messageText === 'empate') {
-                // Apostó a empate pero no ocurrió
-                resultMessage = `😢 *¡NO HUBO EMPATE!* 😢\n\n@${jid.split('@')[0]}, apostaste todo al empate, pero las cartas no fueron iguales.`;
-                finalMessage = `❌ Has perdido tu apuesta de *${session.bet} 💵*.\n\nGracias por jugar en el Casino RaveHub.`;
-            } else {
-                // El usuario eligió Izquierda o Derecha
-                const playerCard = messageText === 'izquierda' ? leftCard : rightCard;
-                const houseCard = messageText === 'izquierda' ? rightCard : leftCard;
-                const userWon = playerCard.value > houseCard.value;
+            const playerChoice = messageText;
+            const playerCard = playerChoice === 'izquierda' ? leftCard : rightCard;
+            const houseCard = playerChoice === 'izquierda' ? rightCard : leftCard;
+            const playerCardName = playerChoice === 'izquierda' ? leftCardName : rightCardName;
+            const houseCardName = playerChoice === 'izquierda' ? rightCardName : leftCardName;
 
-                if (userWon) {
-                    // Ganó la apuesta a Izquierda/Derecha
-                    const winnings = session.bet * 2;
-                    user.economy.wallet += winnings;
-                    resultMessage = `🎉 *¡GANASTE!* 🎉\n\n@${jid.split('@')[0]}, tu carta fue la más alta. ¡Felicidades!`;
-                    finalMessage = `✅ Se han añadido *${winnings} 💵* a tu cartera.\n\nGracias por jugar en el Casino RaveHub.`;
-                } else {
-                    // Perdió la apuesta a Izquierda/Derecha
-                    resultMessage = `😢 *¡PERDISTE!* 😢\n\n@${jid.split('@')[0]}, la carta de la casa fue superior. Más suerte para la próxima.`;
-                    finalMessage = `❌ Has perdido tu apuesta de *${session.bet} 💵*.\n\nGracias por jugar en el Casino RaveHub.`;
-                }
+            await sock.sendMessage(chatId, { text: `Tu carta (${playerChoice}) es... 🎴` });
+            await delay(2500);
+            await sock.sendMessage(chatId, { text: `> Tuya: ${playerCardName}` });
+            await delay(2000);
+            await sock.sendMessage(chatId, { text: `La carta de la casa es... 🤔` });
+            await delay(3000);
+            await sock.sendMessage(chatId, { text: `> Casa: ${houseCardName}` });
+            await delay(2000);
+
+            if (playerCard.value > houseCard.value) {
+                const winnings = session.bet * 2;
+                user.economy.wallet += winnings;
+                resultMessage = `🎉 *¡GANASTE!* 🎉\n\n¡Tu carta es más alta, @${jid.split('@')[0]}!`;
+                finalMessage = `💰 ¡Te llevas $*${winnings} 💵*!`;
+            } else if (playerCard.value < houseCard.value) {
+                resultMessage = `😢 *¡PERDISTE!* 😢\n\nLa carta de la casa es superior, @${jid.split('@')[0]}.`;
+                finalMessage = `❌ Perdiste tu apuesta de *${session.bet} 💵*.`;
+            } else { // Empate inesperado
+                user.economy.wallet += session.bet; // Devolver apuesta
+                resultMessage = `😐 *¡ES UN EMPATE!* 😐\n\nLas cartas son idénticas, @${jid.split('@')[0]}.`;
+                finalMessage = `✅ Se te devuelve tu apuesta de $*${session.bet} 💵*.`;
             }
         }
 
-        // Enviar mensajes de resultado
+        // Enviar mensajes de resultado final
         await sock.sendMessage(chatId, { text: resultMessage, mentions: [jid] });
-        await delay(2000);
-        await sock.sendMessage(chatId, { text: finalMessage, mentions: [jid] });
+        await delay(1500);
+        await sock.sendMessage(chatId, { text: `${finalMessage}\n\nGracias por jugar en el Casino RaveHub.`, mentions: [jid] });
 
         await user.save();
         endGameSession(jid); // Finalizar la sesión
