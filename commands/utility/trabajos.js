@@ -9,6 +9,22 @@ module.exports = {
     const senderJid = message.key.participant || message.key.remoteJid;
     const chatId = message.key.remoteJid;
 
+    // Verificar si el comando se usa en un grupo
+    if (chatId.endsWith('@g.us')) {
+      try {
+        const groupMetadata = await sock.groupMetadata(chatId);
+        const sender = groupMetadata.participants.find(p => p.id === senderJid);
+
+        // Si el que envía no es admin o superadmin, no permitir el comando
+        if (sender && sender.admin !== 'admin' && sender.admin !== 'superadmin') {
+          return await sock.sendMessage(chatId, { text: '🔒 Este comando solo puede ser utilizado por los administradores del grupo.' });
+        }
+      } catch (error) {
+        console.error('Error al verificar permisos de administrador:', error);
+        return await sock.sendMessage(chatId, { text: '❌ No pude verificar tus permisos. Inténtalo de nuevo.' });
+      }
+    }
+
     try {
       const user = await findOrCreateUser(senderJid, message.pushName);
       const userLevel = user.level;
