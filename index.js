@@ -9,6 +9,11 @@ require('dotenv').config();
 let sock;
 let firstConnection = true;
 
+const loadCommands = require('./handlers/commandHandler');
+
+// Cargar todos los comandos y sus alias
+const commands = loadCommands();
+
 async function connectToWhatsApp() {
     const { state, saveCreds } = await useMultiFileAuthState('sessions');
 
@@ -34,7 +39,6 @@ async function connectToWhatsApp() {
         } else if (connection === 'open') {
             console.log('Conexión abierta');
             if (firstConnection) {
-                const commands = require('./handlers/commandHandler')(sock);
                 let menu = `╭───≽ *BOT CONECTADO* ≼───╮
 │
 `;

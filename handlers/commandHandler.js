@@ -12,7 +12,9 @@ module.exports = () => {
         const commandFiles = fs.readdirSync(path.join(__dirname, '..', 'commands', folder)).filter(file => file.endsWith('.js'));
         for (const file of commandFiles) {
             const command = require(`../commands/${folder}/${file}`);
-            commands.set(command.name, command);
+            if (command.name) {
+                commands.set(command.name, command);
+            }
             if (command.aliases && Array.isArray(command.aliases)) {
                 command.aliases.forEach(alias => {
                     commands.set(alias, command);

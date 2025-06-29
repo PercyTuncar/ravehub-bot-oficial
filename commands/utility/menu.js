@@ -1,77 +1,40 @@
+const fs = require('fs');
+const path = require('path');
+
 module.exports = {
     name: 'menu',
     description: 'Muestra el menú de comandos o la información de un comando específico.',
     category: 'utility',
     aliases: ['help', 'commands'],
-    execute(sock, message, args, commands) {
-        const chatId = message.key.remoteJid;
+    async execute(sock, message, args) {
+        const jid = message.key.remoteJid;
 
-        // Si se pide ayuda para un comando específico (.help comando)
-        if (args.length > 0) {
-            const commandName = args[0].toLowerCase();
-            const command = commands.get(commandName) || commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+        const commandPath = path.join(__dirname, '..');
+        const commandFolders = fs.readdirSync(commandPath).filter(folder =>
+            fs.statSync(path.join(commandPath, folder)).isDirectory()
+        );
 
-            if (!command) {
-                return sock.sendMessage(chatId, { text: `🤔 Uhm... no encontré el comando *.${commandName}*. ¿Seguro que lo escribiste bien?` });
+        let menuText = '*🤖 MENÚ DE COMANDOS DE RAVEHUB 🤖*\n\n';
+
+        for (const folder of commandFolders) {
+            menuText += `*╭───「 ${folder.toUpperCase()} 」*\n`;
+            const commandFiles = fs.readdirSync(path.join(commandPath, folder)).filter(file => file.endsWith('.js'));
+
+            for (const file of commandFiles) {
+                const command = require(`../${folder}/${file}`);
+                if (command.name && command.description) {
+                    menuText += `*│* • *${command.name}*\n`;
+                    menuText += `*│*    _${command.description}_\n`;
+                    if (command.usage) {
+                        menuText += `*│*    Uso: \`${command.usage}\`\n`;
+                    }
+                }
             }
-
-            const helpMessage = [
-                `*╭───≽ ℹ️ AYUDA: .${command.name.toUpperCase()} ≼───*`,
-                `*│*`,
-                `*│* 📝 *Descripción:* ${command.description}`,
-            ];
-
-            if (command.aliases && command.aliases.length > 0) {
-                helpMessage.push(`*│* 🔄 *Alias:* ${command.aliases.map(a => `*.${a}*`).join(', ')}`);
-            }
-
-            if (command.usage) {
-                helpMessage.push(`*│* 💡 *Ejemplo de uso:*`);
-                helpMessage.push(`*│*   _${command.usage}_`);
-            } else {
-                helpMessage.push(`*│* 💡 *Ejemplo de uso:* .${command.name}`);
-            }
-
-            helpMessage.push(`*│*`);
-            helpMessage.push(`*╰─────────────────≽*`);
-
-            return sock.sendMessage(chatId, { text: helpMessage.join('\n') });
+            menuText += `*╰────────────*\n\n`;
         }
 
-        // Si no se especifica comando, mostrar el menú completo
-        const uniqueCommands = new Map();
-        commands.forEach(command => {
-            if (!uniqueCommands.has(command.name)) {
-                uniqueCommands.set(command.name, command);
-            }
-        });
+        menuText += `_Para más detalles sobre un comando, usa .help <comando>_`;
 
-        const categories = {};
-        uniqueCommands.forEach(command => {
-            if (!categories[command.category]) {
-                categories[command.category] = [];
-            }
-            categories[command.category].push(command);
-        });
-
-        let menu = `*╭───≽ 🤖 MENÚ DE COMANDOS ≼───*\n*│*\n`;
-
-        for (const category in categories) {
-            const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
-            let categoryIcon = "📁";
-            if (category === "economy") categoryIcon = "💰";
-            if (category === "admin") categoryIcon = "🛠️";
-            if (category === "utility") categoryIcon = "⚙️";
-            if (category === "games") categoryIcon = "🎮";
-
-            menu += `*│* ╭─≽ *${categoryIcon} ${categoryName}*\n`;
-            categories[category].forEach((command) => {
-                menu += `*│* │ • *.${command.name}*\n`;
-            });
-            menu += `*│* ╰─────────────────≽\n*│*\n`;
-        }
-        menu += `*╰─ Usa .help <comando> para más info ─*`;
-
-        sock.sendMessage(message.key.remoteJid, { text: menu });
+        await sock.sendMessage(jid, { text: menuText.trim() });
     },
 };
