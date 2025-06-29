@@ -57,7 +57,7 @@ module.exports = {
         // 3. Construir el menú con el nuevo diseño
         const botName = "RaveHub";
         let menuText = `╭─── ⋅ ⋅ ── ── ⋅ ⋅ ───╮\n`;
-        menuText += `│         *${botName}*         │\n`;
+        menuText += `│           *${botName}*           │\n`;
         menuText += `╰─── ⋅ ⋅ ── ── ⋅ ⋅ ───╯\n\n`;
         menuText += `¡Hola! 👋 Soy tu asistente para todo lo relacionado con el mundo rave. Aquí tienes mis comandos:\n`;
 
