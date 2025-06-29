@@ -59,7 +59,7 @@ module.exports = {
         let menuText = `╭─── ⋅ ⋅ ── ── ⋅ ⋅ ───╮\n`;
         menuText += `│            *${botName}*           │\n`;
         menuText += `╰─── ⋅ ⋅ ── ── ⋅ ⋅ ───╯\n\n`;
-        menuText += `¡Hola! 👋 Soy tu asistente para todo lo relacionado con el mundo rave. Aquí tienes mis comandos:\n`;
+        menuText += `¡Hola! 👋 Aquí tienes mis comandos:\n`;
 
         const categoryEmojis = {
             admin: '👑',
