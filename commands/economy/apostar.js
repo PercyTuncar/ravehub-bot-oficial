@@ -8,7 +8,7 @@ module.exports = {
     name: 'apostar',
     description: 'Inicia un juego de Carta Mayor. Apuesta a Izquierda, Derecha o Empate. Si tu carta es más alta, ganas x2. Si aciertas al empate, ganas x5.',
     usage: '.apostar <cantidad>',
-    category: 'games',
+    category: 'game', // Cambiado de 'economy' a 'game'
     async execute(sock, message, args) {
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;

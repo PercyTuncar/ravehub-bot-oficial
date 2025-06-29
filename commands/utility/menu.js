@@ -24,42 +24,29 @@ module.exports = {
                 console.error('Error al obtener metadatos del grupo:', error);
                 return sock.sendMessage(chatId, { text: '❌ No pude verificar tus permisos en este grupo.' });
             }
+        } else {
+            // Si es un chat privado, se considera admin para ver todos los comandos (excepto los de grupo)
+            isSenderAdmin = true;
         }
 
+        // 2. Cargar todos los comandos y agruparlos por categoría
+        const commandsByCategory = {};
         const commandPath = path.join(__dirname, '..');
         const commandFolders = fs.readdirSync(commandPath).filter(folder =>
             fs.statSync(path.join(commandPath, folder)).isDirectory()
         );
 
-        // 2. Construir el menú dinámicamente
-        let menuText = '🤖 *MENÚ DE RAVEHUB BOT* 🤖\n\n';
-        menuText += 'Estos son los comandos que puedes usar:\n';
-
-        const categoryEmojis = {
-            admin: '👑',
-            economy: '💰',
-            utility: '🛠️',
-            game: '🎮' // Añadido por si hay una categoría de juegos
-        };
-
         for (const folder of commandFolders) {
-            // Omitir la carpeta de admin si el usuario no es admin
-            if (folder.toLowerCase() === 'admin' && !isSenderAdmin) {
-                continue;
-            }
-
             const commandFiles = fs.readdirSync(path.join(commandPath, folder)).filter(file => file.endsWith('.js'));
-            if (commandFiles.length === 0) continue;
-
-            const emoji = categoryEmojis[folder.toLowerCase()] || '🔹';
-            menuText += `\n*${emoji} ${folder.charAt(0).toUpperCase() + folder.slice(1)}*\n`;
-
             for (const file of commandFiles) {
                 try {
                     const command = require(`../${folder}/${file}`);
-                    if (command.name && command.description) {
-                        // Formato compacto: .comando: descripción
-                        menuText += `  • \`.${command.name}\`: _${command.description}_\n`;
+                    if (command.name && command.description && command.category) {
+                        const category = command.category.toLowerCase();
+                        if (!commandsByCategory[category]) {
+                            commandsByCategory[category] = [];
+                        }
+                        commandsByCategory[category].push(command);
                     }
                 } catch (e) {
                     console.error(`Error al cargar el comando ${file}:`, e);
@@ -67,7 +54,42 @@ module.exports = {
             }
         }
 
-        menuText += `\n_Para más detalles sobre un comando específico, usa .help <comando>_`;
+        // 3. Construir el menú con el nuevo diseño
+        const botName = "RaveHub Bot";
+        let menuText = `╭─── ⋅ ⋅ ── ── ⋅ ⋅ ───╮\n`;
+        menuText += `│  *${botName}*  │\n`;
+        menuText += `╰─── ⋅ ⋅ ── ── ⋅ ⋅ ───╯\n\n`;
+        menuText += `¡Hola! 👋 Soy tu asistente para todo lo relacionado con el mundo rave. Aquí tienes mis comandos:\n`;
+
+        const categoryEmojis = {
+            admin: '👑',
+            economy: '💰',
+            utility: '🛠️',
+            game: '🎮'
+        };
+
+        const categoryOrder = ['game', 'economy', 'utility', 'admin'];
+
+        for (const category of categoryOrder) {
+            if (!commandsByCategory[category]) continue;
+
+            // Omitir la categoría de admin si el usuario no es admin
+            if (category === 'admin' && !isSenderAdmin) {
+                continue;
+            }
+
+            const emoji = categoryEmojis[category] || '🔹';
+            const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+            menuText += `\n╭─「 *${emoji} ${categoryName}* 」\n`;
+
+            const commandList = commandsByCategory[category];
+            commandList.forEach(command => {
+                menuText += `│ • \`.${command.name}\`\n`;
+            });
+            menuText += `╰───────────\n`;
+        }
+
+        menuText += `\n_Para ver cómo se usa un comando, escribe .help <comando>_`;
 
         await sock.sendMessage(chatId, { text: menuText.trim() });
     },
