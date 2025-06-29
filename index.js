@@ -10,7 +10,7 @@ require('dotenv').config();
 let sock;
 let firstConnection = true;
 
-// Cargar todos los comandos y sus alias
+// Cargar todos los comandos y sus alias 
 const commands = loadCommands();
 
 async function connectToWhatsApp() {
@@ -80,3 +80,6 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
     process.exit(1);
 });
+
+
+// Haré una prueba de github para asegurarme que todo funciona correctamente
