@@ -1,5 +1,6 @@
 const { getGameSession, getRandomCard, endGameSession } = require('../utils/gameUtils');
 const { findOrCreateUser } = require('../utils/userUtils');
+const GameLog = require('../models/GameLog');
 
 // Helper para pausar la ejecución
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
@@ -52,8 +53,20 @@ async function handleGameMessage(sock, message) {
 
         const user = await findOrCreateUser(jid);
         let finalMessage = '';
+        let logResult = '';
+        let winnings = 0;
 
         // --- Lógica de revelación y resultado ---
+
+        // Define el resultado real del juego (qué lado ganó)
+        let gameOutcome;
+        if (leftCard.value > rightCard.value) {
+            gameOutcome = 'izquierda';
+        } else if (rightCard.value > leftCard.value) {
+            gameOutcome = 'derecha';
+        } else {
+            gameOutcome = 'empate';
+        }
 
         // CASO 1: El usuario apostó a 'empate'
         if (messageText === 'empate') {
@@ -67,11 +80,12 @@ async function handleGameMessage(sock, message) {
             await delay(1500);
 
             if (leftCard.value === rightCard.value) {
-                const winnings = session.bet * 5;
-                user.economy.wallet += winnings;
-                finalMessage = `🤯 *¡EMPATE PERFECTO, @${jid.split('@')[0]}!*\nTu predicción fue correcta.\n\n*Premio:* $ *${winnings} 💵*`;
+                winnings = session.bet * 5;
+                user.economy.wallet += winnings; // Se añade el premio completo
+                finalMessage = `🤯 *¡EMPATE PERFECTO, @${jid.split('@')[0]}!*\nTu predicción fue correcta.\n\n*Premio:* *${winnings} 💵*`;
             } else {
-                finalMessage = `😢 *NO HUBO EMPATE, @${jid.split('@')[0]}!*\nLas cartas no coincidieron.\n\n*Apuesta perdida:* $ *${session.bet} 💵*`;
+                // No se devuelve la apuesta, ya que se perdió
+                finalMessage = `😢 *NO HUBO EMPATE, @${jid.split('@')[0]}!*\nLas cartas no coincidieron.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
             }
         }
         // CASO 2: El usuario apostó a 'izquierda' o 'derecha'
@@ -92,15 +106,27 @@ async function handleGameMessage(sock, message) {
             await delay(1500);
 
             if (playerCard.value > houseCard.value) {
-                const winnings = session.bet * 2;
-                user.economy.wallet += winnings;
-                finalMessage = `🎉 *¡GANASTE, @${jid.split('@')[0]}!*\nTu carta fue la más alta.\n\n*Premio:* $ *${winnings} 💵*`;
+                winnings = session.bet * 2;
+                user.economy.wallet += winnings; // Se añade el premio completo
+                finalMessage = `🎉 *¡GANASTE, @${jid.split('@')[0]}!*\nTu carta fue la más alta.\n\n*Premio:* *${winnings} 💵*`;
             } else if (playerCard.value < houseCard.value) {
-                finalMessage = `😢 *¡PERDISTE, @${jid.split('@')[0]}!*\nLa carta de la casa fue superior.\n\n*Apuesta perdida:* $ *${session.bet} 💵*`;
+                // No se devuelve la apuesta, ya que se perdió
+                finalMessage = `😢 *¡PERDISTE, @${jid.split('@')[0]}!*\nLa carta de la casa fue superior.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
             } else { // Empate inesperado: el jugador no apostó a Empate, por lo tanto pierde.
-                finalMessage = `😐 *¡EMPATE INESPERADO, @${jid.split('@')[0]}!*\nLas cartas fueron idénticas.\n\n*Apuesta perdida:* $ *${session.bet} 💵*`;
+                // No se devuelve la apuesta, ya que se perdió
+                finalMessage = `😐 *¡EMPATE INESPERADO, @${jid.split('@')[0]}!*\nLas cartas fueron idénticas.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
             }
         }
+
+        // Guardar el log del juego
+        const gameLog = new GameLog({
+            gameName: 'carta mayor',
+            result: gameOutcome, // 'izquierda', 'derecha' o 'empate'
+            jid: jid,
+            betAmount: session.bet,
+            winnings: winnings // 0 si pierde, > 0 si gana
+        });
+        await gameLog.save();
 
         // Enviar mensaje de resultado final
         await sock.sendMessage(chatId, { text: `${finalMessage}\n\nGracias por jugar en el Casino RaveHub.`, mentions: [jid] });
