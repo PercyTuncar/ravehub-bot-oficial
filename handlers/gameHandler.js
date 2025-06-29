@@ -51,7 +51,6 @@ async function handleGameMessage(sock, message) {
         const rightCardName = `*${rightCard.rank} de ${rightCard.suit}*`;
 
         const user = await findOrCreateUser(jid);
-        let resultMessage = '';
         let finalMessage = '';
 
         // --- Lógica de revelación y resultado ---
@@ -70,11 +69,9 @@ async function handleGameMessage(sock, message) {
             if (leftCard.value === rightCard.value) {
                 const winnings = session.bet * 5;
                 user.economy.wallet += winnings;
-                resultMessage = `🤯 *¡EMPATE PERFECTO!* 🤯\n\n¡Felicidades, @${jid.split('@')[0]}! Tu predicción fue correcta.`;
-                finalMessage = `💰 ¡Ganaste un premio de $*${winnings} 💵*!`;
+                finalMessage = `🤯 *¡EMPATE PERFECTO!* 🤯\n\n¡Felicidades, @${jid.split('@')[0]}! Tu predicción fue correcta.\n\n💰 ¡Ganaste un premio de *${winnings} 💵*!`;
             } else {
-                resultMessage = `😢 *NO HUBO EMPATE* 😢\n\n@${jid.split('@')[0]}, las cartas no coincidieron.`;
-                finalMessage = `❌ Perdiste tu apuesta de $*${session.bet} 💵*.`;
+                finalMessage = `😢 *NO HUBO EMPATE* 😢\n\n@${jid.split('@')[0]}, las cartas no coincidieron.\n\n❌ Perdiste tu apuesta de *${session.bet} 💵*.`;
             }
         }
         // CASO 2: El usuario apostó a 'izquierda' o 'derecha'
@@ -97,21 +94,15 @@ async function handleGameMessage(sock, message) {
             if (playerCard.value > houseCard.value) {
                 const winnings = session.bet * 2;
                 user.economy.wallet += winnings;
-                resultMessage = `🎉 *¡GANASTE!* 🎉\n\n¡Tu carta es más alta, @${jid.split('@')[0]}!`;
-                finalMessage = `💰 ¡Te llevas $*${winnings} 💵*!`;
+                finalMessage = `🎉 *¡GANASTE!* 🎉\n\n¡Tu carta es más alta, @${jid.split('@')[0]}!\n\n💰 ¡Te llevas *${winnings} 💵*!`;
             } else if (playerCard.value < houseCard.value) {
-                resultMessage = `😢 *¡PERDISTE!* 😢\n\nLa carta de la casa es superior, @${jid.split('@')[0]}.`;
-                finalMessage = `❌ Perdiste tu apuesta de $*${session.bet} 💵*.`;
-            } else { // Empate inesperado
-                user.economy.wallet += session.bet; // Devolver apuesta
-                resultMessage = `😐 *¡ES UN EMPATE!* 😐\n\nLas cartas son idénticas, @${jid.split('@')[0]}.`;
-                finalMessage = `✅ Se te devuelve tu apuesta de $*${session.bet} 💵*.`;
+                finalMessage = `😢 *¡PERDISTE!* 😢\n\nLa carta de la casa es superior, @${jid.split('@')[0]}.\n\n❌ Perdiste tu apuesta de *${session.bet} 💵*.`;
+            } else { // Empate inesperado: el jugador no apostó a Empate, por lo tanto pierde.
+                finalMessage = `😐 *¡ES UN EMPATE!* 😐\n\nLas cartas son idénticas, pero no apostaste a Empate, @${jid.split('@')[0]}.\n\n❌ Perdiste tu apuesta de $*${session.bet} 💵*.`;
             }
         }
 
-        // Enviar mensajes de resultado final
-        await sock.sendMessage(chatId, { text: resultMessage, mentions: [jid] });
-        await delay(1500);
+        // Enviar mensaje de resultado final
         await sock.sendMessage(chatId, { text: `${finalMessage}\n\nGracias por jugar en el Casino RaveHub.`, mentions: [jid] });
 
         await user.save();
