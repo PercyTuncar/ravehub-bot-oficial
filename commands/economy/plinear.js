@@ -2,7 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'plinear',
-    description: 'Transfiere 💵 usando Plin.',
+    description: 'Enviar 💵 usando Plin.',
     usage: '.plinear <monto> @usuario',
     category: 'economy',
     aliases: ['plin'],

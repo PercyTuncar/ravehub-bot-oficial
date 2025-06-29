@@ -2,7 +2,7 @@ const User = require('../../models/User');
 
 module.exports = {
     name: 'deuda',
-    description: 'Muestra tu deuda judicial actual.',
+    description: 'Muestra tu deuda actual.',
     aliases: ['debt'],
     usage: '.deuda',
     category: 'economy',
