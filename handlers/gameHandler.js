@@ -40,7 +40,7 @@ async function handleGameMessage(sock, message) {
             mentions: [jid]
         });
 
-        await delay(3000); // Pausa para el suspenso
+        await delay(2000); // Pausa reducida
 
         // --- Etapa 2: Revelación de cartas y resultado ---
         session.stage = 'REVEALING';
@@ -58,20 +58,20 @@ async function handleGameMessage(sock, message) {
         // CASO 1: El usuario apostó a 'empate'
         if (messageText === 'empate') {
             await sock.sendMessage(chatId, { text: `Revelando la primera carta... 🎴` });
-            await delay(2000);
+            await delay(1500);
             await sock.sendMessage(chatId, { text: `> Carta Izquierda: ${leftCardName}` });
-            await delay(2000);
+            await delay(1500);
             await sock.sendMessage(chatId, { text: `Ahora, la segunda carta... ¿Será igual? 🤔` });
-            await delay(3000);
-            await sock.sendMessage(chatId, { text: `> Carta Derecha: ${rightCardName}` });
             await delay(2000);
+            await sock.sendMessage(chatId, { text: `> Carta Derecha: ${rightCardName}` });
+            await delay(1500);
 
             if (leftCard.value === rightCard.value) {
                 const winnings = session.bet * 5;
                 user.economy.wallet += winnings;
-                finalMessage = `🤯 *¡EMPATE PERFECTO!* 🤯\n\n¡Felicidades, @${jid.split('@')[0]}! Tu predicción fue correcta.\n\n💰 ¡Ganaste un premio de *${winnings} 💵*!`;
+                finalMessage = `🤯 *¡EMPATE PERFECTO, @${jid.split('@')[0]}!*\nTu predicción fue correcta.\n\n*Premio:* *${winnings} 💵*`;
             } else {
-                finalMessage = `😢 *NO HUBO EMPATE* 😢\n\n@${jid.split('@')[0]}, las cartas no coincidieron.\n\n❌ Perdiste tu apuesta de *${session.bet} 💵*.`;
+                finalMessage = `😢 *NO HUBO EMPATE, @${jid.split('@')[0]}!*\nLas cartas no coincidieron.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
             }
         }
         // CASO 2: El usuario apostó a 'izquierda' o 'derecha'
@@ -83,22 +83,22 @@ async function handleGameMessage(sock, message) {
             const houseCardName = playerChoice === 'izquierda' ? rightCardName : leftCardName;
 
             await sock.sendMessage(chatId, { text: `Tu carta (${playerChoice}) es... 🎴` });
-            await delay(2500);
+            await delay(1500);
             await sock.sendMessage(chatId, { text: `> Tuya: ${playerCardName}` });
-            await delay(2000);
+            await delay(1500);
             await sock.sendMessage(chatId, { text: `La carta de la casa es... 🤔` });
-            await delay(3000);
-            await sock.sendMessage(chatId, { text: `> Casa: ${houseCardName}` });
             await delay(2000);
+            await sock.sendMessage(chatId, { text: `> Casa: ${houseCardName}` });
+            await delay(1500);
 
             if (playerCard.value > houseCard.value) {
                 const winnings = session.bet * 2;
                 user.economy.wallet += winnings;
-                finalMessage = `🎉 *¡GANASTE!* 🎉\n\n¡Tu carta es más alta, @${jid.split('@')[0]}!\n\n💰 ¡Te llevas *${winnings} 💵*!`;
+                finalMessage = `🎉 *¡GANASTE, @${jid.split('@')[0]}!*\nTu carta fue la más alta.\n\n*Premio:* *${winnings} 💵*`;
             } else if (playerCard.value < houseCard.value) {
-                finalMessage = `😢 *¡PERDISTE!* 😢\n\nLa carta de la casa es superior, @${jid.split('@')[0]}.\n\n❌ Perdiste tu apuesta de *${session.bet} 💵*.`;
+                finalMessage = `😢 *¡PERDISTE, @${jid.split('@')[0]}!*\nLa carta de la casa fue superior.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
             } else { // Empate inesperado: el jugador no apostó a Empate, por lo tanto pierde.
-                finalMessage = `😐 *¡ES UN EMPATE!* 😐\n\nLas cartas son idénticas, pero no apostaste a Empate, @${jid.split('@')[0]}.\n\n❌ Perdiste tu apuesta de $*${session.bet} 💵*.`;
+                finalMessage = `😐 *¡EMPATE INESPERADO, @${jid.split('@')[0]}!*\nLas cartas fueron idénticas.\n\n*Apuesta perdida:* *${session.bet} 💵*`;
             }
         }
 
