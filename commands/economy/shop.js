@@ -121,7 +121,8 @@ const shopItems = [
 
 module.exports = {
   name: "shop",
-  description: "Muestra la tienda de items.",
+  description: "Ver tienda de ítems.",
+  aliases: ["tienda"],
   usage: ".shop",
   category: "economy",
   async execute(sock, message) {

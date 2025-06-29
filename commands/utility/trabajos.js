@@ -3,8 +3,10 @@ const { jobsByLevel, getLevelName, allJobs } = require('../../utils/levels');
 
 module.exports = {
   name: 'trabajos',
-  description: 'Muestra la lista de trabajos disponibles por nivel.',
+  description: 'Ver lista de trabajos.',
   aliases: ['jobs', 'joblist'],
+  usage: '.trabajos',
+  category: 'utility',
   async execute(sock, message) {
     const senderJid = message.key.participant || message.key.remoteJid;
     const chatId = message.key.remoteJid;

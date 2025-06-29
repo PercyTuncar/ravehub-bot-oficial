@@ -2,10 +2,10 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'deposit',
-    description: 'Deposita dinero de tu cartera a tu banco.',
+    description: 'Depositar dinero.',
     usage: '.deposit <cantidad>',
     category: 'economy',
-    aliases: ['depositar', 'bank'],
+    aliases: ['dep'],
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;

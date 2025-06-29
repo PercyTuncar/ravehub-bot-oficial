@@ -6,8 +6,9 @@ const MAX_BET = 5000;
 
 module.exports = {
     name: 'apostar',
-    description: 'Inicia un juego de Carta Mayor. Apuesta a Izquierda, Derecha o Empate. Si tu carta es más alta, ganas x2. Si aciertas al empate, ganas x5.',
-    usage: '.apostar <cantidad>',
+    description: 'Jugar a la carta mayor.',
+    aliases: ['bet'],
+    usage: '.apostar <cantidad> <opción>',
     category: 'game', // Cambiado de 'economy' a 'game'
     async execute(sock, message, args) {
         const jid = message.key.participant || message.key.remoteJid;

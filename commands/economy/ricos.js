@@ -2,10 +2,10 @@ const User = require('../../models/User');
 
 module.exports = {
     name: 'ricos',
-    description: 'Muestra a los 10 usuarios más ricos.',
+    description: 'Ver top de millonarios.',
     usage: '.ricos',
     category: 'economy',
-    aliases: ['ranking', 'topricos'],
+    aliases: ['top', 'leaderboard'],
     async execute(sock, message) {
         const chatId = message.key.remoteJid;
 

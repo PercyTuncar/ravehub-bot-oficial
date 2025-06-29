@@ -4,7 +4,7 @@ const { getEligibleJobs, xpTable, getLevelName } = require('../../utils/levels')
 
 module.exports = {
     name: 'work',
-    description: 'Trabaja para ganar dinero y subir de nivel.',
+    description: 'Ganar dinero y XP.',
     usage: '.work',
     category: 'economy',
     async execute(sock, message) {

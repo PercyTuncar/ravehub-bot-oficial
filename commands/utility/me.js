@@ -3,7 +3,8 @@ const { getLevelName, xpTable } = require('../../utils/levels');
 
 module.exports = {
     name: 'me',
-    description: 'Muestra tu perfil de usuario con tu economía e inventario.',
+    description: 'Ver tu perfil y stats.',
+    aliases: ['profile', 'yo'],
     usage: '.me',
     category: 'utility',
     async execute(sock, message) {

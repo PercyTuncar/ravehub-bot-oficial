@@ -7,7 +7,8 @@ const FAILURE_FINE = 150; // Multa fija por fallar el robo
 
 module.exports = {
     name: 'rob',
-    description: 'Intenta robar dinero de la cartera de otro usuario. ¡Alto riesgo, alta recompensa!',
+    description: 'Robar a un usuario.',
+    aliases: ['robar'],
     usage: '.rob @usuario',
     category: 'economy',
     async execute(sock, message, args) {

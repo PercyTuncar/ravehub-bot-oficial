@@ -2,7 +2,8 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'transfer',
-    description: 'Transfiere dinero de tu cartera a otro usuario.',
+    description: 'Transferir a usuario.',
+    aliases: ['pay', 'pagar'],
     usage: '.transfer <monto> @usuario',
     category: 'economy',
     async execute(sock, message, args) {

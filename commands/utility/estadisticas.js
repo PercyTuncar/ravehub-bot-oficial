@@ -3,8 +3,8 @@ const moment = require('moment');
 
 module.exports = {
     name: 'estadisticas',
-    aliases: ['estadísticas'],
-    description: 'Muestra las estadísticas de un juego en las últimas 24 horas.',
+    description: 'Ver stats de juegos.',
+    aliases: ['stats', 'estadísticas'],
     usage: '.estadisticas <nombre del juego>',
     category: 'utility',
     async execute(sock, message, args) {

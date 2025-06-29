@@ -2,7 +2,8 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'balance',
-    description: 'Muestra tu balance de economía.',
+    description: 'Ver tu saldo actual.',
+    aliases: ['bal', 'saldo'],
     usage: '.balance',
     category: 'economy',
     async execute(sock, message) {

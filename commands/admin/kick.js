@@ -2,7 +2,9 @@ const { sock } = require('../../index');
 
 module.exports = {
     name: 'kick',
-    description: 'Expulsa a un usuario de un grupo.',
+    description: 'Expulsar a un miembro.',
+    aliases: ['ban', 'expulsar'],
+    usage: '.kick @usuario',
     category: 'admin',
     async execute(sock, message, args) {
         const chatId = message.key.remoteJid;

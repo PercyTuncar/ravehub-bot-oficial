@@ -2,7 +2,8 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'give',
-    description: 'Regala uno o más items de tu inventario a otro usuario.',
+    description: 'Dar dinero a usuario.',
+    aliases: ['dar'],
     usage: '.give @usuario <cantidad> <nombre del item>',
     category: 'economy',
     async execute(sock, message, args) {

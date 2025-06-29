@@ -3,6 +3,8 @@ const User = require('../../models/User');
 module.exports = {
     name: 'deuda',
     description: 'Muestra tu deuda judicial actual.',
+    aliases: ['debt'],
+    usage: '.deuda',
     category: 'economy',
     async execute(sock, message) {
         const senderJid = message.key.participant || message.key.remoteJid;

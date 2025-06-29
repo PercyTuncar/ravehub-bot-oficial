@@ -3,7 +3,7 @@ const path = require('path');
 
 module.exports = {
     name: 'menu',
-    description: 'Muestra los comandos disponibles según tus permisos.',
+    description: 'Ver menú de comandos.',
     category: 'utility',
     aliases: ['help', 'commands'],
     usage: '.menu',
@@ -84,7 +84,8 @@ module.exports = {
 
             const commandList = commandsByCategory[category];
             commandList.forEach(command => {
-                menuText += `│ • \`.${command.name}\`\n`;
+                // Añadimos la descripción del comando para más claridad
+                menuText += `│ • \`.${command.name}\`: _${command.description}_\n`;
             });
             menuText += `╰───────────\n`;
         }
