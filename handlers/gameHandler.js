@@ -14,7 +14,9 @@ async function handleGameMessage(sock, message) {
         return false;
     }
 
-    const messageText = (message.message?.conversation || message.message?.extendedTextMessage?.text || '').toLowerCase().trim();
+    // Tomar solo la primera palabra del mensaje para evitar errores con respuestas de varias líneas.
+    const rawMessage = (message.message?.conversation || message.message?.extendedTextMessage?.text || '');
+    const messageText = rawMessage.toLowerCase().trim().split(/\s+/)[0];
 
     // --- Etapa 1: El usuario elige un lado ---
     if (session.stage === 'CHOOSING_SIDE') {
