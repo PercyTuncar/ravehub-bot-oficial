@@ -3,17 +3,17 @@ const { createLoanSession, getLoanSession } = require('../../handlers/loanSessio
 const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
-    name: 'prestamo',
-    description: 'Solicitar un préstamo a otro usuario.',
-    aliases: ['loan'],
-    usage: '.prestamo <monto> @usuario',
+    name: 'prestame',
+    description: 'Solicita un préstamo 💵.',
+    aliases: ['loan', 'prestamo'],
+    usage: '.prestame <monto> @usuario',
     category: 'economy',
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
         if (args.length < 2 || !message.message.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-            return sock.sendMessage(chatId, { text: 'Debes especificar un monto y mencionar a un usuario. Ejemplo: .prestamo 500 @usuario' });
+            return sock.sendMessage(chatId, { text: 'Debes especificar un monto y mencionar a un usuario. Ejemplo: .prestame 500 @usuario' });
         }
 
         const amount = parseInt(args[0]);
