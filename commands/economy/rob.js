@@ -3,7 +3,7 @@ const { handleDebtPayment } = require('../../utils/debtManager');
 const User = require('../../models/User');
 const { getCurrency } = require('../../utils/groupUtils');
 
-const COOLDOWN_MINUTES = 15; // Cooldown aumentado
+const COOLDOWN_MINUTES = 5; // Cooldown reducido a 5 minutos
 
 module.exports = {
     name: 'rob',
