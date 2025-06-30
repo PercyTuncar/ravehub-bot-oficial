@@ -31,7 +31,7 @@ module.exports = {
     usage: '.setpais <país>',
     category: 'admin',
     async execute(sock, message, args) {
-        const senderJid = message.key.participant || message.key.remoteJid;
+        const senderJid = message.key.fromMe ? sock.user.id.split(':')[0] + '@s.whatsapp.net' : (message.key.participant || message.key.remoteJid);
         const chatId = message.key.remoteJid;
 
         // Check if the sender is the owner
