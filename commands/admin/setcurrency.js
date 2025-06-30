@@ -18,7 +18,7 @@ const countryCurrencies = {
     'nicaragua': { name: 'Córdoba', symbol: 'C$' },
     'panamá': { name: 'Balboa / Dólar estadounidense', symbol: 'B/.' },
     'paraguay': { name: 'Guaraní', symbol: '₲' },
-    'perú': { name: 'Sol peruano', symbol: 'S/' },
+    'perú': { name: 'Sol peruano', symbol: 's/ ' },
     'puerto rico': { name: 'Dólar estadounidense', symbol: '$' },
     'uruguay': { name: 'Peso uruguayo', symbol: '$U' },
     'venezuela': { name: 'Bolívar', symbol: 'Bs' },
