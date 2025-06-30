@@ -25,12 +25,17 @@ module.exports = (sock) => {
         }
 
         // --- Loan Response Handler ---
-        const loanHandled = await handleLoanResponse(sock, message);
-        if (loanHandled) {
-            return;
+        const messageContentRaw = message.message.conversation || message.message.extendedTextMessage?.text || '';
+        const isLoanResponseWord = ['si', 'sí', 'sì', 'no'].includes(messageContentRaw.toLowerCase().trim());
+
+        if (isLoanResponseWord) {
+            const loanHandled = await handleLoanResponse(sock, message);
+            if (loanHandled) {
+                return; // Stop processing if it was a valid loan response
+            }
         }
 
-        // Check for invalid loan responses
+        // Check for invalid loan responses (user has a pending loan but didn't say si/no)
         const User = require('../models/User');
         const sender = await User.findOne({ 
             jid: jid, 
@@ -38,17 +43,13 @@ module.exports = (sock) => {
             'pendingLoan.expiresAt': { $gt: new Date() }
         });
 
-        if (sender) {
-            const messageContentRaw = message.message.conversation || message.message.extendedTextMessage?.text || '';
-            if (messageContentRaw.trim() !== '') { // Only send if there's actual text
-                 await sock.sendMessage(message.key.remoteJid, { 
-                    text: `Hey @${sender.name}, tienes una solicitud de préstamo pendiente. Responde con "si" o "no".`,
-                    mentions: [jid]
-                });
-                return; // Stop further processing
-            }
+        if (sender && !isLoanResponseWord && messageContentRaw.trim() !== '') {
+            await sock.sendMessage(message.key.remoteJid, { 
+                text: `Hey @${sender.name}, tienes una solicitud de préstamo pendiente. Responde con "si" o "no".`,
+                mentions: [jid]
+            });
+            return; // Stop further processing
         }
-
 
         const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';
         console.log('Contenido del mensaje extraído:', messageContent);
