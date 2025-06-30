@@ -19,7 +19,7 @@ async function handleLoanResponse(sock, message) {
     });
 
     // If the sender is not a lender with an active pending loan, ignore.
-    if (!lender) {
+    if (!lender || !lender.pendingLoan) {
         return false;
     }
 
@@ -31,11 +31,14 @@ async function handleLoanResponse(sock, message) {
         return false; // This condition is technically not needed anymore but kept for clarity
     }
 
-    const { borrowerJid, amount } = lender.pendingLoan;
+    const { borrowerJid, amount, messageId } = lender.pendingLoan;
     
-    // Clear pending loan immediately to prevent double processing
-    lender.pendingLoan = null;
-    await lender.save();
+    // Double-check if the loan is still active before processing
+    if (!borrowerJid || new Date() > new Date(lender.pendingLoan.expiresAt)) {
+        lender.pendingLoan = null; // Clean up expired/invalid loan
+        await lender.save();
+        return false; // Expired or invalid
+    }
 
     const borrower = await findOrCreateUser(borrowerJid);
 
@@ -84,6 +87,10 @@ async function handleLoanResponse(sock, message) {
         });
     }
    
+    // Clear pending loan only after all operations are successful or rejection is sent
+    lender.pendingLoan = null;
+    await lender.save();
+
     return true; // Message was handled
 }
 
