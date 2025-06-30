@@ -21,7 +21,7 @@ module.exports = {
             await user.populate({ 
                 path: 'debts', 
                 populate: { path: 'lender', select: 'name jid groupId' } 
-            }).execPopulate();
+            });
 
             // Filtrar deudas solo del grupo actual
             const groupDebts = user.debts.filter(debt => debt.groupId === chatId);
