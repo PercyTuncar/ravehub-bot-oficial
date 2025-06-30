@@ -11,7 +11,8 @@ const levelNames = [
   { name: 'Nivel King de Kines', emoji: '🔥👑💰🦁💵💵💵' },
 ];
 
-const xpTable = [0, 500, 1000, 1800, 3000, 4500, 6300, 8400, 10800, 13500];
+// Dificultad aumentada: se requiere mucho más XP para cada nivel
+const xpTable = [0, 1000, 2500, 5000, 9000, 15000, 22000, 30000, 40000, 52000];
 
 const jobsByLevel = {
   1: [
