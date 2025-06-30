@@ -48,7 +48,7 @@ module.exports = {
                 const timeLeft = sender.cooldowns.rob.getTime() - now.getTime();
                 const minutes = Math.floor(timeLeft / (1000 * 60));
                 const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                return sock.sendMessage(chatId, { text: `⏳ Debes esperar *${minutes}m y ${seconds}s* para volver a intentar un robo.`, mentions: [senderJid] });
+                return sock.sendMessage(chatId, { text: `⏳ @${senderJid.split('@')[0]}, debes esperar *${minutes}m y ${seconds}s* para volver a intentar un robo.`, mentions: [senderJid] });
             }
 
             // --- Verificación de Deuda Límite ---
