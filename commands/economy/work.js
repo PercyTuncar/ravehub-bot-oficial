@@ -52,31 +52,36 @@ module.exports = {
             user.economy.wallet += netGain;
             user.xp += xpGained;
 
-            // Lógica de subida de nivel
-            // (Esta parte se puede mover a una función en userUtils.js si se vuelve compleja)
-            let levelUpMessage = '';
-            const currentLevelXp = xpTable[user.level - 1] || 0;
+            // Guardar el cooldown y el estado del usuario ANTES de enviar mensajes
+            user.cooldowns.work = new Date(new Date().getTime() + job.cooldown * 60 * 1000);
+            await user.save();
+
+            // Mensaje principal del trabajo
+            let workResponse = `*╭─── 💼 TRABAJO ───╮*\n\n  *Puesto:* ${job.name}\n  _\"${job.description}\"_\n\n  *Recompensas para @${senderJid.split('@')[0]}:*\n  > • *Salario:* ${earnings} 💵\n  > • *Experiencia:* +${xpGained} XP\n\n*╰─────────────╯*`;
+
+            if (debtMessage) {
+                workResponse += `\n\n${debtMessage}`;
+            }
+
+            await sock.sendMessage(chatId, { 
+                text: workResponse,
+                mentions: [senderJid]
+            });
+
+            // Lógica de subida de nivel y mensaje separado
             const nextLevelXp = xpTable[user.level] || Infinity;
             if (user.xp >= nextLevelXp) {
                 user.level++;
                 const newLevelName = getLevelName(user.level);
-                levelUpMessage = `\n\n🎉 ¡Felicidades! Has subido al ${newLevelName}.`;
+                await user.save(); // Guardar el nuevo nivel
+
+                const levelUpMessage = `*╭─── 🌟 ¡NIVEL ALCANZADO! 🌟 ───*\n*│*\n*│*   ¡Felicidades, @${senderJid.split('@')[0]}!\n*│*   Has ascendido al nivel:\n*│*\n*│*      *${newLevelName}*\n*│*\n*│*   ¡Sigue así! 🚀\n*│*\n*╰──────────────────────╯*`;
+
+                await sock.sendMessage(chatId, { 
+                    text: levelUpMessage,
+                    mentions: [senderJid]
+                });
             }
-
-            user.cooldowns.work = new Date(new Date().getTime() + job.cooldown * 60 * 1000);
-            await user.save();
-
-            let response = `*╭─── 💼 TRABAJO ───╮*\n\n  *Puesto:* ${job.name}\n  _"${job.description}"_\n\n  *Recompensas para @${senderJid.split('@')[0]}:*\n  > • *Salario: $* ${earnings} 💵\n  > • *Experiencia:* +${xpGained} XP\n\n*╰─────────────╯*`;
-
-            if (debtMessage) {
-                response += `\n\n${debtMessage}`;
-            }
-            response += levelUpMessage;
-
-            await sock.sendMessage(chatId, { 
-                text: response,
-                mentions: [senderJid]
-            });
 
         } catch (error) {
             console.error('Error en el comando work:', error);
