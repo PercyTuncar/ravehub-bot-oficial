@@ -40,7 +40,7 @@ module.exports = {
             }
 
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cuenta de banco para yapear. Saldo actual: ${currency} ${sender.economy.bank.toLocaleString()}` });
+                return sock.sendMessage(chatId, { text: `🚫 No tienes suficiente dinero en tu banco para yapear.\n\nSaldo actual: *${currency} ${sender.economy.bank.toLocaleString()}*` });
             }
 
             let debtPaymentMessage = '';
