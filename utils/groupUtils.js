@@ -1,24 +1,26 @@
 const GroupSettings = require('../models/GroupSettings');
 
-const currencyCache = new Map();
+const groupCurrencyCache = new Map();
+const DEFAULT_CURRENCY = '💵';
 
+/**
+ * Retrieves the currency symbol for a given group, with caching.
+ * @param {string} groupId The JID of the group.
+ * @returns {Promise<string>}
+ */
 async function getCurrency(groupId) {
-    if (currencyCache.has(groupId)) {
-        return currencyCache.get(groupId);
-    }
-
-    if (!groupId || !groupId.endsWith('@g.us')) {
-        return '💵'; // Default for DMs or invalid groupId
+    if (groupCurrencyCache.has(groupId)) {
+        return groupCurrencyCache.get(groupId);
     }
 
     try {
         const settings = await GroupSettings.findOne({ groupId });
-        const symbol = settings?.currencySymbol || '💵';
-        currencyCache.set(groupId, symbol);
-        return symbol;
+        const currency = settings ? settings.currencySymbol : DEFAULT_CURRENCY;
+        groupCurrencyCache.set(groupId, currency);
+        return currency;
     } catch (error) {
-        console.error('Error fetching currency symbol:', error);
-        return '💵'; // Fallback to default
+        console.error("Error fetching group currency:", error);
+        return DEFAULT_CURRENCY;
     }
 }
 
