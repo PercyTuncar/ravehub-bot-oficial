@@ -34,7 +34,7 @@ module.exports = {
 
             // Corrección: Usar la función centralizada para manejar la deuda.
             if (user.judicialDebt > 0) {
-                const { remainingAmount, debtMessage, levelChangeMessage } = handleDebtPayment(user, price);
+                const { remainingAmount, debtMessage, levelChangeMessage } = handleDebtPayment(user, price, currency);
                 
                 if (debtMessage) {
                     await sock.sendMessage(chatId, { text: debtMessage + (levelChangeMessage ? `\n${levelChangeMessage}` : '') });

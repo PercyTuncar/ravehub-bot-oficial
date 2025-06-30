@@ -102,12 +102,24 @@ module.exports = {
                 const successMessage = `*💰 ¡GOLPE MAESTRO! 💰*\n\nCon sigilo y audacia, has vaciado los bolsillos de @${target.name}, llevándote *${currency}${amountToSteal}*.\n\n*Ganancia neta (después de deudas):* +${currency}${netGain}\n*Tu cartera ahora tiene:* ${currency}${sender.economy.wallet}`;
                 await sock.sendMessage(chatId, { text: successMessage, mentions: [senderJid, mentionedJid] });
 
-            } else { // 35% de Fallo
-                sender.judicialDebt += FAILURE_FINE;
+            } else { // 35% de Fracaso
+                // Multa por fallar el robo
+                let fine = FAILURE_FINE;
+                let fineMsg = '';
+                if (sender.economy.bank >= fine) {
+                    sender.economy.bank -= fine;
+                    fineMsg = `🚨 ¡Has sido multado por fallar el robo! Se descontaron *${currency} ${FAILURE_FINE.toLocaleString()}* de tu banco.`;
+                } else {
+                    // No tiene fondos suficientes en el banco: registrar deuda judicial pendiente
+                    const deudaPendiente = fine - sender.economy.bank;
+                    sender.economy.bank = 0;
+                    sender.judicialDebt = (sender.judicialDebt || 0) + deudaPendiente;
+                    fineMsg = `⚖️ No tenías fondos suficientes en el banco para pagar la multa. Se ha registrado una deuda judicial pendiente de *${currency} ${deudaPendiente.toLocaleString()}* que será cobrada automáticamente cuando deposites en el banco.`;
+                }
                 await sender.save();
-
-                const failureMessage = `*👮‍♂️ ¡ATRAPADO INFRAGANTI! 👮‍♂️*\n\nTu torpe intento de robo ha fallado miserablemente. La justicia te ha impuesto una multa ejemplar.\n\n*Multa añadida a tu deuda:* +${currency}${FAILURE_FINE}\n*Deuda judicial total:* ${currency}${sender.judicialDebt}`;
-                return sock.sendMessage(chatId, { text: failureMessage, mentions: [senderJid, mentionedJid] });
+                await sock.sendMessage(chatId, { text: fineMsg, mentions: [senderJid] });
+                await target.save();
+                return;
             }
 
         } catch (error) {

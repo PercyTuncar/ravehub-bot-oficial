@@ -40,8 +40,10 @@ module.exports = {
             if (judicialDebtors.length > 0) {
                 report += '*--- Deudas Judiciales ---*\n';
                 judicialDebtors.forEach(user => {
-                    report += `⚠️ @${user.jid.split('@')[0]} tiene una deuda judicial por robo de *${currency} ${user.judicialDebt.toLocaleString()}* ⚖️\n`;
-                    mentions.push(user.jid);
+                    if (user.judicialDebt > 0) {
+                        report += `⚠️ @${user.jid.split('@')[0]} tiene una deuda judicial por robo de *${currency} ${user.judicialDebt.toLocaleString()}* ⚖️\n`;
+                        mentions.push(user.jid);
+                    }
                 });
             }
 

@@ -1,5 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
+const { handleDebtPayment } = require('../../utils/debtManager');
 
 module.exports = {
     name: 'deposit',
@@ -43,10 +44,21 @@ module.exports = {
             user.economy.wallet -= amountToDeposit;
             user.economy.bank += amountToDeposit;
 
+            // Cobro automático de deuda judicial si hay fondos en el banco
+            let autoDebtMsg = '';
+            if (user.judicialDebt > 0 && user.economy.bank > 0) {
+                const { remainingAmount, debtMessage, levelChangeMessage } = handleDebtPayment(user, user.economy.bank, currency);
+                user.economy.bank = remainingAmount;
+                if (debtMessage) {
+                    autoDebtMsg = `\n\n${debtMessage}`;
+                    if (levelChangeMessage) autoDebtMsg += `\n${levelChangeMessage}`;
+                }
+            }
+
             await user.save();
 
             const responseText = 
-`✅ Depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.\n\n*Nuevo Balance:*
+`✅ Depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.${autoDebtMsg}\n\n*Nuevo Balance:*
 > *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()} 🏦`;
 
             await sock.sendMessage(chatId, { 
