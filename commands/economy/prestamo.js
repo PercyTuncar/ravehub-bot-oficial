@@ -33,8 +33,16 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'El usuario al que intentas pedirle un préstamo no está registrado.' });
         }
 
+        // Check for an existing loan request and if it has expired.
         if (lender.pendingLoan && lender.pendingLoan.borrowerJid) {
-            return sock.sendMessage(chatId, { text: `⚠️ @${lender.name} ya tiene una solicitud de préstamo pendiente. Por favor, espera a que la resuelva.`, mentions: [lenderJid] });
+            if (new Date() < new Date(lender.pendingLoan.expiresAt)) {
+                // If the loan has NOT expired, tell the user to wait.
+                return sock.sendMessage(chatId, { text: `⚠️ @${lender.name} ya tiene una solicitud de préstamo pendiente. Por favor, espera a que la resuelva.`, mentions: [lenderJid] });
+            } else {
+                // If the loan HAS expired, clear it before proceeding.
+                lender.pendingLoan = null;
+                await lender.save();
+            }
         }
 
         const loanRequestMessage = `Hola @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de ${amount} 💵.\n\nResponde con \"Si\" para aceptar o \"No\" para rechazar.\n*Tienes 40 segundos para responder.*`;

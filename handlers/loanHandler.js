@@ -8,20 +8,33 @@ async function handleLoanResponse(sock, message) {
     const chatId = message.key.remoteJid;
 
     if (!['si', 'sí', 'sì', 'no'].includes(messageContent)) {
-        return false; // Not a loan response
+        return false; // Not a loan response word
     }
 
-    const lender = await User.findOne({ jid: senderJid, 'pendingLoan.borrowerJid': { $ne: null } });
+    // Find a lender with a pending loan that hasn't expired
+    const lender = await User.findOne({ 
+        jid: senderJid, 
+        'pendingLoan.borrowerJid': { $ne: null },
+        'pendingLoan.expiresAt': { $gt: new Date() }
+    });
 
-    if (!lender || !message.message.extendedTextMessage?.contextInfo?.stanzaId || message.message.extendedTextMessage.contextInfo.stanzaId !== lender.pendingLoan.messageId) {
-        return false; // Not a valid loan response
+    // If the sender is not a lender with an active pending loan, ignore.
+    if (!lender) {
+        return false;
     }
 
-    const borrowerJid = lender.pendingLoan.borrowerJid;
-    const amount = lender.pendingLoan.amount;
+    // A response is valid if it's a direct reply OR a standalone message from the lender.
+    const isDirectReply = message.message.extendedTextMessage?.contextInfo?.stanzaId === lender.pendingLoan.messageId;
+    const isStandaloneMessage = true; // If we found a lender with an active loan, we can treat it as valid.
+
+    if (!isDirectReply && !isStandaloneMessage) {
+        return false; // This condition is technically not needed anymore but kept for clarity
+    }
+
+    const { borrowerJid, amount } = lender.pendingLoan;
     
     // Clear pending loan immediately to prevent double processing
-    lender.pendingLoan = { borrowerJid: null, amount: 0, messageId: null };
+    lender.pendingLoan = null;
     await lender.save();
 
     const borrower = await findOrCreateUser(borrowerJid);
