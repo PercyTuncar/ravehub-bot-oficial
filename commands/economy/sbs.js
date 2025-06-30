@@ -28,7 +28,7 @@ module.exports = {
                 report += '*--- Deudas por Préstamos ---*\n';
                 allDebts.forEach(debt => {
                     if (debt.borrower && debt.lender) {
-                        report += `🔴 @${debt.borrower.name} debe ${debt.amount.toFixed(2)} 💵 a @${debt.lender.name}\n`;
+                        report += `🔴 @${debt.borrower.jid.split('@')[0]} debe ${debt.amount.toFixed(2)} 💵 a @${debt.lender.jid.split('@')[0]}\n`;
                         mentions.push(debt.borrower.jid, debt.lender.jid);
                     }
                 });
@@ -38,7 +38,7 @@ module.exports = {
             if (judicialDebtors.length > 0) {
                 report += '*--- Deudas Judiciales ---*\n';
                 judicialDebtors.forEach(user => {
-                    report += `⚠️ @${user.name} tiene una deuda judicial por robo de ${user.judicialDebt} 💵 ⚖️\n`;
+                    report += `⚠️ @${user.jid.split('@')[0]} tiene una deuda judicial por robo de ${user.judicialDebt} 💵 ⚖️\n`;
                     mentions.push(user.jid);
                 });
             }
