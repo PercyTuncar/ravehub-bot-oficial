@@ -12,13 +12,22 @@ const findOrCreateUser = async (jid, groupId, name = '') => {
     let user = await User.findOne({ jid, groupId });
     if (!user) {
         const userName = name || jid.split('@')[0];
-        user = new User({
-            jid,
-            groupId,
-            name: userName,
-        });
-        await user.save();
-        console.log(`[DB] Nuevo usuario creado en grupo ${groupId}: ${jid}`);
+        try {
+            user = new User({
+                jid,
+                groupId,
+                name: userName,
+            });
+            await user.save();
+            console.log(`[DB] Nuevo usuario creado en grupo ${groupId}: ${jid}`);
+        } catch (err) {
+            // Si ocurre un error de duplicado, buscar el usuario existente
+            if (err.code === 11000) {
+                user = await User.findOne({ jid, groupId });
+            } else {
+                throw err;
+            }
+        }
     }
     return user;
 };
