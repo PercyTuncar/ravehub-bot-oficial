@@ -20,10 +20,13 @@ module.exports = {
 
             await user.populate({ 
                 path: 'debts', 
-                populate: { path: 'lender', select: 'name jid' } 
+                populate: { path: 'lender', select: 'name jid groupId' } 
             }).execPopulate();
 
-            if (!user || (user.debts.length === 0 && user.judicialDebt === 0)) {
+            // Filtrar deudas solo del grupo actual
+            const groupDebts = user.debts.filter(debt => debt.groupId === chatId);
+
+            if (!user || (groupDebts.length === 0 && user.judicialDebt === 0)) {
                 return sock.sendMessage(chatId, { text: '¡Felicidades! No tienes ninguna deuda pendiente.' });
             }
 
@@ -34,8 +37,8 @@ module.exports = {
                 debtMessage += `*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} ${currency} (Por robo)\n`;
             }
 
-            if (user.debts.length > 0) {
-                user.debts.forEach(debt => {
+            if (groupDebts.length > 0) {
+                groupDebts.forEach(debt => {
                     mentions.push(debt.lender.jid);
                     debtMessage += `*│* 💸 *Préstamo:* Debes ${debt.amount.toFixed(2)} ${currency} a @${debt.lender.jid.split('@')[0]}\n`;
                 });

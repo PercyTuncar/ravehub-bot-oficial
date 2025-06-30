@@ -5,7 +5,7 @@ const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'sbs',
-    description: 'Consultar el historial de deudas de todos los usuarios.',
+    description: 'Consultar las deudas.',
     aliases: ['infocorp'],
     usage: '.sbs',
     category: 'economy',

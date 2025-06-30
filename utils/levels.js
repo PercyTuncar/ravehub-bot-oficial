@@ -235,32 +235,32 @@ const jobsByLevel = {
 
 const allJobs = [
     // Nivel 1
-    { name: 'Lector de QR en ingreso', description: '🎟️ Escaneaste los tickets de los ravers emocionados por entrar.', salary: 80, cooldown: 3, level: 1 },
-    { name: 'Staff de limpieza en el festival', description: '🧹 Dejaste impecable el venue después de una noche de locura.', salary: 100, cooldown: 4, level: 1 },
-    { name: 'Coordinador de accesos', description: '🚧 Organizaste las zonas VIP y los flujos de ingreso general.', salary: 70, cooldown: 3, level: 1 },
-    { name: 'Editor de videos post-evento', description: '🎞️ Editaste el aftermovie con los mejores momentos rave.', salary: 60, cooldown: 3, level: 1 },
-    { name: 'Vendedor de merchandising', description: '🛍️ Vendiste pulseras, poleras y banderas a los fans.', salary: 150, cooldown: 6, level: 1 },
-    { name: 'Responsable de guardarropas', description: '🎒 Cuidaste las pertenencias de los asistentes durante el evento.', salary: 180, cooldown: 7, level: 1 },
-    { name: 'Limpiaste las zapatillas de Martin Garrix', description: '👟 Un trabajo sucio pero alguien tenía que hacerlo. ¡Brillan!', salary: 50, cooldown: 2, level: 1 },
-    { name: 'Vendedor ambulante de agua en rave de VASTION', description: '💧 Mantuviste a todos hidratados bajo el sol.', salary: 55, cooldown: 2, level: 1 },
-    { name: 'Recogiste confeti después del set de David Guetta', description: '✨ El brillo es eterno, pero el suelo no se limpia solo.', salary: 65, cooldown: 3, level: 1 },
-    { name: 'Limpiaste el backstage para Tiësto', description: '🧼 Dejaste el área de artistas impecable para la leyenda.', salary: 75, cooldown: 3, level: 1 },
-    { name: 'Guardaste los cables de Armin van Buuren', description: '🔌 Un trabajo crucial para que el trance no se detenga.', salary: 85, cooldown: 4, level: 1 },
-    { name: 'Vendedor de chicles en la cola de Creamfields', description: '🍬 Refrescaste el aliento de los fans más ansiosos.', salary: 45, cooldown: 2, level: 1 },
-    { name: 'Limpiaste los baños VIP de Ultra Music Festival', description: '🚽 Una tarea poco glamorosa pero muy bien pagada.', salary: 110, cooldown: 5, level: 1 },
-    { name: 'Cargaste las maletas de Hardwell en el aeropuerto', description: '🧳 ¡Cuidado con los CDJs! Llevaste el equipo de una estrella.', salary: 90, cooldown: 4, level: 1 },
-    { name: 'Barriste el escenario antes de Steve Aoki', description: '🎂 Preparaste el terreno para el famoso pastelazo.', salary: 95, cooldown: 4, level: 1 },
-    { name: 'Vendiste pulseras LED afuera de DLDK events', description: '💡 Iluminaste la noche de cientos de ravers.', salary: 60, cooldown: 3, level: 1 },
-    { name: 'Limpiaste el auto de Calvin Harris', description: '🚗 Un coche de lujo necesita un cuidado de lujo.', salary: 100, cooldown: 5, level: 1 },
-    { name: 'Guardaste la ropa sucia de Marshmello', description: '🤫 Un secreto que te llevas a la tumba, y una buena paga.', salary: 120, cooldown: 5, level: 1 },
-    { name: 'Vendiste palomitas en el warm-up de Fedde Le Grand', description: '🍿 El snack perfecto para empezar la noche.', salary: 50, cooldown: 2, level: 1 },
-    { name: 'Limpiaste los audífonos de Nicky Romero', description: '🎧 El sonido perfecto depende de una limpieza perfecta.', salary: 130, cooldown: 6, level: 1 },
-    { name: 'Cuidaste el perro de un DJ mientras tocaba', description: '🐶 El mejor amigo del hombre, y del DJ, estuvo en buenas manos.', salary: 100, cooldown: 4, level: 1 },
-    { name: 'Repartiste volantes para una fiesta en la playa', description: '📄 Promocionaste el próximo gran evento bajo el sol.', salary: 40, cooldown: 2, level: 1 },
-    { name: 'Ayudaste a montar el stand de Red Bull', description: '🥤 Te dio alas... y algo de dinero extra.', salary: 70, cooldown: 3, level: 1 },
-    { name: 'Limpiaste los camerinos después de un show', description: '✨ Dejaste todo listo para la siguiente estrella.', salary: 80, cooldown: 4, level: 1 },
-    { name: 'Vendiste helados en un día caluroso de festival', description: '🍦 Fuiste el héroe del día para muchos ravers acalorados.', salary: 65, cooldown: 3, level: 1 },
-    { name: 'Recogiste vasos de plástico para reciclaje', description: '♻️ Ayudaste a que el festival sea un poco más ecológico.', salary: 55, cooldown: 3, level: 1 },
+    { name: 'Lector de QR en ingreso', description: '🎟️ Escaneaste los tickets de los ravers emocionados por entrar.', salary: 80, cooldown: 1, level: 1 },
+    { name: 'Staff de limpieza en el festival', description: '🧹 Dejaste impecable el venue después de una noche de locura.', salary: 100, cooldown: 1, level: 1 },
+    { name: 'Coordinador de accesos', description: '🚧 Organizaste las zonas VIP y los flujos de ingreso general.', salary: 70, cooldown: 1, level: 1 },
+    { name: 'Editor de videos post-evento', description: '🎞️ Editaste el aftermovie con los mejores momentos rave.', salary: 60, cooldown: 1, level: 1 },
+    { name: 'Vendedor de merchandising', description: '🛍️ Vendiste pulseras, poleras y banderas a los fans.', salary: 150, cooldown: 1, level: 1 },
+    { name: 'Responsable de guardarropas', description: '🎒 Cuidaste las pertenencias de los asistentes durante el evento.', salary: 180, cooldown: 1, level: 1 },
+    { name: 'Limpiaste las zapatillas de Martin Garrix', description: '👟 Un trabajo sucio pero alguien tenía que hacerlo. ¡Brillan!', salary: 50, cooldown: 1, level: 1 },
+    { name: 'Vendedor ambulante de agua en rave de VASTION', description: '💧 Mantuviste a todos hidratados bajo el sol.', salary: 55, cooldown: 1, level: 1 },
+    { name: 'Recogiste confeti después del set de David Guetta', description: '✨ El brillo es eterno, pero el suelo no se limpia solo.', salary: 65, cooldown: 1, level: 1 },
+    { name: 'Limpiaste el backstage para Tiësto', description: '🧼 Dejaste el área de artistas impecable para la leyenda.', salary: 75, cooldown: 1, level: 1 },
+    { name: 'Guardaste los cables de Armin van Buuren', description: '🔌 Un trabajo crucial para que el trance no se detenga.', salary: 85, cooldown: 1, level: 1 },
+    { name: 'Vendedor de chicles en la cola de Creamfields', description: '🍬 Refrescaste el aliento de los fans más ansiosos.', salary: 45, cooldown: 1, level: 1 },
+    { name: 'Limpiaste los baños VIP de Ultra Music Festival', description: '🚽 Una tarea poco glamorosa pero muy bien pagada.', salary: 110, cooldown: 1, level: 1 },
+    { name: 'Cargaste las maletas de Hardwell en el aeropuerto', description: '🧳 ¡Cuidado con los CDJs! Llevaste el equipo de una estrella.', salary: 90, cooldown: 1, level: 1 },
+    { name: 'Barriste el escenario antes de Steve Aoki', description: '🎂 Preparaste el terreno para el famoso pastelazo.', salary: 95, cooldown: 1, level: 1 },
+    { name: 'Vendiste pulseras LED afuera de DLDK events', description: '💡 Iluminaste la noche de cientos de ravers.', salary: 60, cooldown: 1, level: 1 },
+    { name: 'Limpiaste el auto de Calvin Harris', description: '🚗 Un coche de lujo necesita un cuidado de lujo.', salary: 100, cooldown: 1, level: 1 },
+    { name: 'Guardaste la ropa sucia de Marshmello', description: '🤫 Un secreto que te llevas a la tumba, y una buena paga.', salary: 120, cooldown: 1, level: 1 },
+    { name: 'Vendiste palomitas en el warm-up de Fedde Le Grand', description: '🍿 El snack perfecto para empezar la noche.', salary: 50, cooldown: 1, level: 1 },
+    { name: 'Limpiaste los audífonos de Nicky Romero', description: '🎧 El sonido perfecto depende de una limpieza perfecta.', salary: 130, cooldown: 1, level: 1 },
+    { name: 'Cuidaste el perro de un DJ mientras tocaba', description: '🐶 El mejor amigo del hombre, y del DJ, estuvo en buenas manos.', salary: 100, cooldown: 1, level: 1 },
+    { name: 'Repartiste volantes para una fiesta en la playa', description: '📄 Promocionaste el próximo gran evento bajo el sol.', salary: 40, cooldown: 1, level: 1 },
+    { name: 'Ayudaste a montar el stand de Red Bull', description: '🥤 Te dio alas... y algo de dinero extra.', salary: 70, cooldown: 1, level: 1 },
+    { name: 'Limpiaste los camerinos después de un show', description: '✨ Dejaste todo listo para la siguiente estrella.', salary: 80, cooldown: 1, level: 1 },
+    { name: 'Vendiste helados en un día caluroso de festival', description: '🍦 Fuiste el héroe del día para muchos ravers acalorados.', salary: 65, cooldown: 1, level: 1 },
+    { name: 'Recogiste vasos de plástico para reciclaje', description: '♻️ Ayudaste a que el festival sea un poco más ecológico.', salary: 55, cooldown: 1, level: 1 },
 
     // Nivel 2
     { name: 'Seguridad de Ultra Perú', description: '🕶️ Aseguraste que todo fluya sin problemas en el ingreso del evento.', salary: 120, cooldown: 5, level: 2 },
@@ -433,11 +433,38 @@ function getLevelName(level) {
 
 function getEligibleJobs(userLevel) {
   if (userLevel >= 10) {
-    return allJobs; // Nivel 10+ tiene acceso a todos los trabajos
+    // Para nivel 10, todos los trabajos con cooldown aleatorio máximo
+    return allJobs.map(job => {
+      let cooldown;
+      if (job.level === 1) cooldown = Math.floor(Math.random() * 5) + 1; // 1-5
+      else if (job.level === 2) cooldown = Math.floor(Math.random() * 5) + 4; // 4-8
+      else if (job.level === 3) cooldown = Math.floor(Math.random() * 8) + 8; // 8-15
+      else if (job.level === 4) cooldown = Math.floor(Math.random() * 8) + 15; // 15-22
+      else if (job.level === 5) cooldown = Math.floor(Math.random() * 9) + 22; // 22-30
+      else if (job.level === 6) cooldown = Math.floor(Math.random() * 10) + 30; // 30-39
+      else if (job.level === 7) cooldown = Math.floor(Math.random() * 11) + 39; // 39-49
+      else if (job.level === 8) cooldown = Math.floor(Math.random() * 12) + 49; // 49-60
+      else if (job.level === 9) cooldown = Math.floor(Math.random() * 13) + 60; // 60-72
+      else cooldown = Math.floor(Math.random() * 14) + 72; // 72-85 para nivel 10+
+      return { ...job, cooldown };
+    });
   }
-
   // Acumula todos los trabajos desde el nivel 1 hasta el nivel del usuario
-  return allJobs.filter(job => job.level <= userLevel);
+  const jobs = allJobs.filter(job => job.level <= userLevel);
+  return jobs.map(job => {
+    let cooldown;
+    if (job.level === 1) cooldown = Math.floor(Math.random() * 5) + 1; // 1-5
+    else if (job.level === 2) cooldown = Math.floor(Math.random() * 5) + 4; // 4-8
+    else if (job.level === 3) cooldown = Math.floor(Math.random() * 8) + 8; // 8-15
+    else if (job.level === 4) cooldown = Math.floor(Math.random() * 8) + 15; // 15-22
+    else if (job.level === 5) cooldown = Math.floor(Math.random() * 9) + 22; // 22-30
+    else if (job.level === 6) cooldown = Math.floor(Math.random() * 10) + 30; // 30-39
+    else if (job.level === 7) cooldown = Math.floor(Math.random() * 11) + 39; // 39-49
+    else if (job.level === 8) cooldown = Math.floor(Math.random() * 12) + 49; // 49-60
+    else if (job.level === 9) cooldown = Math.floor(Math.random() * 13) + 60; // 60-72
+    else cooldown = Math.floor(Math.random() * 14) + 72; // 72-85 para nivel 10+
+    return { ...job, cooldown };
+  });
 }
 
 module.exports = {
