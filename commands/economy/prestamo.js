@@ -45,7 +45,7 @@ module.exports = {
             }
         }
 
-        const loanRequestMessage = `Hola @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de ${amount} 💵.\n\nResponde con \"Si\" para aceptar o \"No\" para rechazar.\n*Tienes 40 segundos para responder.*`;
+        const loanRequestMessage = `Hola @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de ${amount} 💵.\n\nResponde con \"Si\" para aceptar o \"No\" para rechazar.\n*Tienes 30 segundos para responder.*`;
         
         const sentMessage = await sock.sendMessage(chatId, {
             text: loanRequestMessage,
@@ -56,7 +56,7 @@ module.exports = {
             borrowerJid: senderJid,
             amount: amount,
             messageId: sentMessage.key.id,
-            expiresAt: new Date(new Date().getTime() + 40000) // 40 seconds expiry
+            expiresAt: new Date(new Date().getTime() + 30000) // 30 seconds expiry
         };
         await lender.save();
 
@@ -75,6 +75,6 @@ module.exports = {
             } catch (error) {
                 console.error('Error al anular el préstamo por tiempo de espera:', error);
             }
-        }, 40000); // 40 seconds
+        }, 30000); // 30 seconds
     },
 };

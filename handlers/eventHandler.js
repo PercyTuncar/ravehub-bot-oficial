@@ -30,6 +30,26 @@ module.exports = (sock) => {
             return;
         }
 
+        // Check for invalid loan responses
+        const User = require('../models/User');
+        const sender = await User.findOne({ 
+            jid: jid, 
+            'pendingLoan.borrowerJid': { $ne: null },
+            'pendingLoan.expiresAt': { $gt: new Date() }
+        });
+
+        if (sender) {
+            const messageContentRaw = message.message.conversation || message.message.extendedTextMessage?.text || '';
+            if (messageContentRaw.trim() !== '') { // Only send if there's actual text
+                 await sock.sendMessage(message.key.remoteJid, { 
+                    text: `Hey @${sender.name}, tienes una solicitud de préstamo pendiente. Responde con "si" o "no".`,
+                    mentions: [jid]
+                });
+                return; // Stop further processing
+            }
+        }
+
+
         const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';
         console.log('Contenido del mensaje extraído:', messageContent);
 
