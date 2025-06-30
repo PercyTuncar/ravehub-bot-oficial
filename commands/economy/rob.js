@@ -29,11 +29,11 @@ module.exports = {
 
         try {
             // Usar findOrCreateUser para ambos usuarios
-            const sender = await findOrCreateUser(senderJid, message.pushName);
-            let target = await findOrCreateUser(mentionedJid); // Usamos let para poder reasignar
+            const sender = await findOrCreateUser(senderJid, chatId, message.pushName);
+            let target = await findOrCreateUser(mentionedJid, chatId); // Usamos let para poder reasignar
 
             // Forzar la recarga de los datos del objetivo desde la base de datos para asegurar consistencia
-            target = await User.findOne({ jid: mentionedJid });
+            target = await User.findOne({ jid: mentionedJid, groupId: chatId });
 
             if (!target) { // Aunque findOrCreateUser debería crearlo, es una doble verificación.
                  return sock.sendMessage(chatId, { text: '❌ No se pudo encontrar o crear al usuario objetivo.' });
@@ -99,7 +99,8 @@ module.exports = {
                     }
                 }
 
-                const successMessage = `*💰 ¡GOLPE MAESTRO! 💰*\n\nCon sigilo y audacia, has vaciado los bolsillos de @${target.name}, llevándote *${currency}${amountToSteal}*.\n\n*Ganancia neta (después de deudas):* +${currency}${netGain}\n*Tu cartera ahora tiene:* ${currency}${sender.economy.wallet}`;
+                const successMessage = `*💰 ¡GOLPE MAESTRO! 💰*\n\nCon sigilo y audacia, has vaciado los bolsillos de @${target.name}, llevándote *${currency}${amountToSteal}*.` +
+                    `\n\n*Ganancia neta (después de deudas):* +${currency}${netGain}\n*Tu cartera ahora tiene:* ${currency}${sender.economy.wallet}`;
                 await sock.sendMessage(chatId, { text: successMessage, mentions: [senderJid, mentionedJid] });
 
             } else { // 35% de Fracaso
@@ -108,13 +109,18 @@ module.exports = {
                 let fineMsg = '';
                 if (sender.economy.bank >= fine) {
                     sender.economy.bank -= fine;
+                    console.log(`[JUDICIAL] Multa cobrada automáticamente de banco a ${sender.jid} (${sender.name}) en grupo ${chatId}: ${fine}`);
                     fineMsg = `🚨 ¡Has sido multado por fallar el robo! Se descontaron *${currency} ${FAILURE_FINE.toLocaleString()}* de tu banco.`;
                 } else {
                     // No tiene fondos suficientes en el banco: registrar deuda judicial pendiente
                     const deudaPendiente = fine - sender.economy.bank;
+                    if(sender.economy.bank > 0) {
+                        console.log(`[JUDICIAL] Multa parcial cobrada de banco a ${sender.jid} (${sender.name}) en grupo ${chatId}: ${sender.economy.bank}`);
+                    }
                     sender.economy.bank = 0;
                     sender.judicialDebt = (sender.judicialDebt || 0) + deudaPendiente;
-                    fineMsg = `⚖️ No tenías fondos suficientes en el banco para pagar la multa. Se ha registrado una deuda judicial pendiente de *${currency} ${deudaPendiente.toLocaleString()}* que será cobrada automáticamente cuando deposites en el banco.`;
+                    console.log(`[JUDICIAL] Nueva deuda judicial registrada para ${sender.jid} (${sender.name}) en grupo ${chatId}: ${deudaPendiente}`);
+                    fineMsg = `⚖️ No tenías fondos suficientes en el banco para pagar la multa. Se ha registrado una deuda judicial pendiente de *${currency} ${deudaPendiente.toLocaleString()}* que será cobrada automáticamente cuando deposites en el banco.\n\nSaldo de banco: 0. Deuda judicial pendiente: *${currency} ${sender.judicialDebt.toLocaleString()}*.`;
                 }
                 await sender.save();
                 await sock.sendMessage(chatId, { text: fineMsg, mentions: [senderJid] });

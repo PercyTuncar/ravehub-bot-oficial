@@ -28,7 +28,7 @@ module.exports = {
     }
 
     try {
-      const user = await findOrCreateUser(senderJid, message.pushName);
+      const user = await findOrCreateUser(senderJid, chatId, message.pushName);
       const userLevel = user.level;
 
       let response = `💼 *Lista de Trabajos Disponibles* 💼\n\n`;

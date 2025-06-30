@@ -1,6 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { createLoanSession, getLoanSession } = require('../../handlers/loanSessionHandler');
 const { getCurrency } = require('../../utils/groupUtils');
+const Debt = require('../../models/Debt'); // Asegúrate de que la ruta sea correcta
 
 module.exports = {
     name: 'prestame',
@@ -32,13 +33,19 @@ module.exports = {
             return sock.sendMessage(chatId, { text: `⚠️ El usuario mencionado ya tiene una solicitud de préstamo pendiente. Por favor, espera a que la resuelva.` });
         }
 
-        const borrower = await findOrCreateUser(senderJid);
-        const lender = await findOrCreateUser(lenderJid);
+        const borrower = await findOrCreateUser(senderJid, chatId);
+        const lender = await findOrCreateUser(lenderJid, chatId);
 
         if (!lender) {
             return sock.sendMessage(chatId, { text: 'El usuario al que intentas pedirle un préstamo no está registrado.' });
         }
         const currency = await getCurrency(chatId);
+
+        // Verificar si ya existe una deuda entre el prestatario y el prestamista en este grupo
+        const debt = await Debt.findOne({ borrower: borrower._id, lender: lender._id, groupId: chatId });
+        if (debt) {
+            return sock.sendMessage(chatId, { text: 'Ya tienes una deuda pendiente con este usuario en este grupo.' });
+        }
 
         const loanRequestMessage = `💸 @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de *${currency} ${amount.toLocaleString()}*.` +
             `\n\nResponde con *Si* para aceptar o *No* para rechazar.\n⏳ *Tienes 30 segundos para responder.*`;

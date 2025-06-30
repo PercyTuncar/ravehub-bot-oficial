@@ -16,8 +16,8 @@ module.exports = {
             await applyInterestToAllDebts(); // Ensure debts are updated with interest
             const currency = await getCurrency(chatId);
 
-            const allDebts = await Debt.find({ amount: { $gt: 0 } }).populate('borrower').populate('lender');
-            const judicialDebtors = await User.find({ judicialDebt: { $gt: 0 } });
+            const judicialDebtors = await User.find({ judicialDebt: { $gt: 0 }, groupId: chatId });
+            const allDebts = await Debt.find({ amount: { $gt: 0 }, groupId: chatId }).populate('borrower').populate('lender');
 
             if (allDebts.length === 0 && judicialDebtors.length === 0) {
                 return sock.sendMessage(chatId, { text: '✅ ¡Felicidades! No hay deudores registrados en el sistema.' });

@@ -20,6 +20,7 @@ module.exports = {
 
             const gameLogs = await GameLog.find({
                 gameName: gameName,
+                groupId: jid,
                 timestamp: { $gte: twentyFourHoursAgo }
             }).sort({ timestamp: -1 });
 

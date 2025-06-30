@@ -96,4 +96,18 @@ module.exports = (sock) => {
             sock.sendMessage(message.key.remoteJid, { text: 'Ocurrió un error al ejecutar el comando.' });
         }
     });
+
+    sock.ev.on('group-participants.update', async (update) => {
+        const groupId = update.id;
+        if (!groupId.endsWith('@g.us')) return;
+        try {
+            const groupMetadata = await sock.groupMetadata(groupId);
+            for (const participant of groupMetadata.participants) {
+                await require('../utils/userUtils').findOrCreateUser(participant.id, groupId, participant.notify || participant.id.split('@')[0]);
+            }
+            console.log(`[DB] Sincronizados/creados todos los usuarios del grupo ${groupId}`);
+        } catch (e) {
+            console.error(`[DB] Error al sincronizar usuarios del grupo ${groupId}:`, e);
+        }
+    });
 };

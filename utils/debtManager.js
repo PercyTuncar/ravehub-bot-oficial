@@ -26,6 +26,10 @@ function handleDebtPayment(user, incomingAmount, currency) {
 
     const remainingAmount = incomingAmount - amountToPay;
 
+    if (amountToPay > 0) {
+        console.log(`[JUDICIAL] handleDebtPayment: Cobrado ${amountToPay} de deuda judicial a ${user.jid || user._id}`);
+    }
+
     const debtMessage = `⚖️ ¡Deuda Cobrada! ⚖️\nSe interceptaron *${currency} ${amountToPay.toLocaleString()}* para pagar tu deuda judicial. Perdiste *${xpLost} XP*.\n*Deuda restante:* ${currency} ${user.judicialDebt.toLocaleString()}`;
 
     let levelChangeMessage = '';

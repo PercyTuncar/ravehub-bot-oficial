@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  jid: { type: String, required: true, unique: true },
+  jid: { type: String, required: true, index: true },
+  groupId: { type: String, required: true, index: true },
   name: { type: String, required: true },
   level: { type: Number, default: 1 },
   xp: { type: Number, default: 0 },

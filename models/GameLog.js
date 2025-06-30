@@ -15,6 +15,11 @@ const gameLogSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    groupId: {
+        type: String,
+        required: true,
+        index: true
+    },
     betAmount: {
         type: Number,
         required: true
@@ -29,6 +34,7 @@ const gameLogSchema = new mongoose.Schema({
     }
 });
 
+gameLogSchema.index({ groupId: 1, gameName: 1, timestamp: -1 });
 gameLogSchema.index({ gameName: 1, timestamp: -1 });
 
 const GameLog = mongoose.model('GameLog', gameLogSchema);

@@ -39,7 +39,7 @@ module.exports = {
         }
 
         try {
-            const user = await findOrCreateUser(jid, message.pushName);
+            const user = await findOrCreateUser(jid, chatId, message.pushName);
             const currency = await getCurrency(chatId);
 
             if (user.economy.wallet < betAmount) {

@@ -14,6 +14,10 @@ const connectDB = async () => {
     mongoose.connection.on('disconnected', () => {
         console.log('Desconectado de MongoDB');
     });
+
+    mongoose.connection.on('connected', () => {
+        console.log(`[DB] Conexión activa a la base de datos principal.`);
+    });
 };
 
 module.exports = connectDB;

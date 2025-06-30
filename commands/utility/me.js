@@ -17,10 +17,10 @@ module.exports = {
         try {
             await applyInterestToAllDebts();
             const currency = await getCurrency(chatId);
-            let user = await findOrCreateUser(jid, message.pushName);
+            let user = await findOrCreateUser(jid, chatId, message.pushName);
             user = await User.findById(user._id).populate('inventory.itemId').populate({ 
                 path: 'debts', 
-                populate: { path: 'lender', select: 'name jid' } 
+                populate: { path: 'lender', select: 'name jid groupId' } 
             });
 
             let inventoryList = "Inventario vacío.";

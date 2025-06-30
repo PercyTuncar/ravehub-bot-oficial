@@ -12,8 +12,8 @@ module.exports = {
         const currency = await getCurrency(chatId);
 
         try {
-            // 1. Filtrar usuarios que no tienen JID o cuyo JID no es un string
-            const users = await User.find({ jid: { $exists: true, $type: 'string' } });
+            // Filtrar usuarios solo del grupo actual
+            const users = await User.find({ groupId: chatId, jid: { $exists: true, $type: 'string' } });
 
             if (users.length === 0) {
                 return sock.sendMessage(chatId, { text: 'Aún no hay usuarios registrados para mostrar un ranking.' });
@@ -27,14 +27,13 @@ module.exports = {
 
             const mentions = [];
             let rankingMessage = [
-                `*╭───≽ 💵 LOS MÁS RICOS DE RAVEHUB 💵 ≼───*`,
+                `*╭───≽ 💵 LOS MÁS RICOS DEL GRUPO 💵 ≼───*`,
                 `*│*`,
-                `*│* Top 10 pitucos de la comunidad 💵._`,
+                `*│* Top 10 pitucos de este grupo 💵._`,
                 `*│*`
             ];
 
             rankedUsers.forEach((user, index) => {
-                // 2. Comprobación de seguridad adicional
                 if (user.jid && typeof user.jid === 'string') {
                     const rankEmoji = ['🥇', '🥈', '🥉'][index] || `*${index + 1}.*`;
                     rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - ${currency} ${user.totalWealth.toLocaleString()}`);

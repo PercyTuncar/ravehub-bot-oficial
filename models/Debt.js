@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
 
 const debtSchema = new mongoose.Schema({
-    borrower: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    lender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    groupId: { type: String, required: true, index: true },
+    borrower: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    lender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
     amount: { type: Number, required: true },
     interest: { type: Number, default: 0.01 }, // 1% daily interest
     createdAt: { type: Date, default: Date.now },

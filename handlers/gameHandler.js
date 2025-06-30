@@ -123,6 +123,7 @@ async function handleGameMessage(sock, message) {
             gameName: 'carta mayor',
             result: gameOutcome, // 'izquierda', 'derecha' o 'empate'
             jid: jid,
+            groupId: chatId,
             betAmount: session.bet,
             winnings: winnings // 0 si pierde, > 0 si gana
         });

@@ -1,5 +1,6 @@
 const ShopItem = require("../../models/ShopItem");
 const { getCurrency } = require("../../utils/groupUtils");
+const User = require("../../models/User");
 
 const shopItems = [
   // Productos graciosos y para regalar
@@ -186,6 +187,9 @@ module.exports = {
       }
 
       shopMessage += "*╰─ 🛍️ Usa `.buy <item>` para comprar ─*\n";
+
+      // Filtrar usuarios por groupId si muestra historial o inventario
+      const users = await User.find({ groupId: chatId, jid: { $exists: true, $type: 'string' } });
 
       await sock.sendMessage(chatId, { text: shopMessage });
     } catch (error) {

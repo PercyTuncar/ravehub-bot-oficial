@@ -13,7 +13,7 @@ module.exports = {
         const currency = await getCurrency(chatId);
 
         try {
-            const user = await findOrCreateUser(jid, message.pushName);
+            const user = await findOrCreateUser(jid, chatId, message.pushName);
 
             if (args.length === 0) {
                 return sock.sendMessage(chatId, { text: `❌ Debes especificar la cantidad a retirar. Uso: \`.retirar <cantidad|all>\`` });

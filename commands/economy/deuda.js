@@ -16,10 +16,12 @@ module.exports = {
         try {
             await applyInterestToAllDebts();
             const currency = await getCurrency(chatId);
-            const user = await User.findOne({ jid }).populate({ 
+            const user = await findOrCreateUser(jid, chatId, message.pushName);
+
+            await user.populate({ 
                 path: 'debts', 
                 populate: { path: 'lender', select: 'name jid' } 
-            });
+            }).execPopulate();
 
             if (!user || (user.debts.length === 0 && user.judicialDebt === 0)) {
                 return sock.sendMessage(chatId, { text: '¡Felicidades! No tienes ninguna deuda pendiente.' });

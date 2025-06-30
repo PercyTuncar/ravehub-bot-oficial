@@ -14,7 +14,7 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         try {
-            const user = await findOrCreateUser(senderJid, message.pushName);
+            let user = await findOrCreateUser(senderJid, chatId, message.pushName);
             const currency = await getCurrency(chatId);
 
             if (user.cooldowns.work && user.cooldowns.work > new Date()) {

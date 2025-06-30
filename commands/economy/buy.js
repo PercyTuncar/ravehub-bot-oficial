@@ -22,7 +22,7 @@ module.exports = {
 
         try {
             // Refactorización: Usar la función centralizada para obtener el usuario.
-            let user = await findOrCreateUser(senderJid, message.pushName);
+            let user = await findOrCreateUser(senderJid, chatId, message.pushName);
 
             const itemToBuy = await ShopItem.findOne({ name: new RegExp(`^${itemName}$`, 'i') });
 

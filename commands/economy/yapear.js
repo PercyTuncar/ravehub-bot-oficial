@@ -30,12 +30,10 @@ module.exports = {
             await applyInterestToAllDebts();
             const currency = await getCurrency(chatId);
 
-            const sender = await User.findOne({ jid: senderJid });
-            const recipient = await User.findOne({ jid: mentionedJid });
+            const sender = await findOrCreateUser(senderJid, chatId, message.pushName);
+            const recipient = await findOrCreateUser(mentionedJid, chatId);
 
             if (!sender || !recipient) {
-                await findOrCreateUser(senderJid, message.pushName);
-                await findOrCreateUser(mentionedJid);
                 return sock.sendMessage(chatId, { text: '❌ Ocurrió un error. Inténtalo de nuevo.' });
             }
 

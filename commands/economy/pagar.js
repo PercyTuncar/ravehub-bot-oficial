@@ -28,14 +28,14 @@ module.exports = {
             }
 
             const lenderJid = message.message.extendedTextMessage.contextInfo.mentionedJid[0];
-            const borrower = await User.findOne({ jid: senderJid });
-            const lender = await User.findOne({ jid: lenderJid });
+            const borrower = await User.findOne({ jid: senderJid, groupId: chatId });
+            const lender = await User.findOne({ jid: lenderJid, groupId: chatId });
 
             if (!borrower || !lender) {
                 return sock.sendMessage(chatId, { text: '❌ No se pudo encontrar a uno de los usuarios.' });
             }
 
-            const debt = await Debt.findOne({ borrower: borrower._id, lender: lender._id });
+            const debt = await Debt.findOne({ borrower: borrower._id, lender: lender._id, groupId: chatId });
 
             if (!debt) {
                 return sock.sendMessage(chatId, { text: `No tienes ninguna deuda pendiente con @${lender.name}.`, mentions: [lender.jid] });
