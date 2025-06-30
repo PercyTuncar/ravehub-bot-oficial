@@ -116,7 +116,7 @@ module.exports = {
                 if (sender.economy.bank >= fine) {
                     sender.economy.bank -= fine;
                     console.log(`[JUDICIAL] Multa cobrada automáticamente de banco a ${sender.jid} (${sender.name}) en grupo ${chatId}: ${fine}`);
-                    fineMsg = `🚨 ¡Has sido multado por fallar el robo! Se descontaron *${currency} ${fine.toLocaleString()}* de tu banco.`;
+                    fineMsg = `🚨 ¡Fuiste atrapado intentando robar! Se aplicó una multa de *${currency} ${fine.toLocaleString()}* y se descontó de tu banco.`;
                 } else {
                     // No tiene fondos suficientes en el banco: registrar deuda judicial pendiente
                     const deudaPendiente = fine - sender.economy.bank;
@@ -126,7 +126,8 @@ module.exports = {
                     sender.economy.bank = 0;
                     sender.judicialDebt = (sender.judicialDebt || 0) + deudaPendiente;
                     console.log(`[JUDICIAL] Nueva deuda judicial registrada para ${sender.jid} (${sender.name}) en grupo ${chatId}: ${deudaPendiente}`);
-                    fineMsg = `⚖️ No tenías fondos suficientes en el banco para pagar la multa. Se ha registrado una deuda judicial pendiente de *${currency} ${deudaPendiente.toLocaleString()}* que será cobrada automáticamente cuando deposites en el banco.\n\nSaldo de banco: 0. Deuda judicial pendiente: *${currency} ${sender.judicialDebt.toLocaleString()}*.`;
+                    fineMsg = `🚨 ¡Fuiste atrapado intentando robar! Se aplicó una multa de *${currency} ${fine.toLocaleString()}*.
+⚖️ No tenías fondos suficientes en el banco para pagar la multa. Se ha registrado una deuda judicial pendiente de *${currency} ${deudaPendiente.toLocaleString()}* que será cobrada automáticamente cuando deposites en el banco.\n\nSaldo de banco: 0. Deuda judicial pendiente: *${currency} ${sender.judicialDebt.toLocaleString()}*.`;
                 }
                 await sender.save();
                 await sock.sendMessage(chatId, { text: fineMsg, mentions: [senderJid] });
