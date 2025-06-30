@@ -1,5 +1,5 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
-const User = require('../../models/User');
+const { createLoanSession, getLoanSession } = require('../../handlers/loanSessionHandler');
 
 module.exports = {
     name: 'prestamo',
@@ -26,23 +26,16 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'No puedes pedirte un préstamo a ti mismo.' });
         }
 
+        // Check if the lender already has a pending loan session
+        if (getLoanSession(lenderJid)) {
+            return sock.sendMessage(chatId, { text: `⚠️ El usuario mencionado ya tiene una solicitud de préstamo pendiente. Por favor, espera a que la resuelva.` });
+        }
+
         const borrower = await findOrCreateUser(senderJid);
         const lender = await findOrCreateUser(lenderJid);
 
         if (!lender) {
             return sock.sendMessage(chatId, { text: 'El usuario al que intentas pedirle un préstamo no está registrado.' });
-        }
-
-        // Check for an existing loan request and if it has expired.
-        if (lender.pendingLoan && lender.pendingLoan.borrowerJid) {
-            if (new Date() < new Date(lender.pendingLoan.expiresAt)) {
-                // If the loan has NOT expired, tell the user to wait.
-                return sock.sendMessage(chatId, { text: `⚠️ @${lender.name} ya tiene una solicitud de préstamo pendiente. Por favor, espera a que la resuelva.`, mentions: [lenderJid] });
-            } else {
-                // If the loan HAS expired, clear it before proceeding.
-                lender.pendingLoan = null;
-                await lender.save();
-            }
         }
 
         const loanRequestMessage = `Hola @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de ${amount} 💵.\n\nResponde con \"Si\" para aceptar o \"No\" para rechazar.\n*Tienes 30 segundos para responder.*`;
@@ -52,29 +45,20 @@ module.exports = {
             mentions: [lenderJid, senderJid]
         });
 
-        lender.pendingLoan = {
-            borrowerJid: senderJid,
-            amount: amount,
-            messageId: sentMessage.key.id,
-            expiresAt: new Date(new Date().getTime() + 30000) // 30 seconds expiry
-        };
-        await lender.save();
+        // Create a new loan session
+        createLoanSession(lenderJid, senderJid, amount, sentMessage.key.id);
 
-        // Set a timeout to automatically cancel the loan request
+        // Set a timeout to notify about expiry. The session is cleared in the handler.
         setTimeout(async () => {
-            try {
-                const freshLender = await User.findOne({ jid: lenderJid });
-                if (freshLender && freshLender.pendingLoan && freshLender.pendingLoan.messageId === sentMessage.key.id) {
-                    freshLender.pendingLoan = null; // Clear the pending loan
-                    await freshLender.save();
-                    await sock.sendMessage(chatId, {
-                        text: `⏳ La solicitud de préstamo de @${senderJid.split('@')[0]} a @${lenderJid.split('@')[0]} ha expirado por falta de respuesta.`,
-                        mentions: [senderJid, lenderJid]
-                    });
-                }
-            } catch (error) {
-                console.error('Error al anular el préstamo por tiempo de espera:', error);
+            const session = getLoanSession(lenderJid);
+            if (session && session.messageId === sentMessage.key.id) {
+                // The session still exists, meaning it expired without a response.
+                await sock.sendMessage(chatId, {
+                    text: `⏳ La solicitud de préstamo de @${senderJid.split('@')[0]} a @${lenderJid.split('@')[0]} ha expirado por falta de respuesta.`,
+                    mentions: [senderJid, lenderJid]
+                });
+                // The session will be cleared by its own internal timer.
             }
-        }, 30000); // 30 seconds
+        }, 30100); // 30.1 seconds to be safe
     },
 };

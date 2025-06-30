@@ -1,7 +1,7 @@
 const commandHandler = require('./commandHandler');
 const { handleGameMessage } = require('./gameHandler');
-const { handleLoanResponse } = require('./loanHandler');
 const { getGameSession } = require('../utils/gameUtils');
+const { handleLoanResponse, getLoanSession } = require('./loanSessionHandler'); // Updated import
 const GroupSettings = require('../models/GroupSettings');
 const { sock } = require('../index');
 const userCooldowns = new Map();
@@ -16,39 +16,20 @@ module.exports = (sock) => {
 
         const jid = message.key.participant || message.key.remoteJid;
 
+        // --- Loan Session Handler ---
+        if (getLoanSession(jid)) {
+            const loanHandled = await handleLoanResponse(sock, message);
+            if (loanHandled) {
+                return; // Stop processing if the message was part of a loan session
+            }
+        }
+
         // --- Game Handler Integration ---
         if (getGameSession(jid)) {
             const gameHandled = await handleGameMessage(sock, message);
             if (gameHandled) {
                 return; // Detener el procesamiento si el mensaje fue manejado por el juego
             }
-        }
-
-        // --- Loan Response Handler ---
-        const messageContentRaw = message.message.conversation || message.message.extendedTextMessage?.text || '';
-        const isLoanResponseWord = ['si', 'sí', 'sì', 'no'].includes(messageContentRaw.toLowerCase().trim());
-
-        if (isLoanResponseWord) {
-            const loanHandled = await handleLoanResponse(sock, message);
-            if (loanHandled) {
-                return; // Stop processing if it was a valid loan response
-            }
-        }
-
-        // Check for invalid loan responses (user has a pending loan but didn't say si/no)
-        const User = require('../models/User');
-        const sender = await User.findOne({ 
-            jid: jid, 
-            'pendingLoan.borrowerJid': { $ne: null },
-            'pendingLoan.expiresAt': { $gt: new Date() }
-        });
-
-        if (sender && !isLoanResponseWord && messageContentRaw.trim() !== '') {
-            await sock.sendMessage(message.key.remoteJid, { 
-                text: `Hey @${sender.name}, tienes una solicitud de préstamo pendiente. Responde con "si" o "no".`,
-                mentions: [jid]
-            });
-            return; // Stop further processing
         }
 
         const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';

@@ -1,0 +1,108 @@
+const User = require('../models/User');
+const Debt = require('../models/Debt');
+const { findOrCreateUser } = require('../utils/userUtils');
+
+const loanSessions = new Map();
+
+function createLoanSession(lenderJid, borrowerJid, amount, messageId) {
+    const expiresAt = new Date(new Date().getTime() + 30000); // 30 seconds expiry
+    loanSessions.set(lenderJid, {
+        borrowerJid,
+        amount,
+        messageId,
+        expiresAt,
+        timer: setTimeout(() => {
+            if (loanSessions.has(lenderJid)) {
+                loanSessions.delete(lenderJid);
+                // Optionally notify users of expiry, though prestamo.js already does this.
+            }
+        }, 30000)
+    });
+}
+
+function getLoanSession(jid) {
+    return loanSessions.get(jid);
+}
+
+function clearLoanSession(jid) {
+    const session = loanSessions.get(jid);
+    if (session) {
+        clearTimeout(session.timer);
+        loanSessions.delete(jid);
+    }
+}
+
+async function handleLoanResponse(sock, message) {
+    const senderJid = message.key.participant || message.key.remoteJid;
+    const session = getLoanSession(senderJid);
+
+    if (!session || new Date() > session.expiresAt) {
+        if (session) clearLoanSession(senderJid);
+        return false; // No active session or expired
+    }
+
+    const messageContent = (message.message.conversation || message.message.extendedTextMessage?.text || '').toLowerCase().trim();
+    if (!['si', 'sí', 'sì', 'no'].includes(messageContent)) {
+        // It's a message from a user in a loan session, but not a valid response.
+        await sock.sendMessage(message.key.remoteJid, {
+            text: `Hey @${senderJid.split('@')[0]}, tienes una solicitud de préstamo pendiente. Responde con "si" o "no".`,
+            mentions: [senderJid]
+        });
+        return true; // Message handled by sending a reminder.
+    }
+
+    const { borrowerJid, amount } = session;
+    const chatId = message.key.remoteJid;
+    const lender = await findOrCreateUser(senderJid);
+    const borrower = await findOrCreateUser(borrowerJid);
+
+    if (messageContent.startsWith('s')) { // Accepted
+        const totalFunds = lender.economy.wallet + lender.economy.bank;
+        if (totalFunds < amount) {
+            await sock.sendMessage(chatId, {
+                text: `❗ @${lender.name} tiene la voluntad de prestarte, ¡pero ahora está *misio*! 😅`,
+                mentions: [borrowerJid, lender.jid]
+            });
+        } else {
+            // Deduct from lender
+            if (lender.economy.wallet >= amount) {
+                lender.economy.wallet -= amount;
+            } else {
+                const remaining = amount - lender.economy.wallet;
+                lender.economy.wallet = 0;
+                lender.economy.bank -= remaining;
+            }
+
+            // Give to borrower
+            borrower.economy.wallet += amount;
+
+            // Create debt
+            const newDebt = new Debt({
+                borrower: borrower._id,
+                lender: lender._id,
+                amount: amount,
+            });
+            await newDebt.save();
+
+            borrower.debts.push(newDebt._id);
+            
+            await lender.save();
+            await borrower.save();
+
+            await sock.sendMessage(chatId, {
+                text: `✅ ¡Préstamo aceptado! @${lender.name} ha prestado ${amount} 💵 a @${borrower.name}.`,
+                mentions: [lender.jid, borrower.jid]
+            });
+        }
+    } else { // Rejected
+        await sock.sendMessage(chatId, {
+            text: `❌ @${lender.name} ha rechazado la solicitud de préstamo de @${borrower.name}.`,
+            mentions: [lender.jid, borrower.jid]
+        });
+    }
+   
+    clearLoanSession(senderJid); // Clean up the session
+    return true; // Message was handled
+}
+
+module.exports = { createLoanSession, getLoanSession, handleLoanResponse };
