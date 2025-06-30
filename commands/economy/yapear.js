@@ -37,8 +37,8 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: '❌ Ocurrió un error. Inténtalo de nuevo.' });
             }
 
-            if (sender.economy.wallet < amount) {
-                return sock.sendMessage(chatId, { text: 'No tienes suficiente dinero en tu cartera para yapear.' });
+            if (sender.economy.bank < amount) {
+                return sock.sendMessage(chatId, { text: 'No tienes suficiente dinero en tu cuenta de banco para yapear.' });
             }
 
             let debtPaymentMessage = '';
@@ -68,8 +68,8 @@ module.exports = {
             }
 
             // Perform the main transaction
-            sender.economy.wallet -= amount;
-            recipient.economy.wallet += amount;
+            sender.economy.bank -= amount;
+            recipient.economy.bank += amount;
 
             await sender.save();
             await recipient.save();

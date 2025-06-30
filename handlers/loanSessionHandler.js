@@ -67,7 +67,7 @@ async function handleLoanResponse(sock, message) {
         const totalFunds = lender.economy.wallet + lender.economy.bank;
         if (totalFunds < amount) {
             await sock.sendMessage(chatId, {
-                text: `❗ @${lender.name} tiene la voluntad de prestarte, ¡pero ahora está *misio*! 😅`,
+                text: `❗ @${lender.jid.split('@')[0]} tiene la voluntad de prestarte, ¡pero ahora está *misio*! 😅`,
                 mentions: [borrowerJid, lender.jid]
             });
         } else {
@@ -97,13 +97,13 @@ async function handleLoanResponse(sock, message) {
             await borrower.save();
 
             await sock.sendMessage(chatId, {
-                text: `✅ ¡Préstamo aceptado! @${lender.name} ha prestado ${amount} 💵 a @${borrower.name}.`,
+                text: `✅ ¡Préstamo aceptado! @${lender.jid.split('@')[0]} ha prestado ${amount} 💵 a @${borrower.jid.split('@')[0]}.`,
                 mentions: [lender.jid, borrower.jid]
             });
         }
     } else { // Rejected
         await sock.sendMessage(chatId, {
-            text: `❌ @${lender.name} ha rechazado la solicitud de préstamo de @${borrower.name}.`,
+            text: `❌ @${lender.jid.split('@')[0]} ha rechazado la solicitud de préstamo de @${borrower.jid.split('@')[0]}.`,
             mentions: [lender.jid, borrower.jid]
         });
     }
