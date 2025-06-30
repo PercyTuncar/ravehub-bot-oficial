@@ -34,13 +34,28 @@ module.exports = {
         const senderJid = message.key.fromMe ? sock.user.id.split(':')[0] + '@s.whatsapp.net' : (message.key.participant || message.key.remoteJid);
         const chatId = message.key.remoteJid;
 
-        // Check if the sender is the owner
-        if (senderJid.split('@')[0] !== process.env.OWNER_NUMBER) {
-            return sock.sendMessage(chatId, { text: 'Este comando solo puede ser usado por el propietario del bot.' });
-        }
-
         if (!message.key.remoteJid.endsWith('@g.us')) {
             return sock.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' });
+        }
+
+        // --- Permission Check ---
+        const isOwner = senderJid.split('@')[0] === process.env.OWNER_NUMBER;
+        let isAdmin = false;
+
+        if (!isOwner) {
+            try {
+                const groupMetadata = await sock.groupMetadata(chatId);
+                const senderParticipant = groupMetadata.participants.find(p => p.id === senderJid);
+                if (senderParticipant && (senderParticipant.admin === 'admin' || senderParticipant.admin === 'superadmin')) {
+                    isAdmin = true;
+                }
+            } catch (e) {
+                console.error("Error al obtener metadatos del grupo:", e);
+            }
+        }
+
+        if (!isOwner && !isAdmin) {
+            return sock.sendMessage(chatId, { text: 'Este comando solo puede ser usado por el propietario del bot o un administrador del grupo.' });
         }
 
         const countryName = args.join(' ').toLowerCase();
