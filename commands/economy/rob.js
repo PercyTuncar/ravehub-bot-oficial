@@ -4,7 +4,6 @@ const User = require('../../models/User');
 const { getCurrency } = require('../../utils/groupUtils');
 
 const COOLDOWN_MINUTES = 15; // Cooldown aumentado
-const FAILURE_FINE = 500; // Multa drásticamente aumentada por fallar el robo
 
 module.exports = {
     name: 'rob',
@@ -40,7 +39,7 @@ module.exports = {
             }
 
             if (sender.judicialDebt > 0) {
-                return sock.sendMessage(chatId, { text: `⚖️ Tienes una deuda judicial pendiente de *${currency} ${sender.judicialDebt.toLocaleString()}*. No puedes robar hasta que la saldes.` });
+                return sock.sendMessage(chatId, { text: `⚖️ Tienes una deuda judicial pendiente de *${currency} ${sender.judicialDebt.toLocaleString()}*. No puedes robar hasta que la saldes.`, mentions: [senderJid] });
             }
 
             // --- Verificación de Cooldown ---
@@ -49,7 +48,7 @@ module.exports = {
                 const timeLeft = sender.cooldowns.rob.getTime() - now.getTime();
                 const minutes = Math.floor(timeLeft / (1000 * 60));
                 const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
-                return sock.sendMessage(chatId, { text: `⏳ Debes esperar *${minutes}m y ${seconds}s* para volver a intentar un robo.` });
+                return sock.sendMessage(chatId, { text: `⏳ Debes esperar *${minutes}m y ${seconds}s* para volver a intentar un robo.`, mentions: [senderJid] });
             }
 
             // --- Verificación de Deuda Límite ---
@@ -69,6 +68,13 @@ module.exports = {
 
             // Nueva lógica de robo: 65% de éxito, más arriesgado y con mayor recompensa/castigo.
             const successChance = Math.random();
+
+            // --- Multa dinámica por nivel ---
+            const maxLevel = 10;
+            const senderLevel = Math.max(1, Math.min(sender.level, maxLevel));
+            const maxFine = senderLevel * 1000; // Nivel 1: 1000, Nivel 2: 2000, ..., Nivel 10: 10000
+            const minFine = 300;
+            const FAILURE_FINE = Math.floor(Math.random() * (maxFine - minFine + 1)) + minFine;
 
             if (successChance > 0.35) { // 65% de Éxito
                 // Robar entre 25% y 95% de la cartera de la víctima
@@ -110,7 +116,7 @@ module.exports = {
                 if (sender.economy.bank >= fine) {
                     sender.economy.bank -= fine;
                     console.log(`[JUDICIAL] Multa cobrada automáticamente de banco a ${sender.jid} (${sender.name}) en grupo ${chatId}: ${fine}`);
-                    fineMsg = `🚨 ¡Has sido multado por fallar el robo! Se descontaron *${currency} ${FAILURE_FINE.toLocaleString()}* de tu banco.`;
+                    fineMsg = `🚨 ¡Has sido multado por fallar el robo! Se descontaron *${currency} ${fine.toLocaleString()}* de tu banco.`;
                 } else {
                     // No tiene fondos suficientes en el banco: registrar deuda judicial pendiente
                     const deudaPendiente = fine - sender.economy.bank;
