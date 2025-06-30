@@ -15,9 +15,12 @@ module.exports = {
             const user = await findOrCreateUser(senderJid, message.pushName);
             const currency = await getCurrency(chatId);
 
-            const balanceMessage = `*╭───≽ 💰 BALANCE ≼───*\n*│*\n*│* 👤 *Usuario:* @${senderJid.split('@')[0]}\n*│*\n*│* 💵 *Cartera:* ${user.economy.wallet} ${currency}\n*│* 🏦 *Banco:* ${user.economy.bank} ${currency}\n*│*\n*╰──────────≽*`;
+            const balanceMessage = `*╭───≽ 💰 TU BALANCE ≼───*\n*│*\n*│* 👤 @${senderJid.split('@')[0]}\n*│* 💵 *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n*│* 🏦 *Banco:* ${currency} ${user.economy.bank.toLocaleString()}\n*│*\n*│* 💰 *Total:* ${currency} ${(user.economy.wallet + user.economy.bank).toLocaleString()}\n*╰─────────────≽*`;
 
-            sock.sendMessage(chatId, { text: balanceMessage, mentions: [senderJid] });
+            sock.sendMessage(chatId, {
+                text: balanceMessage,
+                mentions: [senderJid]
+            });
         } catch (error) {
             console.error('Error en el comando balance:', error);
             sock.sendMessage(chatId, { text: '❌ Ocurrió un error al consultar tu balance.' });

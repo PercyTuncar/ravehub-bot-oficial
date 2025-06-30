@@ -47,7 +47,7 @@ module.exports = {
             let debtMessage = '';
 
             if (user.judicialDebt > 0) {
-                const result = handleDebtPayment(user, earnings);
+                const result = handleDebtPayment(user, earnings, currency);
                 netGain = result.remainingAmount;
                 debtMessage = result.debtMessage;
             }
