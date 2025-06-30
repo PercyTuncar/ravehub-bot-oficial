@@ -62,8 +62,9 @@ async function handleLoanResponse(sock, message) {
     const { borrowerJid, amount } = session;
     const chatId = message.key.remoteJid;
     const currency = await getCurrency(chatId);
-    const lender = await findOrCreateUser(senderJid);
-    const borrower = await findOrCreateUser(borrowerJid);
+    // Corregido: pasar siempre chatId como groupId
+    const lender = await findOrCreateUser(senderJid, chatId, message.pushName);
+    const borrower = await findOrCreateUser(borrowerJid, chatId);
 
     if (messageContent.startsWith('s')) { // Accepted
         const totalFunds = lender.economy.wallet + lender.economy.bank;
@@ -85,21 +86,30 @@ async function handleLoanResponse(sock, message) {
             // Give to borrower
             borrower.economy.wallet += amount;
 
-            // Create debt
+            // Crear deuda con groupId y marcar en Infocorp (reputación deudora)
             const newDebt = new Debt({
+                groupId: chatId,
                 borrower: borrower._id,
                 lender: lender._id,
                 amount: amount,
+                interest: 0.01, // 1% diario por defecto
+                createdAt: new Date(),
+                lastInterestApplied: new Date()
             });
             await newDebt.save();
 
+            // Vincular deuda al usuario
             borrower.debts.push(newDebt._id);
-            
+            // Marcar como moroso en Infocorp (reputación)
+            borrower.paymentHistory.paidLate = (borrower.paymentHistory.paidLate || 0) + 1;
+
             await lender.save();
             await borrower.save();
 
             await sock.sendMessage(chatId, {
-                text: `✅ ¡Préstamo aceptado! @${lender.jid.split('@')[0]} ha prestado ${currency}${amount} a @${borrower.jid.split('@')[0]}.`,
+                text: `✅ ¡Préstamo aceptado! @${lender.jid.split('@')[0]} ha prestado ${currency}${amount} a @${borrower.jid.split('@')[0]}.
+
+@${borrower.jid.split('@')[0]} ahora figura en *Infocorp* hasta que pague su deuda.`,
                 mentions: [lender.jid, borrower.jid]
             });
         }
