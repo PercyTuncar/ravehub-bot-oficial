@@ -33,7 +33,11 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'El usuario al que intentas pedirle un préstamo no está registrado.' });
         }
 
-        const loanRequestMessage = `Hola @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de ${amount} 💵.\n\nResponde con \"Si\" para aceptar o \"No\" para rechazar.`;
+        if (lender.pendingLoan && lender.pendingLoan.borrowerJid) {
+            return sock.sendMessage(chatId, { text: `⚠️ @${lender.name} ya tiene una solicitud de préstamo pendiente. Por favor, espera a que la resuelva.`, mentions: [lenderJid] });
+        }
+
+        const loanRequestMessage = `Hola @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de ${amount} 💵.\n\nResponde con \"Si\" para aceptar o \"No\" para rechazar.\n*Tienes 40 segundos para responder.*`;
         
         const sentMessage = await sock.sendMessage(chatId, {
             text: loanRequestMessage,
@@ -44,7 +48,25 @@ module.exports = {
             borrowerJid: senderJid,
             amount: amount,
             messageId: sentMessage.key.id,
+            expiresAt: new Date(new Date().getTime() + 40000) // 40 seconds expiry
         };
         await lender.save();
+
+        // Set a timeout to automatically cancel the loan request
+        setTimeout(async () => {
+            try {
+                const freshLender = await User.findOne({ jid: lenderJid });
+                if (freshLender && freshLender.pendingLoan && freshLender.pendingLoan.messageId === sentMessage.key.id) {
+                    freshLender.pendingLoan = null; // Clear the pending loan
+                    await freshLender.save();
+                    await sock.sendMessage(chatId, {
+                        text: `⏳ La solicitud de préstamo de @${senderJid.split('@')[0]} a @${lenderJid.split('@')[0]} ha expirado por falta de respuesta.`,
+                        mentions: [senderJid, lenderJid]
+                    });
+                }
+            } catch (error) {
+                console.error('Error al anular el préstamo por tiempo de espera:', error);
+            }
+        }, 40000); // 40 seconds
     },
 };
