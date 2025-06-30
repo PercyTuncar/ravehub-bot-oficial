@@ -1,6 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getLevelName, xpTable } = require('../../utils/levels');
 const { applyInterestToAllDebts, getPaymentReputation } = require('../../utils/debtUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 const User = require('../../models/User');
 
 module.exports = {
@@ -15,6 +16,7 @@ module.exports = {
 
         try {
             await applyInterestToAllDebts();
+            const currency = await getCurrency(chatId);
             let user = await findOrCreateUser(jid, message.pushName);
             user = await User.findById(user._id).populate('inventory.itemId').populate({ 
                 path: 'debts', 
@@ -41,7 +43,7 @@ module.exports = {
                 debtsList = user.debts
                     .map((debt) => {
                         mentions.push(debt.lender.jid);
-                        return `💸 Debes ${debt.amount.toFixed(2)} a @${debt.lender.jid.split('@')[0]} (Interés: ${debt.interest * 100}% diario)`;
+                        return `💸 Debes ${debt.amount.toFixed(2)} ${currency} a @${debt.lender.jid.split('@')[0]} (Interés: ${debt.interest * 100}% diario)`;
                     })
                     .join("\n*│* │ ");
             }
@@ -54,7 +56,7 @@ module.exports = {
                 profilePicUrl = 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751131351/portadasinfoto_gz9kk2.jpg'; // URL de imagen por defecto corregida
             }
 
-            const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* 🏅 *Reputación:* ${reputation}\n*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} 💵\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* $${user.economy.wallet}\n*│* │ 🏦 *Banco:* $${user.economy.bank}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🧾 DEUDAS\n*│* │ ${debtsList}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
+            const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* 🏅 *Reputación:* ${reputation}\n*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} ${currency}\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* ${user.economy.wallet} ${currency}\n*│* │ 🏦 *Banco:* ${user.economy.bank} ${currency}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🧾 DEUDAS\n*│* │ ${debtsList}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
 
             await sock.sendMessage(
                 chatId,

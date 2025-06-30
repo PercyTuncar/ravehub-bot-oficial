@@ -1,6 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
 const User = require('../../models/User');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'deuda',
@@ -14,6 +15,7 @@ module.exports = {
 
         try {
             await applyInterestToAllDebts();
+            const currency = await getCurrency(chatId);
             const user = await User.findOne({ jid }).populate({ 
                 path: 'debts', 
                 populate: { path: 'lender', select: 'name jid' } 
@@ -27,13 +29,13 @@ module.exports = {
             const mentions = [jid];
 
             if (user.judicialDebt > 0) {
-                debtMessage += `*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} 💵 (Por robo)\n`;
+                debtMessage += `*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} ${currency} (Por robo)\n`;
             }
 
             if (user.debts.length > 0) {
                 user.debts.forEach(debt => {
                     mentions.push(debt.lender.jid);
-                    debtMessage += `*│* 💸 *Préstamo:* Debes ${debt.amount.toFixed(2)} a @${debt.lender.jid.split('@')[0]}\n`;
+                    debtMessage += `*│* 💸 *Préstamo:* Debes ${debt.amount.toFixed(2)} ${currency} a @${debt.lender.jid.split('@')[0]}\n`;
                 });
             }
 

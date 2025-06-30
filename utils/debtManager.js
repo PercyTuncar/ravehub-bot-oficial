@@ -4,9 +4,10 @@ const { xpTable, getLevelName } = require('./levels');
  * Maneja el pago de una deuda judicial, ajusta la XP y el nivel del usuario.
  * @param {object} user - El objeto del usuario de la base de datos.
  * @param {number} incomingAmount - La cantidad de dinero que el usuario está recibiendo.
+ * @param {string} currency - El símbolo de la moneda del grupo.
  * @returns {{remainingAmount: number, debtMessage: string, levelChangeMessage: string}}
  */
-function handleDebtPayment(user, incomingAmount) {
+function handleDebtPayment(user, incomingAmount, currency) {
     if (user.judicialDebt <= 0) {
         return { remainingAmount: incomingAmount, debtMessage: '', levelChangeMessage: '' };
     }
@@ -25,7 +26,7 @@ function handleDebtPayment(user, incomingAmount) {
 
     const remainingAmount = incomingAmount - amountToPay;
 
-    const debtMessage = `⚖️ ¡Deuda Cobrada! ⚖️\nSe interceptaron *${amountToPay} 💵* para pagar tu deuda judicial. Perdiste *${xpLost} XP*.\n*Deuda restante:* ${user.judicialDebt} 💵`;
+    const debtMessage = `⚖️ ¡Deuda Cobrada! ⚖️\nSe interceptaron *${currency}${amountToPay}* para pagar tu deuda judicial. Perdiste *${xpLost} XP*.\n*Deuda restante:* ${currency}${user.judicialDebt}`;
 
     let levelChangeMessage = '';
     if (user.level < originalLevel) {

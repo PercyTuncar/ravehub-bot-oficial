@@ -1,4 +1,5 @@
 const User = require('../../models/User');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'ricos',
@@ -8,6 +9,7 @@ module.exports = {
     aliases: ['top', 'leaderboard'],
     async execute(sock, message) {
         const chatId = message.key.remoteJid;
+        const currency = await getCurrency(chatId);
 
         try {
             // 1. Filtrar usuarios que no tienen JID o cuyo JID no es un string
@@ -35,7 +37,7 @@ module.exports = {
                 // 2. Comprobación de seguridad adicional
                 if (user.jid && typeof user.jid === 'string') {
                     const rankEmoji = ['🥇', '🥈', '🥉'][index] || `*${index + 1}.*`;
-                    rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - $${user.totalWealth} 💵`);
+                    rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - ${currency}${user.totalWealth}`);
                     mentions.push(user.jid);
                 }
             });

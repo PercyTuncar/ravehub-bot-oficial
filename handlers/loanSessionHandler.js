@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Debt = require('../models/Debt');
 const { findOrCreateUser } = require('../utils/userUtils');
+const { getCurrency } = require('../utils/groupUtils');
 
 const loanSessions = new Map();
 
@@ -60,6 +61,7 @@ async function handleLoanResponse(sock, message) {
 
     const { borrowerJid, amount } = session;
     const chatId = message.key.remoteJid;
+    const currency = await getCurrency(chatId);
     const lender = await findOrCreateUser(senderJid);
     const borrower = await findOrCreateUser(borrowerJid);
 
@@ -68,7 +70,7 @@ async function handleLoanResponse(sock, message) {
         if (totalFunds < amount) {
             await sock.sendMessage(chatId, {
                 text: `❗ @${lender.jid.split('@')[0]} tiene la voluntad de prestarte, ¡pero ahora está *misio*! 😅`,
-                mentions: [borrowerJid, lender.jid]
+                mentions: [borrowerJId, lender.jid]
             });
         } else {
             // Deduct from lender
@@ -97,7 +99,7 @@ async function handleLoanResponse(sock, message) {
             await borrower.save();
 
             await sock.sendMessage(chatId, {
-                text: `✅ ¡Préstamo aceptado! @${lender.jid.split('@')[0]} ha prestado ${amount} 💵 a @${borrower.jid.split('@')[0]}.`,
+                text: `✅ ¡Préstamo aceptado! @${lender.jid.split('@')[0]} ha prestado ${currency}${amount} a @${borrower.jid.split('@')[0]}.`,
                 mentions: [lender.jid, borrower.jid]
             });
         }

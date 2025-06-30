@@ -1,6 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
 const User = require('../../models/User');
+const { getCurrency } = require('../../utils/groupUtils');
 
 const COOLDOWN_MINUTES = 15; // Cooldown aumentado
 const FAILURE_FINE = 500; // Multa drásticamente aumentada por fallar el robo
@@ -14,6 +15,7 @@ module.exports = {
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
+        const currency = await getCurrency(chatId);
 
         const mentionedJid = message.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
 
@@ -38,7 +40,7 @@ module.exports = {
             }
 
             if (sender.judicialDebt > 0) {
-                return sock.sendMessage(chatId, { text: `⚖️ Tienes una deuda judicial pendiente de *${sender.judicialDebt} 💵*. No puedes robar hasta que la saldes.` });
+                return sock.sendMessage(chatId, { text: `⚖️ Tienes una deuda judicial pendiente de *${currency}${sender.judicialDebt}*. No puedes robar hasta que la saldes.` });
             }
 
             // --- Verificación de Cooldown ---
@@ -53,11 +55,7 @@ module.exports = {
             // --- Verificación de Deuda Límite ---
             const totalWealth = sender.economy.wallet + sender.economy.bank;
             if (totalWealth <= -200) {
-                return sock.sendMessage(chatId, { text: `🚨 *¡ALERTA DE DELITO GRAVE!* 🚨
-
-@${senderJid.split('@')[0]}, has alcanzado una deuda crítica de *${totalWealth} 💵*.
-
-Cualquier intento adicional de actividad ilícita podría resultar en tu **expulsión inmediata** del grupo. Te recomendamos saldar tus deudas.`,
+                return sock.sendMessage(chatId, { text: `🚨 *¡ALERTA DE DELITO GRAVE!* 🚨\n\n@${senderJid.split('@')[0]}, has alcanzado una deuda crítica de *${currency}${totalWealth}*.\n\nCualquier intento adicional de actividad ilícita podría resultar en tu **expulsión inmediata** del grupo. Te recomendamos saldar tus deudas.`,
                     mentions: [senderJid]
                 });
             }
@@ -101,14 +99,14 @@ Cualquier intento adicional de actividad ilícita podría resultar en tu **expul
                     }
                 }
 
-                const successMessage = `*💰 ¡GOLPE MAESTRO! 💰*\n\nCon sigilo y audacia, has vaciado los bolsillos de @${target.name}, llevándote *${amountToSteal} 💵*.\n\n*Ganancia neta (después de deudas):* +${netGain} 💵\n*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
+                const successMessage = `*💰 ¡GOLPE MAESTRO! 💰*\n\nCon sigilo y audacia, has vaciado los bolsillos de @${target.name}, llevándote *${currency}${amountToSteal}*.\n\n*Ganancia neta (después de deudas):* +${currency}${netGain}\n*Tu cartera ahora tiene:* ${currency}${sender.economy.wallet}`;
                 await sock.sendMessage(chatId, { text: successMessage, mentions: [senderJid, mentionedJid] });
 
             } else { // 35% de Fallo
                 sender.judicialDebt += FAILURE_FINE;
                 await sender.save();
 
-                const failureMessage = `*👮‍♂️ ¡ATRAPADO INFRAGANTI! 👮‍♂️*\n\nTu torpe intento de robo ha fallado miserablemente. La justicia te ha impuesto una multa ejemplar.\n\n*Multa añadida a tu deuda:* +${FAILURE_FINE} 💵\n*Deuda judicial total:* ${sender.judicialDebt} 💵`;
+                const failureMessage = `*👮‍♂️ ¡ATRAPADO INFRAGANTI! 👮‍♂️*\n\nTu torpe intento de robo ha fallado miserablemente. La justicia te ha impuesto una multa ejemplar.\n\n*Multa añadida a tu deuda:* +${currency}${FAILURE_FINE}\n*Deuda judicial total:* ${currency}${sender.judicialDebt}`;
                 return sock.sendMessage(chatId, { text: failureMessage, mentions: [senderJid, mentionedJid] });
             }
 

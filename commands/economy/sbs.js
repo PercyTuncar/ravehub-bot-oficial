@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const Debt = require('../../models/Debt');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'sbs',
@@ -13,6 +14,7 @@ module.exports = {
 
         try {
             await applyInterestToAllDebts(); // Ensure debts are updated with interest
+            const currency = await getCurrency(chatId);
 
             const allDebts = await Debt.find({ amount: { $gt: 0 } }).populate('borrower').populate('lender');
             const judicialDebtors = await User.find({ judicialDebt: { $gt: 0 } });
@@ -28,7 +30,7 @@ module.exports = {
                 report += '*--- Deudas por Préstamos ---*\n';
                 allDebts.forEach(debt => {
                     if (debt.borrower && debt.lender) {
-                        report += `🔴 @${debt.borrower.jid.split('@')[0]} debe ${debt.amount.toFixed(2)} 💵 a @${debt.lender.jid.split('@')[0]}\n`;
+                        report += `🔴 @${debt.borrower.jid.split('@')[0]} debe ${debt.amount.toFixed(2)} ${currency} a @${debt.lender.jid.split('@')[0]}\n`;
                         mentions.push(debt.borrower.jid, debt.lender.jid);
                     }
                 });
@@ -38,7 +40,7 @@ module.exports = {
             if (judicialDebtors.length > 0) {
                 report += '*--- Deudas Judiciales ---*\n';
                 judicialDebtors.forEach(user => {
-                    report += `⚠️ @${user.jid.split('@')[0]} tiene una deuda judicial por robo de ${user.judicialDebt} 💵 ⚖️\n`;
+                    report += `⚠️ @${user.jid.split('@')[0]} tiene una deuda judicial por robo de ${user.judicialDebt} ${currency} ⚖️\n`;
                     mentions.push(user.jid);
                 });
             }

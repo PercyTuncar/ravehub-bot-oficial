@@ -2,6 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 const User = require('../../models/User');
 const Debt = require('../../models/Debt');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'yapear',
@@ -27,6 +28,7 @@ module.exports = {
             }
 
             await applyInterestToAllDebts();
+            const currency = await getCurrency(chatId);
 
             const sender = await User.findOne({ jid: senderJid });
             const recipient = await User.findOne({ jid: mentionedJid });
@@ -49,7 +51,7 @@ module.exports = {
                 const amountToPayOnDebt = Math.min(amount, debt.amount);
                 debt.amount -= amountToPayOnDebt;
 
-                debtPaymentMessage = `\n\n🧾 De tu yapeo, se usaron ${amountToPayOnDebt.toFixed(2)} 💵 para pagar tu deuda.`;
+                debtPaymentMessage = `\n\n🧾 De tu yapeo, se usaron ${amountToPayOnDebt.toFixed(2)} ${currency} para pagar tu deuda.`;
 
                 if (debt.amount <= 0.01) { // Use threshold for float comparison
                     const daysLate = Math.floor((new Date() - new Date(debt.createdAt)) / (1000 * 60 * 60 * 24)) - 7; // 7 days grace
@@ -63,7 +65,7 @@ module.exports = {
                     debtPaymentMessage += `\n¡Felicidades! Has saldado tu deuda por completo. 🎉`;
                 } else {
                     await debt.save();
-                    debtPaymentMessage += `\nDeuda restante: ${debt.amount.toFixed(2)} 💵.`;
+                    debtPaymentMessage += `\nDeuda restante: ${debt.amount.toFixed(2)} ${currency}.`;
                 }
             }
 
@@ -74,7 +76,7 @@ module.exports = {
             await sender.save();
             await recipient.save();
 
-            const finalMessage = `✅ Has yapeado ${amount} 💵 a @${recipient.jid.split('@')[0]}.${debtPaymentMessage}`;
+            const finalMessage = `✅ Has yapeado ${amount} ${currency} a @${recipient.jid.split('@')[0]}.${debtPaymentMessage}`;
 
             await sock.sendMessage(chatId, { 
                 text: finalMessage, 

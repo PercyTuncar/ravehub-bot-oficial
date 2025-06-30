@@ -2,6 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
 const { getEligibleJobs, xpTable, getLevelName } = require('../../utils/levels');
 const { sendDebtReminder } = require('../../utils/debtUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'work',
@@ -14,6 +15,7 @@ module.exports = {
 
         try {
             const user = await findOrCreateUser(senderJid, message.pushName);
+            const currency = await getCurrency(chatId);
 
             if (user.cooldowns.work && user.cooldowns.work > new Date()) {
                 const timeLeft = (user.cooldowns.work.getTime() - new Date().getTime()) / 1000;
@@ -59,7 +61,7 @@ module.exports = {
             await user.save();
 
             // Mensaje principal del trabajo
-            let workResponse = `*╭─── 💼 TRABAJO ───╮*\n\n  *Puesto:* ${job.name}\n  _\"${job.description}\"_\n\n  *Recompensas para @${senderJid.split('@')[0]}:*\n  > • *Salario:* ${earnings} 💵\n  > • *Experiencia:* +${xpGained} XP\n\n*╰─────────────╯*`;
+            let workResponse = `*╭─── 💼 TRABAJO ───╮*\n\n  *Puesto:* ${job.name}\n  _\"${job.description}\"_\n\n  *Recompensas para @${senderJid.split('@')[0]}:*\n  > • *Salario:* ${earnings} ${currency}\n  > • *Experiencia:* +${xpGained} XP\n\n*╰─────────────╯*`;
 
             if (debtMessage) {
                 workResponse += `\n\n${debtMessage}`;

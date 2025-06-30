@@ -1,4 +1,5 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'balance',
@@ -11,10 +12,10 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         try {
-            // Refactorización: Usar la función centralizada para obtener el usuario.
             const user = await findOrCreateUser(senderJid, message.pushName);
+            const currency = await getCurrency(chatId);
 
-            const balanceMessage = `*╭───≽ 💰 BALANCE ≼───*\n*│*\n*│* 👤 *Usuario:* @${senderJid.split('@')[0]}\n*│*\n*│* 💵 *Cartera:* ${user.economy.wallet} 💵\n*│* 🏦 *Banco:* ${user.economy.bank} 💵\n*│*\n*╰──────────≽*`;
+            const balanceMessage = `*╭───≽ 💰 BALANCE ≼───*\n*│*\n*│* 👤 *Usuario:* @${senderJid.split('@')[0]}\n*│*\n*│* 💵 *Cartera:* ${user.economy.wallet} ${currency}\n*│* 🏦 *Banco:* ${user.economy.bank} ${currency}\n*│*\n*╰──────────≽*`;
 
             sock.sendMessage(chatId, { text: balanceMessage, mentions: [senderJid] });
         } catch (error) {

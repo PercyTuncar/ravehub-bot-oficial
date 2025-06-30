@@ -1,4 +1,5 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'transfer-bank',
@@ -9,6 +10,7 @@ module.exports = {
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
+        const currency = await getCurrency(chatId);
 
         const mentionedJid = message.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
         const amountStr = args.find(arg => !isNaN(parseInt(arg)));
@@ -25,7 +27,7 @@ module.exports = {
         try {
             const sender = await findOrCreateUser(senderJid, message.pushName);
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${sender.economy.bank} 🏦` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${currency}${sender.economy.bank}` });
             }
 
             const target = await findOrCreateUser(mentionedJid);
@@ -37,7 +39,7 @@ module.exports = {
             await target.save();
 
             await sock.sendMessage(chatId, {
-                text: `✅ Transferencia bancaria exitosa de ${amount} 🏦 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${sender.economy.bank} 🏦`,
+                text: `✅ Transferencia bancaria exitosa de ${currency}${amount} a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${currency}${sender.economy.bank}`,
                 mentions: [senderJid, mentionedJid]
             });
 

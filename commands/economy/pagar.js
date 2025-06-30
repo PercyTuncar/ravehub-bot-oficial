@@ -2,6 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 const User = require('../../models/User');
 const Debt = require('../../models/Debt');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'pagar',
@@ -15,6 +16,7 @@ module.exports = {
 
         try {
             await applyInterestToAllDebts();
+            const currency = await getCurrency(chatId);
 
             if (args.length < 2 || !message.message.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
                 return sock.sendMessage(chatId, { text: 'Debes especificar un monto y mencionar al usuario al que le debes. Ejemplo: .pagar 500 @usuario' });
@@ -49,7 +51,7 @@ module.exports = {
             lender.economy.wallet += amountToPay;
             debt.amount -= amountToPay;
 
-            let responseText = `✅ Has pagado ${amountToPay.toFixed(2)} 💵 de tu deuda a @${lender.name}.`;
+            let responseText = `✅ Has pagado ${amountToPay.toFixed(2)} ${currency} de tu deuda a @${lender.name}.`;
 
             if (debt.amount <= 0.01) { // Use a small threshold for floating point comparison
                 const daysLate = Math.floor((new Date() - new Date(debt.createdAt)) / (1000 * 60 * 60 * 24)) - 7; // Example: 7 days grace period
@@ -64,7 +66,7 @@ module.exports = {
                 responseText += `\n\n¡Felicidades! Has saldado tu deuda por completo. 🎉`;
             } else {
                 await debt.save();
-                responseText += `\nDeuda restante: ${debt.amount.toFixed(2)} 💵.`;
+                responseText += `\nDeuda restante: ${debt.amount.toFixed(2)} ${currency}.`;
             }
 
             await borrower.save();

@@ -1,4 +1,5 @@
 const ShopItem = require("../../models/ShopItem");
+const { getCurrency } = require("../../utils/groupUtils");
 
 const shopItems = [
   // Productos graciosos y para regalar
@@ -127,6 +128,7 @@ module.exports = {
   category: "economy",
   async execute(sock, message) {
     const chatId = message.key.remoteJid;
+    const currency = await getCurrency(chatId);
 
     try {
       const items = await ShopItem.find().sort({ price: 1 }); // Ordenar por precio
@@ -171,7 +173,7 @@ module.exports = {
 
         if (categoryItems.length > 0) {
           categoryItems.forEach((item, index) => {
-            shopMessage += `*│* ${item.emoji} *${item.name}* - $${item.price} 💵\n`;
+            shopMessage += `*│* ${item.emoji} *${item.name}* - ${currency}${item.price}\n`;
             shopMessage += `*│*  _${item.description}_\n`;
             if (index < categoryItems.length - 1) {
               shopMessage += `*│*\n`; // Agrega un salto de línea entre productos

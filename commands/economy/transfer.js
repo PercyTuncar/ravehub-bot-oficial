@@ -2,6 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 const User = require('../../models/User');
 const Debt = require('../../models/Debt');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'transfer',
@@ -27,6 +28,7 @@ module.exports = {
             }
 
             await applyInterestToAllDebts();
+            const currency = await getCurrency(chatId);
 
             const sender = await User.findOne({ jid: senderJid });
             const recipient = await User.findOne({ jid: mentionedJid });
@@ -38,7 +40,7 @@ module.exports = {
             }
 
             if (sender.economy.wallet < amount) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${sender.economy.wallet} 💵` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${sender.economy.wallet} ${currency}` });
             }
 
             let transferAmount = amount;
@@ -52,7 +54,7 @@ module.exports = {
                 debt.amount -= amountToPayOnDebt;
                 transferAmount -= amountToPayOnDebt;
 
-                debtPaymentMessage = `\n\n🧾 De tu transferencia, se usaron ${amountToPayOnDebt.toFixed(2)} 💵 para pagar tu deuda.`;
+                debtPaymentMessage = `\n\n🧾 De tu transferencia, se usaron ${amountToPayOnDebt.toFixed(2)} ${currency} para pagar tu deuda.`;
 
                 if (debt.amount <= 0.01) {
                     const daysLate = Math.floor((new Date() - new Date(debt.createdAt)) / (1000 * 60 * 60 * 24)) - 7; // 7 days grace
@@ -66,7 +68,7 @@ module.exports = {
                     debtPaymentMessage += `\n¡Felicidades! Has saldado tu deuda por completo. 🎉`;
                 } else {
                     await debt.save();
-                    debtPaymentMessage += `\nDeuda restante: ${debt.amount.toFixed(2)} 💵.`;
+                    debtPaymentMessage += `\nDeuda restante: ${debt.amount.toFixed(2)} ${currency}.`;
                 }
             }
 
@@ -77,7 +79,7 @@ module.exports = {
             await sender.save();
             await recipient.save();
 
-            const finalMessage = `✅ Has transferido ${amount} 💵 a @${recipient.jid.split('@')[0]}.${debtPaymentMessage}`;
+            const finalMessage = `✅ Has transferido ${amount} ${currency} a @${recipient.jid.split('@')[0]}.${debtPaymentMessage}`;
 
             await sock.sendMessage(chatId, { 
                 text: finalMessage, 

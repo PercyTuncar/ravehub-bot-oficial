@@ -1,4 +1,5 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'retirar',
@@ -9,6 +10,7 @@ module.exports = {
     async execute(sock, message, args) {
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
+        const currency = await getCurrency(chatId);
 
         try {
             const user = await findOrCreateUser(jid, message.pushName);
@@ -32,7 +34,7 @@ module.exports = {
                     return sock.sendMessage(chatId, { text: '❌ Por favor, introduce un número válido para retirar.' });
                 }
                 if (amountToWithdraw > user.economy.bank) {
-                    return sock.sendMessage(chatId, { text: `🏦 No tienes suficiente dinero en el banco. Solo puedes retirar hasta ${user.economy.bank} 💵.` });
+                    return sock.sendMessage(chatId, { text: `🏦 No tienes suficiente dinero en el banco. Solo puedes retirar hasta ${currency}${user.economy.bank}.` });
                 }
             }
 
@@ -41,7 +43,7 @@ module.exports = {
 
             await user.save();
 
-            const successMessage = `✅ Has retirado *${amountToWithdraw} 💵* de tu banco.\n\n*Cartera:* ${user.economy.wallet} 💵\n*Banco:* ${user.economy.bank} 💵`;
+            const successMessage = `✅ Has retirado *${currency}${amountToWithdraw}* de tu banco.\n\n*Cartera:* ${currency}${user.economy.wallet}\n*Banco:* ${currency}${user.economy.bank}`;
             await sock.sendMessage(chatId, { text: successMessage });
 
         } catch (error) {

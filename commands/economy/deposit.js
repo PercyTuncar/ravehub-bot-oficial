@@ -1,4 +1,5 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
+const { getCurrency } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'deposit',
@@ -9,6 +10,7 @@ module.exports = {
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
+        const currency = await getCurrency(chatId);
 
         try {
             // Refactorización: Usar la función centralizada para obtener el usuario.
@@ -31,7 +33,7 @@ module.exports = {
             }
 
             if (user.economy.wallet < amountToDeposit) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${user.economy.wallet} 💵` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${currency}${user.economy.wallet}` });
             }
             
             if (amountToDeposit === 0) {
@@ -44,7 +46,7 @@ module.exports = {
             await user.save();
 
             const responseText = 
-`✅ Depósito exitoso de ${amountToDeposit} 💵.\n\n*Nuevo Balance:*\n*Cartera:* ${user.economy.wallet} 💵\n*Banco:* ${user.economy.bank} 🏦`;
+`✅ Depósito exitoso de ${currency}${amountToDeposit}.\n\n*Nuevo Balance:*\n*Cartera:* ${currency}${user.economy.wallet}\n*Banco:* ${currency}${user.economy.bank} 🏦`;
 
             await sock.sendMessage(chatId, { 
                 text: responseText,
