@@ -25,12 +25,12 @@ module.exports = {
         }
 
         try {
-            const sender = await findOrCreateUser(senderJid, message.pushName);
+            const sender = await findOrCreateUser(senderJid, chatId, message.pushName);
             if (sender.economy.bank < amount) {
                 return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${currency}${sender.economy.bank}` });
             }
 
-            const target = await findOrCreateUser(mentionedJid);
+            const target = await findOrCreateUser(mentionedJid, chatId);
 
             sender.economy.bank -= amount;
             target.economy.bank += amount;

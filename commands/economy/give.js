@@ -31,7 +31,7 @@ module.exports = {
 
         try {
             // Refactorización: Usar la función centralizada para obtener el emisor.
-            const sender = await findOrCreateUser(senderJid, message.pushName);
+            const sender = await findOrCreateUser(senderJid, chatId, message.pushName);
 
             const itemInInventory = sender.inventory.find(item => item.name.toLowerCase() === itemName);
 
@@ -41,7 +41,7 @@ module.exports = {
 
             // Refactorización: Usar la función centralizada para obtener el receptor.
             const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
-            const target = await findOrCreateUser(mentionedJid, targetName);
+            const target = await findOrCreateUser(mentionedJid, chatId, targetName);
 
             // Poblar el inventario del emisor para acceder al emoji del item
             await sender.populate('inventory.itemId');
