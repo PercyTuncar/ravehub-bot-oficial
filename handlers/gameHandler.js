@@ -51,7 +51,8 @@ async function handleGameMessage(sock, message) {
         const leftCardName = `*${leftCard.rank} de ${leftCard.suit}*`;
         const rightCardName = `*${rightCard.rank} de ${rightCard.suit}*`;
 
-        const user = await findOrCreateUser(jid);
+        // Corregido: pasar siempre chatId como groupId
+        const user = await findOrCreateUser(jid, chatId);
         let finalMessage = '';
         let logResult = '';
         let winnings = 0;
