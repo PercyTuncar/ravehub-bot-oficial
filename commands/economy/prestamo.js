@@ -46,19 +46,6 @@ module.exports = {
         });
 
         // Create a new loan session
-        createLoanSession(lenderJid, senderJid, amount, sentMessage.key.id);
-
-        // Set a timeout to notify about expiry. The session is cleared in the handler.
-        setTimeout(async () => {
-            const session = getLoanSession(lenderJid);
-            if (session && session.messageId === sentMessage.key.id) {
-                // The session still exists, meaning it expired without a response.
-                await sock.sendMessage(chatId, {
-                    text: `⏳ La solicitud de préstamo de @${senderJid.split('@')[0]} a @${lenderJid.split('@')[0]} ha expirado por falta de respuesta.`,
-                    mentions: [senderJid, lenderJid]
-                });
-                // The session will be cleared by its own internal timer.
-            }
-        }, 30100); // 30.1 seconds to be safe
+        createLoanSession(sock, chatId, lenderJid, senderJid, amount, sentMessage.key.id);
     },
 };

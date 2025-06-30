@@ -4,19 +4,26 @@ const { findOrCreateUser } = require('../utils/userUtils');
 
 const loanSessions = new Map();
 
-function createLoanSession(lenderJid, borrowerJid, amount, messageId) {
+function createLoanSession(sock, chatId, lenderJid, borrowerJid, amount, messageId) {
     const expiresAt = new Date(new Date().getTime() + 30000); // 30 seconds expiry
+    const sessionTimer = setTimeout(async () => {
+        const session = loanSessions.get(lenderJid);
+        // Check if the session still exists and hasn't been handled
+        if (session && session.messageId === messageId) {
+            loanSessions.delete(lenderJid);
+            await sock.sendMessage(chatId, {
+                text: `⏳ La solicitud de préstamo de @${borrowerJid.split('@')[0]} a @${lenderJid.split('@')[0]} ha expirado por falta de respuesta.`,
+                mentions: [borrowerJid, lenderJid]
+            });
+        }
+    }, 30000);
+
     loanSessions.set(lenderJid, {
         borrowerJid,
         amount,
         messageId,
         expiresAt,
-        timer: setTimeout(() => {
-            if (loanSessions.has(lenderJid)) {
-                loanSessions.delete(lenderJid);
-                // Optionally notify users of expiry, though prestamo.js already does this.
-            }
-        }, 30000)
+        timer: sessionTimer
     });
 }
 
@@ -100,9 +107,14 @@ async function handleLoanResponse(sock, message) {
             mentions: [lender.jid, borrower.jid]
         });
     }
-   
-    clearLoanSession(senderJid); // Clean up the session
-    return true; // Message was handled
+
+    clearLoanSession(senderJid); // Clear the session after handling the response.
+    return true; // Indicate that the message was handled.
 }
 
-module.exports = { createLoanSession, getLoanSession, handleLoanResponse };
+module.exports = {
+    createLoanSession,
+    getLoanSession,
+    clearLoanSession,
+    handleLoanResponse
+};
