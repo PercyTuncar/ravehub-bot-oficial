@@ -37,7 +37,7 @@ module.exports = {
                 // 2. Comprobación de seguridad adicional
                 if (user.jid && typeof user.jid === 'string') {
                     const rankEmoji = ['🥇', '🥈', '🥉'][index] || `*${index + 1}.*`;
-                    rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - ${currency}${user.totalWealth}`);
+                    rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - ${currency} ${user.totalWealth.toLocaleString()}`);
                     mentions.push(user.jid);
                 }
             });

@@ -40,7 +40,7 @@ module.exports = {
             }
 
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: 'No tienes suficiente dinero en tu cuenta de banco para yapear.' });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cuenta de banco para yapear. Saldo actual: ${currency} ${sender.economy.bank.toLocaleString()}` });
             }
 
             let debtPaymentMessage = '';
@@ -51,7 +51,7 @@ module.exports = {
                 const amountToPayOnDebt = Math.min(amount, debt.amount);
                 debt.amount -= amountToPayOnDebt;
 
-                debtPaymentMessage = `\n\n🧾 De tu yapeo, se usaron ${amountToPayOnDebt.toFixed(2)} ${currency} para pagar tu deuda.`;
+                debtPaymentMessage = `\n\n🧾 De tu yapeo, se usaron *${currency} ${amountToPayOnDebt.toLocaleString()}* para pagar tu deuda.`;
 
                 if (debt.amount <= 0.01) { // Use threshold for float comparison
                     const daysLate = Math.floor((new Date() - new Date(debt.createdAt)) / (1000 * 60 * 60 * 24)) - 7; // 7 days grace
@@ -65,7 +65,7 @@ module.exports = {
                     debtPaymentMessage += `\n¡Felicidades! Has saldado tu deuda por completo. 🎉`;
                 } else {
                     await debt.save();
-                    debtPaymentMessage += `\nDeuda restante: ${debt.amount.toFixed(2)} ${currency}.`;
+                    debtPaymentMessage += `\nDeuda restante: *${currency} ${debt.amount.toLocaleString()}*.`;
                 }
             }
 
@@ -76,7 +76,7 @@ module.exports = {
             await sender.save();
             await recipient.save();
 
-            const finalMessage = `✅ Has yapeado ${amount} ${currency} a @${recipient.jid.split('@')[0]}.${debtPaymentMessage}`;
+            const finalMessage = `✅ Has yapeado *${currency} ${amount.toLocaleString()}* a @${recipient.jid.split('@')[0]}.${debtPaymentMessage}`;
 
             await sock.sendMessage(chatId, { 
                 text: finalMessage, 

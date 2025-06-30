@@ -173,7 +173,7 @@ module.exports = {
 
         if (categoryItems.length > 0) {
           categoryItems.forEach((item, index) => {
-            shopMessage += `*│* ${item.emoji} *${item.name}* - ${currency}${item.price}\n`;
+            shopMessage += `*│* ${item.emoji} *${item.name}* - ${currency} ${item.price.toLocaleString()}\n`;
             shopMessage += `*│*  _${item.description}_\n`;
             if (index < categoryItems.length - 1) {
               shopMessage += `*│*\n`; // Agrega un salto de línea entre productos

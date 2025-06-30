@@ -61,7 +61,7 @@ module.exports = {
             await user.save();
 
             // Mensaje principal del trabajo
-            let workResponse = `*╭─── 💼 TRABAJO ───╮*\n\n  *Puesto:* ${job.name}\n  _\"${job.description}\"_\n\n  *Recompensas para @${senderJid.split('@')[0]}:*\n  > • *Salario:* ${earnings} ${currency}\n  > • *Experiencia:* +${xpGained} XP\n\n*╰─────────────╯*`;
+            let workResponse = `*╭─── 💼 TRABAJO ───╮*\n\n  *Puesto:* ${job.name}\n  _\"${job.description}\"_\n\n  *Recompensas para @${senderJid.split('@')[0]}:*\n  > • *Salario:* ${currency} ${earnings.toLocaleString()}\n  > • *Experiencia:* +${xpGained} XP\n\n*╰─────────────╯`;
 
             if (debtMessage) {
                 workResponse += `\n\n${debtMessage}`;

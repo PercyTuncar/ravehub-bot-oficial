@@ -31,18 +31,19 @@ module.exports = {
         const betAmount = parseInt(betAmountStr, 10);
 
         if (betAmount < MIN_BET) {
-            return sock.sendMessage(chatId, { text: `📉 La apuesta mínima es de *${currency}${MIN_BET}*.` });
+            return sock.sendMessage(chatId, { text: `📉 La apuesta mínima es de *${await getCurrency(chatId)} ${MIN_BET}*.` });
         }
 
         if (betAmount > MAX_BET) {
-            return sock.sendMessage(chatId, { text: `📈 La apuesta máxima es de *${currency}${MAX_BET}*.` });
+            return sock.sendMessage(chatId, { text: `📈 La apuesta máxima es de *${await getCurrency(chatId)} ${MAX_BET}*.` });
         }
 
         try {
             const user = await findOrCreateUser(jid, message.pushName);
+            const currency = await getCurrency(chatId);
 
             if (user.economy.wallet < betAmount) {
-                return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero en tu cartera para apostar *${currency}${betAmount}*.` });
+                return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar *${currency} ${betAmount}*.` });
             }
 
             // Retirar la apuesta de la cartera
@@ -54,7 +55,15 @@ module.exports = {
 
             await sock.sendMessage(chatId, {
                 image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/v1751218082/actualizado_casino_ravehub-min_rrojpr.jpg' },
-                caption: `*¡Bienvenido al Casino RaveHub, @${jid.split('@')[0]}!* 🎰\n\nTu apuesta de *${currency}${betAmount}* ha sido aceptada.\n\n*Elige tu jugada:*\n> • *Izquierda* o *Derecha*: Gana x2 si tu carta es mayor.\n> • *Empate*: Gana x5 si las cartas son iguales.\n\nResponde con tu elección. ¡Tienes 30 segundos!`,
+                caption: `*¡Bienvenido al Casino RaveHub, @${jid.split('@')[0]}!* 🎰
+
+Tu apuesta de *${currency} ${betAmount}* ha sido aceptada.
+
+*Elige tu jugada:*
+> • *Izquierda* o *Derecha*: Gana x2 si tu carta es mayor.
+> • *Empate*: Gana x5 si las cartas son iguales.
+
+Responde con tu elección. ¡Tienes 30 segundos!`,
                 mentions: [jid]
             });
 
@@ -64,7 +73,9 @@ module.exports = {
                 session.timer = setTimeout(async () => {
                     if (getGameSession(jid)) { // Verificar si la sesión todavía existe
                         await sock.sendMessage(chatId, {
-                            text: `⌛ @${jid.split('@')[0]}, se ha agotado el tiempo para tu jugada.\n\nTu apuesta de *${currency}${betAmount}* ha sido cancelada y devuelta a tu cartera.`,
+                            text: `⌛ @${jid.split('@')[0]}, se agotó el tiempo para tu jugada.
+
+Tu apuesta de *${currency} ${betAmount}* ha sido devuelta a tu cartera.`,
                             mentions: [jid]
                         });
                         // Devolver la apuesta

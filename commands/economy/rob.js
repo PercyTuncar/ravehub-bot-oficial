@@ -40,7 +40,7 @@ module.exports = {
             }
 
             if (sender.judicialDebt > 0) {
-                return sock.sendMessage(chatId, { text: `⚖️ Tienes una deuda judicial pendiente de *${currency}${sender.judicialDebt}*. No puedes robar hasta que la saldes.` });
+                return sock.sendMessage(chatId, { text: `⚖️ Tienes una deuda judicial pendiente de *${currency} ${sender.judicialDebt.toLocaleString()}*. No puedes robar hasta que la saldes.` });
             }
 
             // --- Verificación de Cooldown ---
@@ -55,7 +55,7 @@ module.exports = {
             // --- Verificación de Deuda Límite ---
             const totalWealth = sender.economy.wallet + sender.economy.bank;
             if (totalWealth <= -200) {
-                return sock.sendMessage(chatId, { text: `🚨 *¡ALERTA DE DELITO GRAVE!* 🚨\n\n@${senderJid.split('@')[0]}, has alcanzado una deuda crítica de *${currency}${totalWealth}*.\n\nCualquier intento adicional de actividad ilícita podría resultar en tu **expulsión inmediata** del grupo. Te recomendamos saldar tus deudas.`,
+                return sock.sendMessage(chatId, { text: `🚨 *¡ALERTA DE DELITO GRAVE!* 🚨\n\n@${senderJid.split('@')[0]}, has alcanzado una deuda crítica de *${currency} ${totalWealth.toLocaleString()}*.\n\nCualquier intento adicional de actividad ilícita podría resultar en tu **expulsión inmediata** del grupo. Te recomendamos saldar tus deudas.`,
                     mentions: [senderJid]
                 });
             }

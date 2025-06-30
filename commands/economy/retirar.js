@@ -34,7 +34,7 @@ module.exports = {
                     return sock.sendMessage(chatId, { text: '❌ Por favor, introduce un número válido para retirar.' });
                 }
                 if (amountToWithdraw > user.economy.bank) {
-                    return sock.sendMessage(chatId, { text: `🏦 No tienes suficiente dinero en el banco. Solo puedes retirar hasta ${currency}${user.economy.bank}.` });
+                    return sock.sendMessage(chatId, { text: `🏦 No tienes suficiente dinero en el banco. Solo puedes retirar hasta ${currency} ${user.economy.bank.toLocaleString()}.` });
                 }
             }
 
@@ -43,7 +43,8 @@ module.exports = {
 
             await user.save();
 
-            const successMessage = `✅ Has retirado *${currency}${amountToWithdraw}* de tu banco.\n\n*Cartera:* ${currency}${user.economy.wallet}\n*Banco:* ${currency}${user.economy.bank}`;
+            const successMessage = `✅ Has retirado *${currency} ${amountToWithdraw.toLocaleString()}* de tu banco.\n\n*Balance actual:*
+> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`;
             await sock.sendMessage(chatId, { text: successMessage });
 
         } catch (error) {

@@ -43,7 +43,7 @@ module.exports = {
                 debtsList = user.debts
                     .map((debt) => {
                         mentions.push(debt.lender.jid);
-                        return `💸 Debes ${debt.amount.toFixed(2)} ${currency} a @${debt.lender.jid.split('@')[0]} (Interés: ${debt.interest * 100}% diario)`;
+                        return `💸 Debes *${currency} ${debt.amount.toLocaleString()}* a @${debt.lender.jid.split('@')[0]} (Interés: ${debt.interest * 100}% diario)`;
                     })
                     .join("\n*│* │ ");
             }
@@ -56,7 +56,7 @@ module.exports = {
                 profilePicUrl = 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751131351/portadasinfoto_gz9kk2.jpg'; // URL de imagen por defecto corregida
             }
 
-            const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@")[0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* 🏅 *Reputación:* ${reputation}\n*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} ${currency}\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* ${user.economy.wallet} ${currency}\n*│* │ 🏦 *Banco:* ${user.economy.bank} ${currency}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🧾 DEUDAS\n*│* │ ${debtsList}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
+            const profileMessage = `*╭───≽ PERFIL DE USUARIO ≼───*\n*│*\n*│* 👤 *Usuario:* @${jid.split("@") [0]}\n*│* 📛 *Nombre:* ${user.name}\n*│* 🌟 *Nivel:* ${getLevelName(user.level)}\n*│* 📈 *Experiencia:* ${xpProgress} XP\n*│* 🏅 *Reputación:* ${reputation}\n*│* ⚖️ *Deuda Judicial:* *${currency} ${user.judicialDebt.toLocaleString()}*\n*│*\n*│* ╭─≽ 💰 ECONOMÍA\n*│* │ 💵 *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n*│* │ 🏦 *Banco:* ${currency} ${user.economy.bank.toLocaleString()}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🧾 DEUDAS\n*│* │ ${debtsList}\n*│* ╰─────────────────≽\n*│*\n*│* ╭─≽ 🎒 INVENTARIO\n*│* │ ${inventoryList}\n*│* ╰─────────────────≽\n*│*\n*╰──────────≽*`;
 
             await sock.sendMessage(
                 chatId,

@@ -40,7 +40,8 @@ module.exports = {
         }
         const currency = await getCurrency(chatId);
 
-        const loanRequestMessage = `Hola @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de ${amount} ${currency}.\n\nResponde con \"Si\" para aceptar o \"No\" para rechazar.\n*Tienes 30 segundos para responder.*`;
+        const loanRequestMessage = `Hola @${lenderJid.split('@')[0]}, @${senderJid.split('@')[0]} te ha solicitado un préstamo de *${currency} ${amount.toLocaleString()}*.` +
+            `\n\nResponde con "Si" para aceptar o "No" para rechazar.\n*Tienes 30 segundos para responder.*`;
         
         const sentMessage = await sock.sendMessage(chatId, {
             text: loanRequestMessage,
