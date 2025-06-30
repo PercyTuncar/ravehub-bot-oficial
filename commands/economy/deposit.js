@@ -59,8 +59,11 @@ module.exports = {
             await user.save();
 
             const responseText = 
-`✅ Depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.${autoDebtMsg}\n\n*Nuevo Balance:*
-> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()} 🏦`;
+`✅ @${senderJid.split('@')[0]}, depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.${autoDebtMsg}
+
+*Nuevo Balance:*
+> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}
+> *Banco:* ${currency} ${user.economy.bank.toLocaleString()} 🏦`;
 
             await sock.sendMessage(chatId, { 
                 text: responseText,

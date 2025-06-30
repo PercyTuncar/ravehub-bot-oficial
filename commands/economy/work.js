@@ -31,7 +31,7 @@ module.exports = {
                     timeString += `${seconds} segundo(s)`;
                 }
 
-                return sock.sendMessage(chatId, { text: `⏳ Debes esperar ${timeString} más para volver a trabajar.` });
+                return sock.sendMessage(chatId, { text: `⏳ @${senderJid.split('@')[0]}, debes esperar ${timeString} más para volver a trabajar.`, mentions: [senderJid] });
             }
 
             const eligibleJobs = getEligibleJobs(user.level);
