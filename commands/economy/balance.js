@@ -12,7 +12,7 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         try {
-            const user = await findOrCreateUser(senderJid, message.pushName);
+            const user = await findOrCreateUser(senderJid, chatId, message.pushName);
             const currency = await getCurrency(chatId);
 
             const balanceMessage = `*╭───≽ 💰 TU BALANCE ≼───*\n*│*\n*│* 👤 @${senderJid.split('@')[0]}\n*│* 💵 *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n*│* 🏦 *Banco:* ${currency} ${user.economy.bank.toLocaleString()}\n*│*\n*│* 💰 *Total:* ${currency} ${(user.economy.wallet + user.economy.bank).toLocaleString()}\n*╰─────────────≽*`;
