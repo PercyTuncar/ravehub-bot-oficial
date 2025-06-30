@@ -1,5 +1,6 @@
 const commandHandler = require('./commandHandler');
 const { handleGameMessage } = require('./gameHandler');
+const { handleLoanResponse } = require('./loanHandler');
 const { getGameSession } = require('../utils/gameUtils');
 const GroupSettings = require('../models/GroupSettings');
 const { sock } = require('../index');
@@ -21,6 +22,12 @@ module.exports = (sock) => {
             if (gameHandled) {
                 return; // Detener el procesamiento si el mensaje fue manejado por el juego
             }
+        }
+
+        // --- Loan Response Handler ---
+        const loanHandled = await handleLoanResponse(sock, message);
+        if (loanHandled) {
+            return;
         }
 
         const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';

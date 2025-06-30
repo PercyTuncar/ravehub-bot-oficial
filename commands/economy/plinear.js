@@ -1,4 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
+const User = require('../../models/User');
+const Debt = require('../../models/Debt');
 
 module.exports = {
     name: 'plinear',
@@ -40,8 +42,29 @@ module.exports = {
             await sender.save();
             await target.save();
 
+            // Nueva lógica: Manejo de deudas
+            const debtToTarget = await Debt.findOne({ borrower: sender._id, lender: target._id });
+            let debtMessage = '';
+
+            if (debtToTarget) {
+                const payment = Math.min(amount, debtToTarget.amount);
+                debtToTarget.amount -= payment;
+                sender.economy.bank -= payment;
+                target.economy.bank += payment;
+                amount -= payment;
+
+                if (debtToTarget.amount <= 0) {
+                    await Debt.findByIdAndDelete(debtToTarget._id);
+                    sender.debts.pull(debtToTarget._id);
+                    debtMessage = `\n\nHas saldado tu deuda de ${payment} 💵 con @${target.jid.split('@')[0]}. ¡Deuda pagada!`;
+                } else {
+                    await debtToTarget.save();
+                    debtMessage = `\n\nHas pagado ${payment} 💵 de tu deuda a @${target.jid.split('@')[0]}. Deuda restante: ${debtToTarget.amount} 💵.`;
+                }
+            }
+
             await sock.sendMessage(chatId, { 
-                text: `✅ Plin exitoso de ${amount} 💵 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${sender.economy.bank} 💵`,
+                text: `✅ Plin exitoso de ${amount} 💵 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${sender.economy.bank} 💵${debtMessage}`,
                 mentions: [senderJid, mentionedJid]
             });
 

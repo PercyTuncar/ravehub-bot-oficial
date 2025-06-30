@@ -13,12 +13,22 @@ const userSchema = new mongoose.Schema({
     wallet: { type: Number, default: 0 },
     bank: { type: Number, default: 0 },
   },
+  pendingLoan: {
+    borrowerJid: { type: String, default: null },
+    amount: { type: Number, default: 0 },
+    messageId: { type: String, default: null },
+  },
+  debts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Debt' }],
   judicialDebt: { type: Number, default: 0 },
   inventory: [{
     itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'ShopItem' },
     name: { type: String, required: true },
     quantity: { type: Number, required: true, default: 1 },
   }],
+  paymentHistory: { 
+    paidOnTime: { type: Number, default: 0 },
+    paidLate: { type: Number, default: 0 },
+  },
   warnings: { type: Number, default: 0 },
   lastWork: { type: Date, default: null },
   isBanned: { type: Boolean, default: false },

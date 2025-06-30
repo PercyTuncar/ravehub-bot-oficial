@@ -1,30 +1,49 @@
+const { findOrCreateUser } = require('../../utils/userUtils');
+const { applyInterestToAllDebts } = require('../../utils/debtUtils');
 const User = require('../../models/User');
 
 module.exports = {
     name: 'deuda',
-    description: 'Muestra tu deuda actual.',
-    aliases: ['debt'],
+    description: 'Ver tus deudas pendientes.',
+    aliases: ['debts'],
     usage: '.deuda',
     category: 'economy',
     async execute(sock, message) {
-        const senderJid = message.key.participant || message.key.remoteJid;
+        const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
         try {
-            let user = await User.findOne({ jid: senderJid });
+            await applyInterestToAllDebts();
+            const user = await User.findOne({ jid }).populate({ 
+                path: 'debts', 
+                populate: { path: 'lender', select: 'name jid' } 
+            });
 
-            if (!user || user.judicialDebt <= 0) {
-                const reply = `🎉 ¡Felicidades! 🎉\n\n@${senderJid.split('@')[0]}, no tienes ninguna deuda judicial pendiente. ¡Sigue así!`;
-                return sock.sendMessage(chatId, { text: reply, mentions: [senderJid] });
+            if (!user || (user.debts.length === 0 && user.judicialDebt === 0)) {
+                return sock.sendMessage(chatId, { text: '¡Felicidades! No tienes ninguna deuda pendiente.' });
             }
 
-            const debtMessage = `⚖️ *Estado de Deuda Judicial* ⚖️\n\nHola @${senderJid.split('@')[0]},\n\nTienes una deuda pendiente con la justicia.\n\n💰 *Monto de la deuda:* ${user.judicialDebt} 💵\n\nRecuerda que no podrás realizar ciertas acciones, como robar, hasta que saldes tu deuda. Puedes pagarla trabajando o al realizar compras.`;
+            let debtMessage = '*╭───≽ 🧾 TUS DEUDAS ≼───*\n*│*\n';
+            const mentions = [jid];
 
-            await sock.sendMessage(chatId, { text: debtMessage, mentions: [senderJid] });
+            if (user.judicialDebt > 0) {
+                debtMessage += `*│* ⚖️ *Deuda Judicial:* ${user.judicialDebt} 💵 (Por robo)\n`;
+            }
+
+            if (user.debts.length > 0) {
+                user.debts.forEach(debt => {
+                    mentions.push(debt.lender.jid);
+                    debtMessage += `*│* 💸 *Préstamo:* Debes ${debt.amount.toFixed(2)} a @${debt.lender.jid.split('@')[0]}\n`;
+                });
+            }
+
+            debtMessage += '*│*\n*╰──────────≽*';
+
+            await sock.sendMessage(chatId, { text: debtMessage, mentions: [...new Set(mentions)] });
 
         } catch (error) {
-            console.error('Error al consultar la deuda:', error);
-            sock.sendMessage(chatId, { text: '❌ Ocurrió un error al consultar tu deuda.' });
+            console.error('Error en el comando deuda:', error);
+            sock.sendMessage(chatId, { text: '❌ Ocurrió un error al consultar tus deudas.' });
         }
     },
 };

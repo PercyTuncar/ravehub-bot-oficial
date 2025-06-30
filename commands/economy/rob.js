@@ -1,9 +1,9 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
-const User = require('../../models/User'); // Asegúrate de que la ruta sea correcta
+const User = require('../../models/User');
 
-const COOLDOWN_MINUTES = 10;
-const FAILURE_FINE = 150; // Multa fija por fallar el robo
+const COOLDOWN_MINUTES = 15; // Cooldown aumentado
+const FAILURE_FINE = 500; // Multa drásticamente aumentada por fallar el robo
 
 module.exports = {
     name: 'rob',
@@ -69,11 +69,12 @@ Cualquier intento adicional de actividad ilícita podría resultar en tu **expul
             // Establecer cooldown inmediatamente
             sender.cooldowns.rob = new Date(new Date().getTime() + COOLDOWN_MINUTES * 60 * 1000);
 
-            // Nueva lógica de robo: 90% de éxito si la víctima tiene dinero, 10% de fallo.
+            // Nueva lógica de robo: 65% de éxito, más arriesgado y con mayor recompensa/castigo.
             const successChance = Math.random();
 
-            if (successChance > 0.10) { // 90% de Éxito
-                const amountToSteal = Math.floor(target.economy.wallet * (Math.random() * 0.35 + 0.10)); // Robar entre 10% y 45%
+            if (successChance > 0.35) { // 65% de Éxito
+                // Robar entre 25% y 95% de la cartera de la víctima
+                const amountToSteal = Math.floor(target.economy.wallet * (Math.random() * 0.70 + 0.25));
                 target.economy.wallet -= amountToSteal;
 
                 let finalDebtMessage = '';
@@ -100,24 +101,14 @@ Cualquier intento adicional de actividad ilícita podría resultar en tu **expul
                     }
                 }
 
-                const successMessage = `*💰 ¡ROBO EXITOSO! 💰*
-
-Le has robado *${amountToSteal} 💵* a @${target.name}.
-
-*Ganancia neta (después de deudas):* +${netGain} 💵
-*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
+                const successMessage = `*💰 ¡GOLPE MAESTRO! 💰*\n\nCon sigilo y audacia, has vaciado los bolsillos de @${target.name}, llevándote *${amountToSteal} 💵*.\n\n*Ganancia neta (después de deudas):* +${netGain} 💵\n*Tu cartera ahora tiene:* ${sender.economy.wallet} 💵`;
                 await sock.sendMessage(chatId, { text: successMessage, mentions: [senderJid, mentionedJid] });
 
-            } else { // 10% de Fallo
+            } else { // 35% de Fallo
                 sender.judicialDebt += FAILURE_FINE;
                 await sender.save();
 
-                const failureMessage = `*👮‍♂️ ¡QUÉ TORPE! 👮‍♂️*
-
-Fallaste el robo y fuiste atrapado. Ahora tienes una nueva deuda con la justicia.
-
-*Multa añadida a tu deuda:* +${FAILURE_FINE} 💵
-*Deuda judicial total:* ${sender.judicialDebt} 💵`;
+                const failureMessage = `*👮‍♂️ ¡ATRAPADO INFRAGANTI! 👮‍♂️*\n\nTu torpe intento de robo ha fallado miserablemente. La justicia te ha impuesto una multa ejemplar.\n\n*Multa añadida a tu deuda:* +${FAILURE_FINE} 💵\n*Deuda judicial total:* ${sender.judicialDebt} 💵`;
                 return sock.sendMessage(chatId, { text: failureMessage, mentions: [senderJid, mentionedJid] });
             }
 

@@ -1,63 +1,92 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
+const User = require('../../models/User');
+const Debt = require('../../models/Debt');
+const { applyInterestToAllDebts } = require('../../utils/debtUtils');
 
 module.exports = {
     name: 'transfer',
-    description: 'Transferir a usuario.',
-    aliases: ['pay', 'pagar'],
+    description: 'Transferir dinero a otro usuario.',
+    aliases: ['transferir'],
     usage: '.transfer <monto> @usuario',
     category: 'economy',
     async execute(sock, message, args) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
-        const mentionedJid = message.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
-        const amountStr = args.find(arg => !isNaN(parseInt(arg)));
-        const amount = amountStr ? parseInt(amountStr) : 0;
-
-        if (!mentionedJid || amount <= 0) {
-            return sock.sendMessage(chatId, { text: 'Formato incorrecto. Uso: .transfer @usuario <cantidad>' });
-        }
-
-        if (senderJid === mentionedJid) {
-            return sock.sendMessage(chatId, { text: 'No puedes transferirte dinero a ti mismo.' });
-        }
-
         try {
-            // Refactorización: Usar la función centralizada para obtener el emisor.
-            const sender = await findOrCreateUser(senderJid, message.pushName);
+            const mentionedJid = message.message.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            const amountStr = args.find(arg => !isNaN(parseInt(arg)));
+            const amount = amountStr ? parseInt(amountStr) : 0;
+
+            if (!mentionedJid || amount <= 0) {
+                return sock.sendMessage(chatId, { text: 'Formato incorrecto. Uso: .transfer <monto> @usuario' });
+            }
+
+            if (senderJid === mentionedJid) {
+                return sock.sendMessage(chatId, { text: 'No puedes transferirte dinero a ti mismo.' });
+            }
+
+            await applyInterestToAllDebts();
+
+            const sender = await User.findOne({ jid: senderJid });
+            const recipient = await User.findOne({ jid: mentionedJid });
+
+            if (!sender || !recipient) {
+                await findOrCreateUser(senderJid, message.pushName);
+                await findOrCreateUser(mentionedJid);
+                return sock.sendMessage(chatId, { text: '❌ Ocurrió un error. Inténtalo de nuevo.' });
+            }
 
             if (sender.economy.wallet < amount) {
                 return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${sender.economy.wallet} 💵` });
             }
 
-            // Refactorización: Usar la función centralizada para obtener el receptor.
-            const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
-            const target = await findOrCreateUser(mentionedJid, targetName);
+            let transferAmount = amount;
+            let debtPaymentMessage = '';
 
-            sender.economy.wallet -= amount;
-            target.economy.wallet += amount;
+            const debt = await Debt.findOne({ borrower: sender._id, lender: recipient._id });
 
-            // --- Lógica de Deuda Judicial ---
-            if (target.judicialDebt > 0) {
-                const debtPaid = Math.min(amount, target.judicialDebt);
-                target.judicialDebt -= debtPaid;
-                await sock.sendMessage(chatId, {
-                    text: `⚖️ Se ha descontado automáticamente *${debtPaid} 💵* de la transferencia recibida por @${mentionedJid.split('@')[0]} para pagar su deuda judicial.\n*Deuda restante:* ${target.judicialDebt} 💵`,
-                    mentions: [mentionedJid]
-                });
+            if (debt) {
+                const amountToPayOnDebt = Math.min(transferAmount, debt.amount);
+                
+                debt.amount -= amountToPayOnDebt;
+                transferAmount -= amountToPayOnDebt;
+
+                debtPaymentMessage = `\n\n🧾 De tu transferencia, se usaron ${amountToPayOnDebt.toFixed(2)} 💵 para pagar tu deuda.`;
+
+                if (debt.amount <= 0.01) {
+                    const daysLate = Math.floor((new Date() - new Date(debt.createdAt)) / (1000 * 60 * 60 * 24)) - 7; // 7 days grace
+                    if (daysLate > 0) {
+                        sender.paymentHistory.paidLate += 1;
+                    } else {
+                        sender.paymentHistory.paidOnTime += 1;
+                    }
+                    await Debt.findByIdAndDelete(debt._id);
+                    sender.debts.pull(debt._id);
+                    debtPaymentMessage += `\n¡Felicidades! Has saldado tu deuda por completo. 🎉`;
+                } else {
+                    await debt.save();
+                    debtPaymentMessage += `\nDeuda restante: ${debt.amount.toFixed(2)} 💵.`;
+                }
             }
 
+            // Perform the main transaction
+            sender.economy.wallet -= amount; 
+            recipient.economy.wallet += amount;
+
             await sender.save();
-            await target.save();
+            await recipient.save();
+
+            const finalMessage = `✅ Has transferido ${amount} 💵 a @${recipient.jid.split('@')[0]}.${debtPaymentMessage}`;
 
             await sock.sendMessage(chatId, { 
-                text: `✅ Transferencia de cartera exitosa de ${amount} 💵 a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en cartera es: ${sender.economy.wallet} 💵`,
-                mentions: [senderJid, mentionedJid]
+                text: finalMessage, 
+                mentions: [senderJid, recipient.jid] 
             });
 
         } catch (error) {
             console.error('Error en la transferencia:', error);
-            await sock.sendMessage(chatId, { text: 'Ocurrió un error al realizar la transferencia.' });
+            await sock.sendMessage(chatId, { text: '❌ Ocurrió un error al realizar la transferencia.' });
         }
     }
 };

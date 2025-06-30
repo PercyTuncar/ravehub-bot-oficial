@@ -1,6 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
 const { getEligibleJobs, xpTable, getLevelName } = require('../../utils/levels');
+const { sendDebtReminder } = require('../../utils/debtUtils');
 
 module.exports = {
     name: 'work',
@@ -54,6 +55,7 @@ module.exports = {
 
             // Guardar el cooldown y el estado del usuario ANTES de enviar mensajes
             user.cooldowns.work = new Date(new Date().getTime() + job.cooldown * 60 * 1000);
+            user.lastWork = new Date();
             await user.save();
 
             // Mensaje principal del trabajo
@@ -82,6 +84,9 @@ module.exports = {
                     mentions: [senderJid]
                 });
             }
+
+            // Enviar recordatorio de deuda después de trabajar
+            await sendDebtReminder(sock, chatId, user);
 
         } catch (error) {
             console.error('Error en el comando work:', error);
