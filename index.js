@@ -26,7 +26,7 @@ async function connectToWhatsApp() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) {
             qrcode.generate(qr, { small: true });
@@ -61,7 +61,16 @@ async function connectToWhatsApp() {
                 menu += `│
 ╰──────────≽`;
 
-                sock.sendMessage(`${process.env.OWNER_NUMBER}@s.whatsapp.net`, { text: menu });
+                try {
+                    if (process.env.OWNER_NUMBER) {
+                        await sock.sendMessage(`${process.env.OWNER_NUMBER}@s.whatsapp.net`, { text: menu });
+                    } else {
+                        console.warn('OWNER_NUMBER no está definido en el archivo .env, no se enviará el mensaje de inicio.');
+                    }
+                } catch (error) {
+                    console.error('Error al enviar el mensaje de inicio:', error);
+                }
+                
                 firstConnection = false;
             }
         }
