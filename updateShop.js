@@ -12,8 +12,8 @@ const products = [
     emoji: "🏡",
   },
   {
-    name: "Casa en Ate",
-    description: "Casa familiar de 2 pisos en Ate, Lima Este.",
+    name: "Casa en SJL",
+    description: "Casa de esteras en SJL",
     price: 10000,
     emoji: "🏠",
   },

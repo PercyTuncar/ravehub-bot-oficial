@@ -11,9 +11,9 @@ const shopItems = [
     emoji: "🏡",
   },
   {
-    name: "Casa en Ate",
-    description: "Casa familiar de 2 pisos en Ate, Lima Este.",
-    price: 10000,
+    name: "Casa en SJL",
+    description: "Casa de esteras en SJL",
+    price: 8000,
     emoji: "🏠",
   },
 
@@ -191,7 +191,7 @@ module.exports = {
       const categories = {
         "🏡 Bienes Raíces": [
           "Casa en San Isidro",
-          "Casa en Ate",
+          "Casa en SJL",
         ],
         "🚗 Vehículos": [
           "Auto Tesla Model 3",

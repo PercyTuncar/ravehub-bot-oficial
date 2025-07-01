@@ -80,7 +80,7 @@ module.exports = {
                 case 'casa en san isidro':
                     giftMessage = `🎊 ¡Felicidades, @${target.jid.split('@')[0]}! 🎊\n\nEn un acto de generosidad sin precedentes, @${sender.jid.split('@')[0]} te ha transferido la propiedad de una *${giftedItemName}* ${itemEmoji}. ¡Ahora eres dueño(a) de una de las propiedades más exclusivas de Lima!`;
                     break;
-                case 'casa en ate':
+                case 'casa en Ate':
                     giftMessage = `🏡 ¡A estrenar se ha dicho, @${target.jid.split('@')[0]}! 🏡\n\n¡Qué ofertón! @${sender.jid.split('@')[0]} te acaba de regalar una *${giftedItemName}*. ¡Ya tienes donde hacer la previa para los raves!`;
                     break;
 
