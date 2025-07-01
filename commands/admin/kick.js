@@ -1,4 +1,4 @@
-const { sock } = require('../../index');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'kick',
@@ -6,7 +6,8 @@ module.exports = {
     aliases: ['ban', 'expulsar'],
     usage: '.kick @usuario',
     category: 'admin',
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const chatId = message.key.remoteJid;
         const senderId = message.key.participant || message.key.remoteJid;
 

@@ -2,6 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
 const User = require('../../models/User');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'deuda',
@@ -9,7 +10,8 @@ module.exports = {
     aliases: ['debts'],
     usage: '.deuda',
     category: 'economy',
-    async execute(sock, message) {
+    async execute(message) {
+        const sock = getSocket();
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'menu',
@@ -7,7 +8,8 @@ module.exports = {
     category: 'utility',
     aliases: ['help', 'commands'],
     usage: '.menu',
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         let isSenderAdmin = false;

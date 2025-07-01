@@ -5,6 +5,7 @@ const pino = require('pino');
 const connectDB = require('./config/database');
 const eventHandler = require('./handlers/eventHandler');
 const loadCommands = require('./handlers/commandHandler');
+const { setSocket } = require('./bot');
 require('dotenv').config();
 
 let sock;
@@ -21,6 +22,8 @@ async function connectToWhatsApp() {
         printQRInTerminal: true,
         logger: pino({ level: 'silent' })
     });
+
+    setSocket(sock);
 
     sock.ev.on('creds.update', saveCreds);
 
@@ -65,7 +68,7 @@ async function connectToWhatsApp() {
         }
     });
 
-    eventHandler(sock);
+    eventHandler();
 }
 
 connectDB();

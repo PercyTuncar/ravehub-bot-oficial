@@ -1,5 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'retirar',
@@ -7,7 +8,8 @@ module.exports = {
     aliases: ['withdraw'],
     usage: '.retirar <cantidad|all>',
     category: 'economy',
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);
@@ -43,8 +45,7 @@ module.exports = {
 
             await user.save();
 
-            const successMessage = `✅ Has retirado *${currency} ${amountToWithdraw.toLocaleString()}* de tu banco.\n\n*Balance actual:*
-> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`;
+            const successMessage = `✅ Has retirado *${currency} ${amountToWithdraw.toLocaleString()}* de tu banco.\\n\\n*Balance actual:*\r\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`;
             await sock.sendMessage(chatId, { text: successMessage });
 
         } catch (error) {

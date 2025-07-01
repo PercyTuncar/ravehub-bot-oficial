@@ -1,8 +1,10 @@
 const User = require('../models/User');
 const Debt = require('../models/Debt');
 const { findOrCreateUser } = require('../utils/userUtils');
+const { getSocket } = require('../bot');
 
-async function handleLoanResponse(sock, message) {
+async function handleLoanResponse(message) {
+    const sock = getSocket();
     const messageContent = (message.message.conversation || message.message.extendedTextMessage?.text || '').toLowerCase().trim();
     const senderJid = message.key.participant || message.key.remoteJid;
     const chatId = message.key.remoteJid;

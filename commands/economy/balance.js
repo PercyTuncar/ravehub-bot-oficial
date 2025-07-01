@@ -1,5 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'balance',
@@ -7,7 +8,8 @@ module.exports = {
     aliases: ['bal', 'saldo'],
     usage: '.balance',
     category: 'economy',
-    async execute(sock, message) {
+    async execute(message) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 

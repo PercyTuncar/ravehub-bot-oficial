@@ -2,6 +2,7 @@ const User = require('../../models/User');
 const Debt = require('../../models/Debt');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'sbs',
@@ -9,7 +10,8 @@ module.exports = {
     aliases: ['infocorp'],
     usage: '.sbs',
     category: 'economy',
-    async execute(sock, message) {
+    async execute(message) {
+        const sock = getSocket();
         const chatId = message.key.remoteJid;
 
         try {
@@ -23,7 +25,7 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: '✅ ¡Felicidades! No hay deudores registrados en el sistema.' });
             }
 
-            let report = '📋 *REPORTE DE DEUDORES (SBS / INFOCORP)* 📋\n\n';
+            let report = '📋 *REPORTE DE DEUDORES (SBS / INFOCORP)* 📋\\n\\n';
             const mentions = [];
 
             if (allDebts.length > 0) {

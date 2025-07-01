@@ -1,6 +1,7 @@
 const ShopItem = require("../../models/ShopItem");
 const { getCurrency } = require("../../utils/groupUtils");
 const User = require("../../models/User");
+const { getSocket } = require('../../bot');
 
 const shopItems = [
   // 🛏️ Bienes Raíces
@@ -175,7 +176,8 @@ module.exports = {
   aliases: ["tienda"],
   usage: ".shop",
   category: "economy",
-  async execute(sock, message) {
+  async execute(message) {
+    const sock = getSocket();
     const chatId = message.key.remoteJid;
     const currency = await getCurrency(chatId);
 

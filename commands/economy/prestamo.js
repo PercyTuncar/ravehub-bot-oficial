@@ -2,6 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 const { createLoanSession, getLoanSession } = require('../../handlers/loanSessionHandler');
 const { getCurrency } = require('../../utils/groupUtils');
 const Debt = require('../../models/Debt'); // Asegúrate de que la ruta sea correcta
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'prestame',
@@ -9,7 +10,8 @@ module.exports = {
     aliases: ['loan', 'prestamo'],
     usage: '.prestame <monto> @usuario',
     category: 'economy',
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
@@ -56,6 +58,6 @@ module.exports = {
         });
 
         // Create a new loan session
-        createLoanSession(sock, chatId, lenderJid, senderJid, amount, sentMessage.key.id);
+        createLoanSession(chatId, lenderJid, senderJid, amount, sentMessage.key.id);
     },
 };

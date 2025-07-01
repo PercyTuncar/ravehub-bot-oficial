@@ -3,11 +3,12 @@ const { handleGameMessage } = require('./gameHandler');
 const { getGameSession } = require('../utils/gameUtils');
 const { handleLoanResponse, getLoanSession } = require('./loanSessionHandler'); // Updated import
 const GroupSettings = require('../models/GroupSettings');
-const { sock } = require('../index');
+const { getSocket } = require('../bot');
 const userCooldowns = new Map();
 
-module.exports = (sock) => {
-    const commands = commandHandler(sock);
+module.exports = () => {
+    const sock = getSocket();
+    const commands = commandHandler();
 
     sock.ev.on('messages.upsert', async (m) => {
         console.log('Evento messages.upsert recibido:', JSON.stringify(m, null, 2));
@@ -18,7 +19,7 @@ module.exports = (sock) => {
 
         // --- Loan Session Handler ---
         if (getLoanSession(jid)) {
-            const loanHandled = await handleLoanResponse(sock, message);
+            const loanHandled = await handleLoanResponse(message);
             if (loanHandled) {
                 return; // Stop processing if the message was part of a loan session
             }
@@ -26,7 +27,7 @@ module.exports = (sock) => {
 
         // --- Game Handler Integration ---
         if (getGameSession(jid)) {
-            const gameHandled = await handleGameMessage(sock, message);
+            const gameHandled = await handleGameMessage(message);
             if (gameHandled) {
                 return; // Detener el procesamiento si el mensaje fue manejado por el juego
             }
@@ -90,7 +91,7 @@ module.exports = (sock) => {
         userCooldowns.set(userId, Date.now());
 
         try {
-            command.execute(sock, message, args, commands);
+            command.execute(message, args, commands);
         } catch (error) {
             console.error('Error al ejecutar el comando:', error);
             sock.sendMessage(message.key.remoteJid, { text: 'Ocurrió un error al ejecutar el comando.' });

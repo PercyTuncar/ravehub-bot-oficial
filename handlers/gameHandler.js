@@ -1,3 +1,4 @@
+const { getSocket } = require('../bot');
 const { getGameSession, getRandomCard, endGameSession } = require('../utils/gameUtils');
 const { findOrCreateUser } = require('../utils/userUtils');
 const GameLog = require('../models/GameLog');
@@ -5,7 +6,8 @@ const GameLog = require('../models/GameLog');
 // Helper para pausar la ejecución
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function handleGameMessage(sock, message) {
+async function handleGameMessage(message) {
+    const sock = getSocket();
     const jid = message.key.participant || message.key.remoteJid;
     const chatId = message.key.remoteJid;
     const session = getGameSession(jid);

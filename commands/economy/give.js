@@ -1,5 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const ShopItem = require('../../models/ShopItem'); // Importar el modelo de ShopItem
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'give',
@@ -7,7 +8,8 @@ module.exports = {
     aliases: ['dar'],
     usage: '.give @usuario <cantidad> <nombre del item>',
     category: 'economy',
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const groupId = message.key.remoteJid;
 

@@ -1,5 +1,6 @@
 const GameLog = require('../../models/GameLog');
 const moment = require('moment');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'estadisticas',
@@ -7,7 +8,8 @@ module.exports = {
     aliases: ['stats', 'estadísticas'],
     usage: '.estadisticas <nombre del juego>',
     category: 'utility',
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const jid = message.key.remoteJid;
         const gameName = args.join(' ').toLowerCase().trim();
 

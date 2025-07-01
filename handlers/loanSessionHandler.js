@@ -2,10 +2,12 @@ const User = require('../models/User');
 const Debt = require('../models/Debt');
 const { findOrCreateUser } = require('../utils/userUtils');
 const { getCurrency } = require('../utils/groupUtils');
+const { getSocket } = require('../bot');
 
 const loanSessions = new Map();
 
-function createLoanSession(sock, chatId, lenderJid, borrowerJid, amount, messageId) {
+function createLoanSession(chatId, lenderJid, borrowerJid, amount, messageId) {
+    const sock = getSocket();
     const expiresAt = new Date(new Date().getTime() + 30000); // 30 seconds expiry
     const sessionTimer = setTimeout(async () => {
         const session = loanSessions.get(lenderJid);
@@ -40,7 +42,8 @@ function clearLoanSession(jid) {
     }
 }
 
-async function handleLoanResponse(sock, message) {
+async function handleLoanResponse(message) {
+    const sock = getSocket();
     const senderJid = message.key.participant || message.key.remoteJid;
     const session = getLoanSession(senderJid);
 

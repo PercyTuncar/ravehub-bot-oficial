@@ -1,5 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'transfer-bank',
@@ -7,7 +8,8 @@ module.exports = {
     usage: '.transfer-bank <monto> @usuario',
     category: 'economy',
     aliases: ['tbank'],
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);
@@ -39,7 +41,7 @@ module.exports = {
             await target.save();
 
             await sock.sendMessage(chatId, {
-                text: `✅ Transferencia bancaria exitosa de ${currency}${amount} a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${currency}${sender.economy.bank}`,
+                text: `✅ Transferencia bancaria exitosa de ${currency}${amount} a @${mentionedJid.split('@')[0]}.\\n\\nTu nuevo saldo en banco es: ${currency}${sender.economy.bank}`,
                 mentions: [senderJid, mentionedJid]
             });
 

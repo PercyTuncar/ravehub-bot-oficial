@@ -1,5 +1,6 @@
 const Debt = require('../models/Debt');
 const User = require('../models/User');
+const { getSocket } = require('../bot');
 
 /**
  * Calcula y aplica el interés acumulado a todas las deudas activas.
@@ -35,11 +36,11 @@ function getPaymentReputation(user) {
 
 /**
  * Envía un recordatorio de deuda a un usuario.
- * @param {object} sock - La instancia del socket de Baileys.
  * @param {string} chatId - El JID del chat donde se enviará el mensaje.
  * @param {object} user - El objeto del usuario que tiene deudas.
  */
-async function sendDebtReminder(sock, chatId, user) {
+async function sendDebtReminder(chatId, user) {
+    const sock = getSocket();
     await applyInterestToAllDebts(); // Asegurarse de que las deudas estén actualizadas
     const populatedUser = await User.findById(user._id).populate({
         path: 'debts',
@@ -51,7 +52,7 @@ async function sendDebtReminder(sock, chatId, user) {
         const lenders = [...new Set(populatedUser.debts.map(d => `@${d.lender.jid.split('@')[0]}`))].join(', ');
         const mentions = populatedUser.debts.map(d => d.lender.jid);
 
-        const reminderMessage = `🧾 ¡Recuerda que tienes una deuda total de ${totalDebt.toFixed(2)} 💵 con ${lenders}!\nUsa *.pagar* para saldar tus cuentas. 💼`;
+        const reminderMessage = `🧾 ¡Recuerda que tienes una deuda total de ${totalDebt.toFixed(2)} 💵 con ${lenders}!\\nUsa *.pagar* para saldar tus cuentas. 💼`;
         
         await sock.sendMessage(chatId, {
             text: reminderMessage,

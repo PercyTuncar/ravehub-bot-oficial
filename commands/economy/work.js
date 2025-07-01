@@ -3,13 +3,15 @@ const { handleDebtPayment } = require('../../utils/debtManager');
 const { getEligibleJobs, xpTable, getLevelName } = require('../../utils/levels');
 const { sendDebtReminder } = require('../../utils/debtUtils');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'work',
     description: 'Ganar dinero y XP.',
     usage: '.work',
     category: 'economy',
-    async execute(sock, message) {
+    async execute(message) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
@@ -61,10 +63,10 @@ module.exports = {
             await user.save();
 
             // Mensaje principal del trabajo
-            let workResponse = `*╭───≽ 💼 TRABAJO ≼───*\n*│*\n*│* 👤 @${senderJid.split('@')[0]}\n*│* 💼 *Puesto:* ${job.name}\n*│* 📝 _${job.description}_\n*│*\n*│* 💰 *Salario:* ${currency} ${earnings.toLocaleString()}\n*│* ✨ *Experiencia:* +${xpGained} XP\n*│*\n*╰─────────────≽*`;
+            let workResponse = `*╭───≽ 💼 TRABAJO ≼───*\\n*│*\\n*│* 👤 @${senderJid.split('@')[0]}\\n*│* 💼 *Puesto:* ${job.name}\\n*│* 📝 _${job.description}_\\n*│*\\n*│* 💰 *Salario:* ${currency} ${earnings.toLocaleString()}\\n*│* ✨ *Experiencia:* +${xpGained} XP\\n*│*\\n*╰─────────────≽*`;
 
             if (debtMessage) {
-                workResponse += `\n\n${debtMessage}`;
+                workResponse += `\\n\\n${debtMessage}`;
             }
 
             await sock.sendMessage(chatId, { 
@@ -79,7 +81,7 @@ module.exports = {
                 const newLevelName = getLevelName(user.level);
                 await user.save(); // Guardar el nuevo nivel
 
-                const levelUpMessage = `*╭─── 🌟 ¡NIVEL ALCANZADO! 🌟 ───*\n*│*\n*│*   ¡Felicidades, @${senderJid.split('@')[0]}!\n*│*   Has ascendido al nivel:\n*│*\n*│*      *${newLevelName}*\n*│*\n*│*   ¡Sigue así! 🚀\n*│*\n*╰──────────────────────╯*`;
+                const levelUpMessage = `*╭─── 🌟 ¡NIVEL ALCANZADO! 🌟 ───*\\n*│*\\n*│*   ¡Felicidades, @${senderJid.split('@')[0]}!\\n*│*   Has ascendido al nivel:\\n*│*\\n*│*      *${newLevelName}*\\n*│*\\n*│*   ¡Sigue así! 🚀\\n*│*\\n*╰──────────────────────╯*`;
 
                 await sock.sendMessage(chatId, { 
                     text: levelUpMessage,
@@ -88,7 +90,7 @@ module.exports = {
             }
 
             // Enviar recordatorio de deuda después de trabajar
-            await sendDebtReminder(sock, chatId, user);
+            await sendDebtReminder(chatId, user);
 
         } catch (error) {
             console.error('Error en el comando work:', error);

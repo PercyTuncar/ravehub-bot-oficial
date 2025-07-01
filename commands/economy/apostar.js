@@ -1,6 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { startGameSession, getGameSession, endGameSession } = require('../../utils/gameUtils');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 const MIN_BET = 50;
 const MAX_BET = 5000;
@@ -11,7 +12,8 @@ module.exports = {
     aliases: ['bet'],
     usage: '.apostar <cantidad>',
     category: 'game', // Cambiado de 'economy' a 'game'
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);

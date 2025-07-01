@@ -2,6 +2,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 const User = require('../../models/User');
 const Debt = require('../../models/Debt');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'plinear',
@@ -9,7 +10,8 @@ module.exports = {
     usage: '.plinear <monto> @usuario',
     category: 'economy',
     aliases: ['plin'],
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);

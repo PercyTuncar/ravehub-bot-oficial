@@ -1,6 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'deposit',
@@ -8,7 +9,8 @@ module.exports = {
     usage: '.deposit <cantidad>',
     category: 'economy',
     aliases: ['dep'],
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);

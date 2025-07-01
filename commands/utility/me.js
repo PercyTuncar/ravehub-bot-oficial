@@ -3,6 +3,7 @@ const { getLevelName, xpTable } = require('../../utils/levels');
 const { applyInterestToAllDebts, getPaymentReputation } = require('../../utils/debtUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const User = require('../../models/User');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'me',
@@ -10,7 +11,8 @@ module.exports = {
     aliases: ['profile', 'yo'],
     usage: '.me',
     category: 'utility',
-    async execute(sock, message) {
+    async execute(message) {
+        const sock = getSocket();
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 

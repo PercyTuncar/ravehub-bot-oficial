@@ -3,6 +3,7 @@ const User = require('../../models/User');
 const Debt = require('../../models/Debt');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
 const { getCurrency } = require('../../utils/groupUtils');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'yapear',
@@ -10,7 +11,8 @@ module.exports = {
     aliases: ['yape'],
     usage: '.yapear <monto> @usuario',
     category: 'economy',
-    async execute(sock, message, args) {
+    async execute(message, args) {
+        const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
@@ -38,7 +40,7 @@ module.exports = {
             }
 
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: `🚫 No tienes suficiente dinero en tu banco para yapear.\n\nSaldo actual: *${currency} ${sender.economy.bank.toLocaleString()}*` });
+                return sock.sendMessage(chatId, { text: `🚫 No tienes suficiente dinero en tu banco para yapear.\\n\\nSaldo actual: *${currency} ${sender.economy.bank.toLocaleString()}*` });
             }
 
             let debtPaymentMessage = '';
