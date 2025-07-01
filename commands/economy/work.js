@@ -1,7 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
 const { getEligibleJobs, xpTable, getLevelName } = require('../../utils/levels');
-const { sendDebtReminder } = require('../../utils/debtUtils');
+const { getDebtReminderMessage } = require('../../utils/debtUtils'); // Cambiado de sendDebtReminder a getDebtReminderMessage
 const { getCurrency } = require('../../utils/groupUtils');
 const { getSocket } = require('../../bot');
 
@@ -55,11 +55,20 @@ module.exports = {
             await user.save();
 
             // Mensaje principal del trabajo
-            const workResponse = `*╭─「 💼 TRABAJO REALIZADO 」─*\n*│*\n*├* 👤 *Trabajador:* @${senderJid.split('@')[0]}\n*├* 💼 *Puesto:* ${job.name}\n*├* 📝 *Descripción:* _${job.description}_\n*│*\n*├* 💰 *Salario:* ${currency} ${earnings.toLocaleString()}\n*├* ✨ *Experiencia:* +${xpGained} XP\n*│*\n*╰─「 ✅ 」*`;
+            let workResponse = `*╭─「 💼 TRABAJO REALIZADO 」─*\n*│*\n*├* 👤 *Trabajador:* @${senderJid.split('@')[0]}\n*├* 💼 *Puesto:* ${job.name}\n*├* 📝 *Descripción:* _${job.description}_\n*│*\n*├* 💰 *Salario:* ${currency} ${earnings.toLocaleString()}\n*├* ✨ *Experiencia:* +${xpGained} XP\n*│*\n*╰─「 ✅ 」*`;
+
+            // Obtener el mensaje de recordatorio de deuda
+            const debtReminder = await getDebtReminderMessage(user);
+            let mentions = [senderJid];
+
+            if (debtReminder) {
+                workResponse += debtReminder.text; // Añadir el recordatorio al mensaje de trabajo
+                mentions = [...new Set([...mentions, ...debtReminder.mentions])]; // Unir menciones sin duplicados
+            }
 
             await sock.sendMessage(chatId, { 
                 text: workResponse,
-                mentions: [senderJid]
+                mentions: mentions
             });
 
             // Lógica de subida de nivel y mensaje separado
@@ -80,8 +89,8 @@ Has ascendido al nivel: *${newLevelName}*
                 });
             }
 
-            // Enviar recordatorio de deuda después de trabajar
-            await sendDebtReminder(chatId, user);
+            // Ya no se necesita el envío de recordatorio por separado
+            // await sendDebtReminder(chatId, user);
 
         } catch (error) {
             console.error('Error en el comando work:', error);
