@@ -85,10 +85,32 @@ module.exports = {
 
             await user.save();
 
-            await sock.sendMessage(chatId, {
-                text: `🛍️ *¡Compra exitosa!* 🛍️\n\n${paymentMessage}\n\n*Balance actual:*
-> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`
-            });
+            // --- Mensaje de Compra Personalizado ---
+            const itemNameLower = itemToBuy.name.toLowerCase();
+            const mentions = [senderJid];
+
+            if (itemNameLower === 'ramo de rosas') {
+                const roseImages = [
+                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/ramo-de-24-rosas-rojas-en-papel-koreano_hn2muy.jpg',
+                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/WhatsApp-Image-2024-05-16-at-11.04.59_srlrbs.jpg',
+                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/DSC02967_tolmkw.jpg'
+                ];
+                const randomImage = roseImages[Math.floor(Math.random() * roseImages.length)];
+                const successMessage = `🌹 *¡Un detalle especial para alguien especial!* 🌹\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado un *Ramo de rosas*.\n\n${paymentMessage}\n\n*Balance actual:*\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`;
+
+                await sock.sendMessage(chatId, {
+                    image: { url: randomImage },
+                    caption: successMessage,
+                    mentions: mentions
+                });
+
+            } else {
+                // Mensaje de compra genérico para otros items
+                await sock.sendMessage(chatId, {
+                    text: `🛍️ *¡Compra exitosa!* 🛍️\n\n${paymentMessage}\n\n*Balance actual:*\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`,
+                    mentions
+                });
+            }
 
         } catch (error) {
             console.error('Error en el comando buy:', error);

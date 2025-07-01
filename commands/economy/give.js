@@ -144,10 +144,27 @@ module.exports = {
                     break;
             }
 
-            await sock.sendMessage(groupId, {
-                text: giftMessage,
-                mentions: [senderJid, mentionedJid]
-            });
+            const mentions = [senderJid, mentionedJid];
+
+            if (itemNameLower === 'ramo de rosas') {
+                const roseImages = [
+                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/ramo-de-24-rosas-rojas-en-papel-koreano_hn2muy.jpg',
+                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/WhatsApp-Image-2024-05-16-at-11.04.59_srlrbs.jpg',
+                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/DSC02967_tolmkw.jpg'
+                ];
+                const randomImage = roseImages[Math.floor(Math.random() * roseImages.length)];
+
+                await sock.sendMessage(groupId, {
+                    image: { url: randomImage },
+                    caption: giftMessage,
+                    mentions: mentions
+                });
+            } else {
+                await sock.sendMessage(groupId, {
+                    text: giftMessage,
+                    mentions: mentions
+                });
+            }
 
         } catch (error) {
             console.error('Error en el comando give:', error);
