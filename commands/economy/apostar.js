@@ -33,11 +33,17 @@ module.exports = {
         const betAmount = parseInt(betAmountStr, 10);
 
         if (betAmount < MIN_BET) {
-            return sock.sendMessage(chatId, { text: `📉 La apuesta mínima es de *${await getCurrency(chatId)} ${MIN_BET}*.` });
+            return sock.sendMessage(chatId, { 
+                text: `📉 @${jid.split('@')[0]}, la apuesta mínima es de *${await getCurrency(chatId)} ${MIN_BET}*.`,
+                mentions: [jid]
+            });
         }
 
         if (betAmount > MAX_BET) {
-            return sock.sendMessage(chatId, { text: `📈 La apuesta máxima es de *${await getCurrency(chatId)} ${MAX_BET}*.` });
+            return sock.sendMessage(chatId, { 
+                text: `📈 @${jid.split('@')[0]}, la apuesta máxima es de *${await getCurrency(chatId)} ${MAX_BET}*.`,
+                mentions: [jid]
+            });
         }
 
         try {
