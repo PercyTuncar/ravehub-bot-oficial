@@ -3,7 +3,55 @@ const { getCurrency } = require("../../utils/groupUtils");
 const User = require("../../models/User");
 
 const shopItems = [
-  // Productos graciosos y para regalar
+  // 🛏️ Bienes Raíces
+  {
+    name: "Casa en San Isidro",
+    description: "Casa de 3 pisos en Córpac, zona exclusiva de Lima.",
+    price: 500000,
+    emoji: "🏡",
+  },
+  {
+    name: "Casa en Ate",
+    description: "Casa familiar de 2 pisos en Salamanca, Lima Este.",
+    price: 10000,
+    emoji: "🏠",
+  },
+
+  // 🚗 Vehículos
+  {
+    name: "Auto Tesla Model 3",
+    description: "Auto eléctrico Tesla, autonomía avanzada y diseño futurista.",
+    price: 129000,
+    emoji: "⚡",
+  },
+  {
+    name: "Chevrolet (Sapito)",
+    description: "Compacto y con mucho estilo.",
+    price: 8000,
+    emoji: "🚗",
+  },
+  {
+    name: "Mototaxi",
+    description: "Transporte urbano económico.",
+    price: 4500,
+    emoji: "🛺",
+  },
+
+  // 📱 Tecnología
+  {
+    name: "iPhone 16 Pro",
+    description: "Apple Intelligence, diseño titanio, triple cámara.",
+    price: 5149,
+    emoji: "📱",
+  },
+  {
+    name: "iPhone 16 Pro Max",
+    description: "Pantalla más grande, batería superior, cámara pro.",
+    price: 5999,
+    emoji: "📱",
+  },
+
+  // 🎁 Productos graciosos y para regalar
   {
     name: "Ramo de rosas",
     description: "Para esa persona especial 🌹✨",
@@ -28,7 +76,8 @@ const shopItems = [
     price: 150,
     emoji: "💌",
   },
-  // Tickets de eventos
+
+  // 🎫 Tickets de eventos
   {
     name: "Pase VIP Far Away Peru",
     description: "Acceso VIP al evento Far Away en Perú.",
@@ -77,8 +126,8 @@ const shopItems = [
     price: 120,
     emoji: "🎟️",
   },
-  // Temáticos de festivales de música electrónica
 
+  // 🎉 Temáticos de festivales de música electrónica
   {
     name: "Camisa con logo de RaveHub",
     description: "Muestra tu orgullo por la comunidad 🔥💖",
@@ -91,10 +140,9 @@ const shopItems = [
     price: 300,
     emoji: "✨",
   },
-
   {
     name: "Perrito rave",
-    description: 'Tu compañero de baile  🐶🎵',
+    description: "Tu compañero de baile 🐶🎵",
     price: 1000,
     emoji: "🐶",
   },
@@ -141,6 +189,19 @@ module.exports = {
 
       // Agrupar items por categorías (basado en la lista del archivo)
       const categories = {
+        "🏡 Bienes Raíces": [
+          "Casa en San Isidro",
+          "Casa en Ate",
+        ],
+        "🚗 Vehículos": [
+          "Auto Tesla Model 3",
+          "Chevrolet (Sapito)",
+          "Mototaxi",
+        ],
+        "📱 Tecnología": [
+          "iPhone 16 Pro",
+          "iPhone 16 Pro Max",
+        ],
         "🎁 Regalos y Sorpresas": [
           "Ramo de rosas",
           "Peluche rave-bebé",
@@ -157,7 +218,7 @@ module.exports = {
           "Entrada Boris Brejcha Palco",
           "Ticket DLDK Perú 2025",
         ],
-        "👕 Artículos de Festival": [
+        "🎉 Artículos de Festival": [
           "Camisa con logo de RaveHub",
           "Glitter mágico",
           "Perrito rave",
