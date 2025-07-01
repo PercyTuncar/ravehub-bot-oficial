@@ -41,7 +41,8 @@ module.exports = {
                     .map((item) => {
                         const emoji = item.itemId?.emoji || "📦";
                         const description = item.itemId?.description || "Sin descripción.";
-                        const quantity = item.quantity > 1 ? `(x${item.quantity})` : '';
+                        // CORRECCIÓN: Cambiar el formato de (xN) a xN para mayor claridad
+                        const quantity = item.quantity > 1 ? `x${item.quantity}` : ''; 
                         return `${emoji} *${item.name}* ${quantity}\n*│* │   _${description}_`;
                     })
                     .join("\n*│* │ \n*│* │ "); // Añade un pequeño espacio entre items
