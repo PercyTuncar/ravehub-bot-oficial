@@ -63,10 +63,19 @@ module.exports = {
             await user.save();
 
             // Mensaje principal del trabajo
-            let workResponse = `*╭───≽ 💼 TRABAJO ≼───*\\n*│*\\n*│* 👤 @${senderJid.split('@')[0]}\\n*│* 💼 *Puesto:* ${job.name}\\n*│* 📝 _${job.description}_\\n*│*\\n*│* 💰 *Salario:* ${currency} ${earnings.toLocaleString()}\\n*│* ✨ *Experiencia:* +${xpGained} XP\\n*│*\\n*╰─────────────≽*`;
+            const workResponse = `*╭─「 💼 TRABAJO REALIZADO 」─*
+*│*
+*├* 👤 *Trabajador:* @${senderJid.split('@')[0]}
+*├* 💼 *Puesto:* ${job.name}
+*├* 📝 *Descripción:* _${job.description}_
+*│*
+*├* 💰 *Salario:* ${currency} ${earnings.toLocaleString()}
+*├* ✨ *Experiencia:* +${xpGained} XP
+*│*
+*╰─「 ✅ 」*`;
 
             if (debtMessage) {
-                workResponse += `\\n\\n${debtMessage}`;
+                workResponse += `\n\n${debtMessage}`;
             }
 
             await sock.sendMessage(chatId, { 
@@ -81,7 +90,10 @@ module.exports = {
                 const newLevelName = getLevelName(user.level);
                 await user.save(); // Guardar el nuevo nivel
 
-                const levelUpMessage = `*╭─── 🌟 ¡NIVEL ALCANZADO! 🌟 ───*\\n*│*\\n*│*   ¡Felicidades, @${senderJid.split('@')[0]}!\\n*│*   Has ascendido al nivel:\\n*│*\\n*│*      *${newLevelName}*\\n*│*\\n*│*   ¡Sigue así! 🚀\\n*│*\\n*╰──────────────────────╯*`;
+                const levelUpMessage = `*🎉 ¡Felicidades, @${senderJid.split('@')[0]}! 🎉*
+
+Has ascendido al nivel: *${newLevelName}*
+¡Sigue así! 🚀`;
 
                 await sock.sendMessage(chatId, { 
                     text: levelUpMessage,
