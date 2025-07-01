@@ -2,6 +2,7 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = requi
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
 const pino = require('pino');
+const fs = require('fs');
 const connectDB = require('./config/database');
 const eventHandler = require('./handlers/eventHandler');
 const loadCommands = require('./handlers/commandHandler');
@@ -32,9 +33,18 @@ async function connectToWhatsApp() {
             qrcode.generate(qr, { small: true });
         }
         if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect.error instanceof Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
-            console.log('Conexión cerrada debido a ', lastDisconnect.error, ', reconectando ', shouldReconnect);
+            const statusCode = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
+            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
+
+            console.log(`Conexión cerrada. Razón: ${statusCode}. Reconectando: ${shouldReconnect}`);
+
             if (shouldReconnect) {
+                connectToWhatsApp();
+            } else {
+                console.log('Credenciales inválidas. Eliminando sesión anterior y reiniciando...');
+                if (fs.existsSync('./sessions')) {
+                    fs.rmSync('./sessions', { recursive: true, force: true });
+                }
                 connectToWhatsApp();
             }
         } else if (connection === 'open') {
