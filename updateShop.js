@@ -13,7 +13,7 @@ const products = [
   },
   {
     name: "Casa en Ate",
-    description: "Casa familiar de 2 pisos en Salamanca, Lima Este.",
+    description: "Casa familiar de 2 pisos en Ate, Lima Este.",
     price: 10000,
     emoji: "🏠",
   },
