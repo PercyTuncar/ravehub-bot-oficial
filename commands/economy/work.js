@@ -55,7 +55,7 @@ module.exports = {
             await user.save();
 
             // Mensaje principal del trabajo
-            let workResponse = `*💼 TRABAJO FINALIZADO*\n\n> 👤 *Trabajador/a:* @${senderJid.split('@')[0]}\n> 🧹 *Puesto:* _${job.name}_\n> 🤫 *Detalle:* _${job.description}_\n> 💰 *Salario:* \`${currency} ${earnings.toLocaleString()}\`\n> 🌟 *XP:* \`\`\`+${xpGained}\`\`\``;
+            let workResponse = `*💼 TRABAJO FINALIZADO 💵*\n\n> 👤 *Trabajador/a:* @${senderJid.split('@')[0]}\n> 🧹 *Puesto:* _${job.name}_\n> 🤫 *Detalle:* _${job.description}_\n> 💰 *Salario:* \`${currency} ${earnings.toLocaleString()}\`\n> 🌟 *XP:* \`\`\`+${xpGained}\`\`\``;
 
             // Obtener el mensaje de recordatorio de deuda
             const debtReminder = await getDebtReminderMessage(user);
