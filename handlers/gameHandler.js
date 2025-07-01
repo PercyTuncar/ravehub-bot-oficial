@@ -71,7 +71,7 @@ async function handleGameMessage(sock, message) {
 
         // CASO 1: El usuario apostó a 'empate'
         if (messageText === 'empate') {
-            await sock.sendMessage(chatId, { text: `Revelando la primera carta... 🎴` });
+            await sock.sendMessage(chatId, { text: `@${jid.split('@')[0]}, estamos revelando las cartas para tu apuesta por *empate*... 🤞`, mentions: [jid] });
             await delay(1500);
             await sock.sendMessage(chatId, { text: `> Carta Izquierda: ${leftCardName}` });
             await delay(1500);
