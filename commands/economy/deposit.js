@@ -43,29 +43,37 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: 'No tienes dinero en tu cartera para depositar.', mentions: [senderJid] });
             }
 
+            // Realizar la transacción de depósito
             user.economy.wallet -= amountToDeposit;
             user.economy.bank += amountToDeposit;
 
-            // Cobro automático de deuda judicial si hay fondos en el banco
-            let autoDebtMsg = '';
+            let debtMessage = '';
+            let levelChangeMessage = '';
+
+            // Lógica de cobro de deuda judicial sobre el saldo del banco
             if (user.judicialDebt > 0 && user.economy.bank > 0) {
-                const { remainingAmount, debtMessage, levelChangeMessage } = handleDebtPayment(user, user.economy.bank, currency);
-                console.log(`[JUDICIAL] Cobranza automática de deuda judicial a ${user.jid} (${user.name}) en grupo ${chatId}: pagado ${user.economy.bank - remainingAmount}, deuda restante: ${user.judicialDebt}`);
-                user.economy.bank = remainingAmount;
-                if (debtMessage) {
-                    autoDebtMsg = `\n\n${debtMessage}`;
-                    if (levelChangeMessage) autoDebtMsg += `\n${levelChangeMessage}`;
-                }
+                const result = handleDebtPayment(user, user.economy.bank, currency);
+                
+                // handleDebtPayment ya modifica la deuda y XP del usuario, 
+                // ahora actualizamos el banco con el sobrante.
+                user.economy.bank = result.remainingAmount;
+                debtMessage = result.debtMessage;
+                levelChangeMessage = result.levelChangeMessage;
             }
 
             await user.save();
 
-            const responseText = 
-`✅ @${senderJid.split('@')[0]}, depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.${autoDebtMsg}
+            let responseText = 
+`✅ @${senderJid.split('@')[0]}, depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.`;
 
-*Nuevo Balance:*
-> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}
-> *Banco:* ${currency} ${user.economy.bank.toLocaleString()} 🏦`;
+            if (debtMessage) {
+                responseText += `\n\n${debtMessage}`;
+                if (levelChangeMessage) {
+                    responseText += `\n${levelChangeMessage}`;
+                }
+            }
+
+            responseText += `\n\n*Nuevo Balance:*\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()} 🏦`;
 
             await sock.sendMessage(chatId, { 
                 text: responseText,

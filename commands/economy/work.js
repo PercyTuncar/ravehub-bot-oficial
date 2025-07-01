@@ -45,16 +45,8 @@ module.exports = {
             const earnings = job.salary;
             const xpGained = Math.floor(earnings / 10);
 
-            let netGain = earnings;
-            let debtMessage = '';
-
-            if (user.judicialDebt > 0) {
-                const result = handleDebtPayment(user, earnings, currency);
-                netGain = result.remainingAmount;
-                debtMessage = result.debtMessage;
-            }
-
-            user.economy.wallet += netGain;
+            // Las ganancias van directamente a la cartera, sin deducción de deuda judicial aquí.
+            user.economy.wallet += earnings;
             user.xp += xpGained;
 
             // Guardar el cooldown y el estado del usuario ANTES de enviar mensajes
@@ -63,20 +55,7 @@ module.exports = {
             await user.save();
 
             // Mensaje principal del trabajo
-            const workResponse = `*╭─「 💼 TRABAJO REALIZADO 」─*
-*│*
-*├* 👤 *Trabajador:* @${senderJid.split('@')[0]}
-*├* 💼 *Puesto:* ${job.name}
-*├* 📝 *Descripción:* _${job.description}_
-*│*
-*├* 💰 *Salario:* ${currency} ${earnings.toLocaleString()}
-*├* ✨ *Experiencia:* +${xpGained} XP
-*│*
-*╰─「 ✅ 」*`;
-
-            if (debtMessage) {
-                workResponse += `\n\n${debtMessage}`;
-            }
+            const workResponse = `*╭─「 💼 TRABAJO REALIZADO 」─*\n*│*\n*├* 👤 *Trabajador:* @${senderJid.split('@')[0]}\n*├* 💼 *Puesto:* ${job.name}\n*├* 📝 *Descripción:* _${job.description}_\n*│*\n*├* 💰 *Salario:* ${currency} ${earnings.toLocaleString()}\n*├* ✨ *Experiencia:* +${xpGained} XP\n*│*\n*╰─「 ✅ 」*`;
 
             await sock.sendMessage(chatId, { 
                 text: workResponse,

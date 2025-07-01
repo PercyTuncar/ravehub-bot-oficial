@@ -33,43 +33,42 @@ module.exports = {
             }
 
             const price = itemToBuy.price;
-
-            // Corrección: Usar la función centralizada para manejar la deuda.
-            if (user.judicialDebt > 0) {
-                const { remainingAmount, debtMessage, levelChangeMessage } = handleDebtPayment(user, price, currency);
-                
-                if (debtMessage) {
-                    await sock.sendMessage(chatId, { text: debtMessage + (levelChangeMessage ? `\n${levelChangeMessage}` : '') });
-                    if (remainingAmount <= 0) {
-                         await user.save();
-                         return;
-                    }
-                }
-            }
-
-            const wallet = user.economy.wallet;
-            const bank = user.economy.bank;
             let paymentMessage = '';
 
-            if (wallet + bank < price) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar *${itemToBuy.name}*. Necesitas ${currency} ${price}.` });
-            }
-
-            if (wallet >= price) {
+            // Lógica de compra revisada
+            if (user.judicialDebt > 0) {
+                // Usuario con deuda: solo puede usar la cartera
+                if (user.economy.wallet < price) {
+                    return sock.sendMessage(chatId, { text: `ℹ️ Tienes una deuda judicial pendiente y solo puedes comprar con dinero en efectivo (cartera).\n\nNo tienes suficiente para comprar *${itemToBuy.name}*. Necesitas ${currency} ${price} y tienes ${currency} ${user.economy.wallet.toFixed(2)} en la cartera.` });
+                }
+                
                 user.economy.wallet -= price;
                 paymentMessage = `Has pagado en efectivo *${currency} ${price}* por tu *${itemToBuy.name}*.`;
+
             } else {
-                const paymentMethods = ['yapeaste', 'plineaste', 'transferiste'];
-                const randomMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
-                
-                if (wallet > 0) {
-                    const fromBank = price - wallet;
+                // Usuario sin deuda: puede usar cartera y banco
+                if (user.economy.wallet + user.economy.bank < price) {
+                    return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar *${itemToBuy.name}*. Necesitas ${currency} ${price}.` });
+                }
+
+                if (user.economy.wallet >= price) {
+                    user.economy.wallet -= price;
+                    paymentMessage = `Has pagado en efectivo *${currency} ${price}* por tu *${itemToBuy.name}*.`;
+                } else {
+                    const paymentMethods = ['yapeaste', 'plineaste', 'transferiste'];
+                    const randomMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+                    
+                    const fromBank = price - user.economy.wallet;
+                    const fromWallet = user.economy.wallet;
+                    
                     user.economy.wallet = 0;
                     user.economy.bank -= fromBank;
-                    paymentMessage = `Pagaste *${currency} ${wallet}* en efectivo y ${randomMethod} *${currency} ${fromBank}* desde tu banco para comprar tu *${itemToBuy.name}*.`;
-                } else {
-                    user.economy.bank -= price;
-                    paymentMessage = `Has ${randomMethod} *${currency} ${price}* desde tu banco para comprar tu *${itemToBuy.name}*.`;
+
+                    if (fromWallet > 0) {
+                        paymentMessage = `Pagaste *${currency} ${fromWallet.toFixed(2)}* en efectivo y ${randomMethod} *${currency} ${fromBank.toFixed(2)}* desde tu banco para comprar tu *${itemToBuy.name}*.`;
+                    } else {
+                        paymentMessage = `Has ${randomMethod} *${currency} ${price}* desde tu banco para comprar tu *${itemToBuy.name}*.`;
+                    }
                 }
             }
 

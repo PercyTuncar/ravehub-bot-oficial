@@ -29,46 +29,44 @@ module.exports = {
         }
 
         try {
-            // Refactorización: Usar la función centralizada para obtener el emisor.
             const sender = await findOrCreateUser(senderJid, chatId, message.pushName);
 
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${currency}${sender.economy.bank}` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco para plinear esa cantidad. Saldo actual: ${currency} ${sender.economy.bank.toFixed(2)}` });
             }
 
-            // Refactorización: Usar la función centralizada para obtener el receptor.
             const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
             const target = await findOrCreateUser(mentionedJid, chatId, targetName);
 
+            // --- Lógica de Deuda Refactorizada ---
+            let debtMessage = '';
+            const debtToTarget = await Debt.findOne({ borrower: sender._id, lender: target._id, groupId: chatId });
+
+            if (debtToTarget) {
+                const paymentForDebt = Math.min(amount, debtToTarget.amount);
+                debtToTarget.amount -= paymentForDebt;
+
+                if (debtToTarget.amount <= 0) {
+                    await Debt.findByIdAndDelete(debtToTarget._id);
+                    // Asegurarse de que la deuda se elimina de las referencias de ambos usuarios
+                    sender.debts.pull(debtToTarget._id);
+                    target.loans.pull(debtToTarget._id);
+                    debtMessage = `\n\nℹ️ Con este Plin, has saldado completamente tu deuda de *${currency} ${paymentForDebt.toFixed(2)}* con @${target.jid.split('@')[0]}. ¡Estás libre de deudas con esta persona!`;
+                } else {
+                    await debtToTarget.save();
+                    debtMessage = `\n\nℹ️ De este monto, *${currency} ${paymentForDebt.toFixed(2)}* se usaron para pagar tu deuda con @${target.jid.split('@')[0]}. Deuda restante: *${currency} ${debtToTarget.amount.toFixed(2)}*.`;
+                }
+            }
+
+            // --- Transacción Única ---
             sender.economy.bank -= amount;
             target.economy.bank += amount;
 
             await sender.save();
             await target.save();
 
-            // Nueva lógica: Manejo de deudas
-            const debtToTarget = await Debt.findOne({ borrower: sender._id, lender: target._id });
-            let debtMessage = '';
-
-            if (debtToTarget) {
-                const payment = Math.min(amount, debtToTarget.amount);
-                debtToTarget.amount -= payment;
-                sender.economy.bank -= payment;
-                target.economy.bank += payment;
-                amount -= payment;
-
-                if (debtToTarget.amount <= 0) {
-                    await Debt.findByIdAndDelete(debtToTarget._id);
-                    sender.debts.pull(debtToTarget._id);
-                    debtMessage = `\n\nHas saldado tu deuda de ${currency}${payment} con @${target.jid.split('@')[0]}. ¡Deuda pagada!`;
-                } else {
-                    await debtToTarget.save();
-                    debtMessage = `\n\nHas pagado ${currency}${payment} de tu deuda a @${target.jid.split('@')[0]}. Deuda restante: ${currency}${debtToTarget.amount}.`;
-                }
-            }
-
             await sock.sendMessage(chatId, { 
-                text: `✅ Plin exitoso de ${currency}${amount} a @${mentionedJid.split('@')[0]}.\n\nTu nuevo saldo en banco es: ${currency}${sender.economy.bank}${debtMessage}`,
+                text: `✅ Plin exitoso de *${currency} ${amount.toFixed(2)}* a @${mentionedJid.split('@')[0]}.${debtMessage}\n\n*Tu nuevo saldo en banco:* ${currency} ${sender.economy.bank.toFixed(2)}`,
                 mentions: [senderJid, mentionedJid]
             });
 
