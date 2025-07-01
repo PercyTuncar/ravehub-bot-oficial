@@ -97,7 +97,7 @@ async function handleGameMessage(sock, message) {
             const playerCardName = playerChoice === 'izquierda' ? leftCardName : rightCardName;
             const houseCardName = playerChoice === 'izquierda' ? rightCardName : leftCardName;
 
-            await sock.sendMessage(chatId, { text: `Tu carta (${playerChoice}) es... 🎴` });
+            await sock.sendMessage(chatId, { text: `@${jid.split('@')[0]}, tu carta (${playerChoice}) es... 🎴`, mentions: [jid] });
             await delay(1500);
             await sock.sendMessage(chatId, { text: `> Tuya: ${playerCardName}` });
             await delay(1500);
