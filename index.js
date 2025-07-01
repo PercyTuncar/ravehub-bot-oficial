@@ -32,19 +32,19 @@ async function connectToWhatsApp() {
         if (qr) {
             qrcode.generate(qr, { small: true });
         }
+
         if (connection === 'close') {
             const statusCode = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
-            const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
 
-            console.log(`Conexión cerrada. Razón: ${statusCode}. Reconectando: ${shouldReconnect}`);
-
-            if (shouldReconnect) {
-                connectToWhatsApp();
-            } else {
+            if (statusCode === DisconnectReason.loggedOut) {
                 console.log('Credenciales inválidas. Eliminando sesión anterior y reiniciando...');
                 if (fs.existsSync('./sessions')) {
                     fs.rmSync('./sessions', { recursive: true, force: true });
                 }
+                // Llama a la función principal para reiniciar el proceso de conexión desde cero
+                connectToWhatsApp();
+            } else {
+                console.log('Conexión perdida. Intentando reconectar...');
                 connectToWhatsApp();
             }
         } else if (connection === 'open') {
