@@ -1,8 +1,9 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, DisconnectReason } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
 const pino = require('pino');
 const fs = require('fs');
+const bufferedAuthStore = require('./utils/bufferedAuthStore');
 const connectDB = require('./config/database');
 const eventHandler = require('./handlers/eventHandler');
 const loadCommands = require('./handlers/commandHandler');
@@ -16,7 +17,7 @@ let firstConnection = true;
 const commands = loadCommands();
 
 async function connectToWhatsApp() {
-    const { state, saveCreds } = await useMultiFileAuthState('sessions');
+    const { state, saveCreds } = await bufferedAuthStore('sessions');
 
     sock = makeWASocket({
         auth: state,
