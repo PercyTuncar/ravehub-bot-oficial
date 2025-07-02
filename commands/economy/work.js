@@ -55,9 +55,9 @@ module.exports = {
             await user.save();
 
             // Mensaje principal del trabajo
-            let workResponse = `🔨═══════════════════════🔨
+            let workResponse = `🔨══════════════════🔨
 *💼 BUEN TRABAJO 💵*
-🔨═══════════════════════🔨
+🔨══════════════════🔨
 
 👤 @${senderJid.split('@')[0]}
 🧹 *Puesto:* _${job.name}_
