@@ -103,7 +103,8 @@ async function connectToWhatsApp() {
         }
     });
 
-    eventHandler();
+    // La siguiente línea ya no es necesaria porque el evento 'messages.upsert' se maneja arriba.
+    // eventHandler(); 
 }
 
 connectDB();
