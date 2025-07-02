@@ -6,6 +6,14 @@ const { getSocket } = require('../../bot');
 const MIN_BET = 50;
 const MAX_BET = 5000;
 
+const casinoImages = [
+    'https://res.cloudinary.com/amadodedios/image/upload/v1751431245/casino-1_1_xi6eiv.webp',
+    'https://res.cloudinary.com/amadodedios/image/upload/v1751431245/casino-_1_ucaqeq.webp',
+    'https://res.cloudinary.com/amadodedios/image/upload/v1751431245/casino-2_qk6eyw.webp',
+    'https://res.cloudinary.com/amadodedios/image/upload/v1751431246/casino-4_avxtnz.webp',
+    'https://res.cloudinary.com/amadodedios/image/upload/v1751431245/casino-3_qcilqk.webp'
+];
+
 module.exports = {
     name: 'apostar',
     description: 'Jugar a la carta mayor.',
@@ -61,8 +69,10 @@ module.exports = {
             // Iniciar la sesión de juego
             startGameSession(jid, betAmount);
 
+            const randomImage = casinoImages[Math.floor(Math.random() * casinoImages.length)];
+
             await sock.sendMessage(chatId, {
-                image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/v1751218082/actualizado_casino_ravehub-min_rrojpr.jpg' },
+                image: { url: randomImage },
                 caption: `*🃏 ¡Bienvenido al Casino RaveHub! 🃏*
 
 ¡Mucha suerte, @${jid.split('@')[0]}! 🎰
