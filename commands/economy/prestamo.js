@@ -19,12 +19,15 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'Debes especificar un monto y mencionar a un usuario. Ejemplo: .prestame 500 @usuario' });
         }
 
-        const amount = parseInt(args[0]);
-        if (isNaN(amount) || amount <= 0) {
-            return sock.sendMessage(chatId, { text: 'El monto debe ser un número positivo.' });
-        }
-
         const lenderJid = message.message.extendedTextMessage.contextInfo.mentionedJid[0];
+
+        // Busca el monto en los argumentos, sin importar la posición
+        const amountArg = args.find(arg => !isNaN(parseInt(arg)));
+        const amount = amountArg ? parseInt(amountArg) : NaN;
+
+        if (isNaN(amount) || amount <= 0) {
+            return sock.sendMessage(chatId, { text: 'El monto debe ser un número positivo. Ejemplo: .prestame @usuario 50' });
+        }
 
         if (senderJid === lenderJid) {
             return sock.sendMessage(chatId, { text: 'No puedes pedirte un préstamo a ti mismo.' });
