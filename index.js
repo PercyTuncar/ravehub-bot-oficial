@@ -1,10 +1,9 @@
-const { default: makeWASocket, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, DisconnectReason, Browsers, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
 const pino = require('pino');
 const fs = require('fs');
 const path = require('path');
-const makeFileAuthStore = require('./utils/bufferedAuthStore'); // Renombrado para claridad
 const connectDB = require('./config/database');
 const eventHandler = require('./handlers/eventHandler');
 const loadCommands = require('./handlers/commandHandler');
@@ -17,21 +16,12 @@ let firstConnection = true;
 // Cargar todos los comandos y sus alias 
 const commands = loadCommands();
 
-// La ruta al directorio de sesiones, resuelta de forma absoluta.
-const sessionsDir = path.join(__dirname, 'sessions');
-const credsFile = path.join(sessionsDir, 'creds.json');
-
-// Asegurarse de que el directorio de sesiones exista síncronamente al inicio.
-if (!fs.existsSync(sessionsDir)) {
-    fs.mkdirSync(sessionsDir, { recursive: true });
-}
-
 async function connectToWhatsApp() {
-    // El store ahora se inicializa con la ruta completa al archivo y debe ser esperado.
-    const authStore = await makeFileAuthStore(credsFile).init();
+    // Usar el gestor de autenticación oficial de Baileys
+    const { state, saveCreds } = await useMultiFileAuthState('sessions');
 
     sock = makeWASocket({
-        auth: authStore.state,
+        auth: state,
         logger: pino({ level: 'warn' }),
         browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false, // El QR se maneja manualmente.
@@ -40,7 +30,7 @@ async function connectToWhatsApp() {
     setSocket(sock);
 
     // Guardar credenciales cuando se actualicen.
-    sock.ev.on('creds.update', authStore.saveCreds);
+    sock.ev.on('creds.update', saveCreds);
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
@@ -51,24 +41,21 @@ async function connectToWhatsApp() {
 
         if (connection === 'close') {
             const reason = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
-            let shouldReconnect = reason !== DisconnectReason.loggedOut && reason !== DisconnectReason.connectionReplaced;
-
-            if (reason === DisconnectReason.badSession || reason === DisconnectReason.timedOut || reason === DisconnectReason.restartRequired) {
-                console.error(`Sesión inválida o error crítico (${DisconnectReason[reason]}). Limpiando credenciales y reconectando...`);
-                await authStore.clearCreds();
-                shouldReconnect = true;
-            } else if (reason === DisconnectReason.loggedOut) {
-                console.log('Dispositivo desvinculado. Limpiando credenciales. Escanee el nuevo QR para continuar.');
-                await authStore.clearCreds();
-                shouldReconnect = false; // No reconectar, esperar a que se escanee el QR.
-            }
-
-            if (shouldReconnect) {
+            
+            // La lógica de reconexión ahora es más simple, ya que el store oficial es más robusto.
+            if (reason === DisconnectReason.loggedOut) {
+                console.log('Dispositivo desvinculado. Limpiando la carpeta de sesión y reiniciando.');
+                // Eliminar la carpeta de sesión para forzar un inicio limpio
+                const sessionsDir = path.join(__dirname, 'sessions');
+                if (fs.existsSync(sessionsDir)) {
+                    fs.rmSync(sessionsDir, { recursive: true, force: true });
+                }
+                connectToWhatsApp();
+            } else if (reason !== DisconnectReason.connectionReplaced) {
                 console.log(`Conexión perdida. Razón: ${DisconnectReason[reason] || reason}. Reconectando...`);
                 connectToWhatsApp();
             } else {
-                console.log(`Conexión cerrada. Razón: ${DisconnectReason[reason] || reason}. No se reconectará automáticamente.`);
-                // El proceso podría terminar aquí o esperar a que el usuario reinicie manualmente.
+                 console.log(`Conexión reemplazada. No se reconectará.`);
             }
         } else if (connection === 'open') {
             console.log('Conexión abierta y establecida.');
