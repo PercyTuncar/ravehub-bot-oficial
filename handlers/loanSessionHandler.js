@@ -74,7 +74,7 @@ async function handleLoanResponse(message) {
         if (totalFunds < amount) {
             await sock.sendMessage(chatId, {
                 text: `❗ @${lender.jid.split('@')[0]} tiene la voluntad de prestarte, ¡pero ahora está *misio*! 😅`,
-                mentions: [borrowerJId, lender.jid]
+                mentions: [borrowerJid, lender.jid]
             });
         } else {
             // Deduct from lender

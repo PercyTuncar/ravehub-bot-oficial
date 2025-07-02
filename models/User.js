@@ -25,11 +25,6 @@ const userSchema = new mongoose.Schema({
       moneyLost: { type: Number, default: 0 }
     }
   },
-  pendingLoan: {
-    borrowerJid: { type: String, default: null },
-    amount: { type: Number, default: 0 },
-    messageId: { type: String, default: null },
-  },
   debts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Debt' }],
   judicialDebt: { type: Number, default: 0 },
   inventory: [{
