@@ -1,4 +1,4 @@
-const { proto, initAuthCreds } = require('@whiskeysockets/baileys');
+const { proto, initAuthCreds, BufferJSON } = require('@whiskeysockets/baileys');
 
 /**
  * Crea un store de autenticación en memoria con escritura en búfer para Baileys.
@@ -25,7 +25,7 @@ const makeBufferedAuthStore = (fs, path) => {
     // Cargar las credenciales iniciales desde el disco si existen.
     try {
         const data = fs.readFileSync(path, { encoding: 'utf-8' });
-        const parsed = JSON.parse(data);
+        const parsed = JSON.parse(data, BufferJSON.reviver);
         creds = parsed.creds;
         keys = parsed.keys;
     } catch (e) {
@@ -41,15 +41,7 @@ const makeBufferedAuthStore = (fs, path) => {
     const saveState = async () => {
         try {
             // Se usa JSON.stringify con una función de reemplazo para manejar Buffers y BigInts.
-            const data = JSON.stringify({ creds, keys }, (key, value) => {
-                if (value instanceof Buffer) {
-                    return value.toString('base64');
-                }
-                if (typeof value === 'bigint') {
-                    return value.toString();
-                }
-                return value;
-            }, 2);
+            const data = JSON.stringify({ creds, keys }, BufferJSON.replacer, 2);
             await fs.promises.writeFile(path, data);
         } catch (e) {
             console.error('Error al guardar el estado de autenticación:', e);
