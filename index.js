@@ -18,17 +18,15 @@ let firstConnection = true;
 const commands = loadCommands();
 
 async function connectToWhatsApp() {
-    const sessionsDir = 'sessions';
-    if (!fs.existsSync(sessionsDir)) {
-        fs.mkdirSync(sessionsDir);
-    }
-    const authFile = path.join(sessionsDir, 'auth_info.json');
-
-    const { state, saveCreds } = makeBufferedAuthStore(fs, authFile);
+    // La creación del directorio y la carga del estado ahora son asíncronas
+    // y se manejan dentro de makeBufferedAuthStore.
+    const { state, saveCreds } = await makeBufferedAuthStore('sessions');
 
     sock = makeWASocket({
         auth: state,
-        logger: pino({ level: 'warn' })
+        logger: pino({ level: 'warn' }),
+        // Imprime el QR en la terminal
+        printQRInTerminal: true,
     });
 
     setSocket(sock);

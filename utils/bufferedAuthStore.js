@@ -1,4 +1,9 @@
 const { proto, initAuthCreds, BufferJSON } = require('@whiskeysockets/baileys');
+const { promises: fs } = require('fs');
+const path = require('path');
+const P = require('pino');
+
+const logger = P().child({ level: 'silent', stream: 'store' });
 
 /**
  * Crea un store de autenticación en memoria con escritura en búfer para Baileys.
@@ -13,26 +18,17 @@ const { proto, initAuthCreds, BufferJSON } = require('@whiskeysockets/baileys');
  * 4. Esto es crucial para bots que manejan muchas conversaciones o se ejecutan en contenedores/servidores
  *    donde la E/S del disco puede ser un cuello de botella.
  * 
- * @param {object} fs - El módulo 'fs' de Node.js para interactuar con el sistema de archivos.
- * @param {string} path - La ruta al archivo donde se deben guardar las credenciales (ej. 'sessions/auth_info.json').
+ * @param {string} folderName - El nombre de la carpeta donde se deben guardar las credenciales.
  * @returns Un objeto con los métodos `state` y `saveCreds` para ser usado con Baileys.
  */
-const makeBufferedAuthStore = (fs, path) => {
-    let creds = null;
-    let keys = {};
-    let saveCount = 0;
+const makeBufferedAuthStore = async (folderName) => {
+    const folder = path.join(__dirname, '..', folderName);
+    
+    // Asegurarse de que el directorio exista, de forma asíncrona.
+    await fs.mkdir(folder, { recursive: true });
 
-    // Cargar las credenciales iniciales desde el disco si existen.
-    try {
-        const data = fs.readFileSync(path, { encoding: 'utf-8' });
-        const parsed = JSON.parse(data, BufferJSON.reviver);
-        creds = parsed.creds;
-        keys = parsed.keys;
-    } catch (e) {
-        // Si el archivo no existe o hay un error, se inician credenciales nuevas.
-        creds = initAuthCreds();
-        keys = {};
-    }
+    let creds;
+    let keys = {};
 
     /**
      * Guarda los datos en el archivo de forma asíncrona.
@@ -41,19 +37,27 @@ const makeBufferedAuthStore = (fs, path) => {
     const saveState = async () => {
         try {
             // Se usa JSON.stringify con una función de reemplazo para manejar Buffers y BigInts.
-            const data = JSON.stringify({ creds, keys }, BufferJSON.replacer, 2);
-            await fs.promises.writeFile(path, data);
+            const str = JSON.stringify({ creds, keys }, BufferJSON.replacer, 2);
+            await fs.writeFile(path.join(folder, 'creds.json'), str, 'utf-8');
         } catch (e) {
-            console.error('Error al guardar el estado de autenticación:', e);
+            logger.error('Error al guardar el estado de autenticación:', e);
         }
     };
 
-    // Un temporizador para agrupar las operaciones de guardado.
-    let saveTimeout = null;
-    const scheduleSave = () => {
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(saveState, 2000); // Guardar cada 2 segundos de inactividad
+    const loadState = async () => {
+        try {
+            const data = await fs.readFile(path.join(folder, 'creds.json'), 'utf-8');
+            const { creds: loadedCreds, keys: loadedKeys } = JSON.parse(data, BufferJSON.reviver);
+            creds = loadedCreds || initAuthCreds();
+            keys = loadedKeys || {};
+        } catch (e) {
+            // Si el archivo no existe o hay un error, empezamos de cero.
+            creds = initAuthCreds();
+            keys = {};
+        }
     };
+
+    await loadState();
 
     return {
         state: {
@@ -64,20 +68,13 @@ const makeBufferedAuthStore = (fs, path) => {
                     return keys[key];
                 },
                 set: (data) => {
-                    for (const type in data) {
-                        for (const id in data[type]) {
-                            const key = `${type}:${id}`;
-                            keys[key] = data[type][id];
-                        }
-                    }
-                    scheduleSave();
+                    Object.assign(keys, data);
+                    saveState(); // Guardar en segundo plano
                 },
             },
         },
-        saveCreds: () => {
-            // La serialización y el guardado se manejan a través de `scheduleSave`.
-            // Este método solo necesita asegurarse de que las credenciales más recientes estén en `creds`.
-            scheduleSave();
+        saveCreds: async () => {
+            await saveState();
         },
     };
 };
