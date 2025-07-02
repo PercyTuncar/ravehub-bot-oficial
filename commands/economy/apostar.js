@@ -78,6 +78,10 @@ El crupier está barajando las cartas...`,
     let loss = false;
     let multiplier = 0;
 
+    // Determinar si el jugador ganó basado en su apuesta (side)
+    const playerWon = (side === 'izquierda' && playerCardValue > houseCardValue) || 
+                      (side === 'derecha' && playerCardValue < houseCardValue);
+
     if (side === 'empate') {
         if (playerCardValue === houseCardValue) {
             win = true;
@@ -88,8 +92,6 @@ El crupier está barajando las cartas...`,
             resultText = `❌ ¡No fue un empate! Perdiste *${currency} ${betAmount}*.`;
         }
     } else {
-        const playerWins = playerCardValue > houseCardValue;
-
         if (playerCardValue === houseCardValue) {
             user.economy.wallet += betAmount; // Devolver apuesta en caso de empate
             await user.save();
@@ -97,7 +99,7 @@ El crupier está barajando las cartas...`,
             await updateGameStats(jid, chatId, 'cartaMayor', { ties: 1 });
             endGameSession(jid);
             return sock.sendMessage(chatId, { text: resultText, mentions: [jid] });
-        } else if (playerWins) {
+        } else if (playerWon) {
             win = true;
             multiplier = 2;
             resultText = `🎉 ¡Felicidades, @${jid.split('@')[0]}! Ganaste *${currency} ${betAmount * multiplier}*.`;
