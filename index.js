@@ -1,4 +1,4 @@
-const { default: makeWASocket, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
 const pino = require('pino');
@@ -17,16 +17,23 @@ let firstConnection = true;
 // Cargar todos los comandos y sus alias 
 const commands = loadCommands();
 
+// Asegurarse de que el directorio de sesiones exista antes de cualquier otra cosa.
+const sessionsDir = path.join(__dirname, 'sessions');
+if (!fs.existsSync(sessionsDir)) {
+    fs.mkdirSync(sessionsDir, { recursive: true });
+}
+
 async function connectToWhatsApp() {
-    // La creación del directorio y la carga del estado ahora son asíncronas
-    // y se manejan dentro de makeBufferedAuthStore.
+    // El store ahora solo necesita el nombre de la carpeta.
     const { state, saveCreds } = await makeBufferedAuthStore('sessions');
 
     sock = makeWASocket({
         auth: state,
         logger: pino({ level: 'warn' }),
-        // Imprime el QR en la terminal
-        printQRInTerminal: true,
+        // Emular un navegador para mejorar la estabilidad de la conexión.
+        browser: Browsers.macOS('Desktop'),
+        // No imprimir el QR en la terminal, se manejará en el evento 'connection.update'
+        printQRInTerminal: false,
     });
 
     setSocket(sock);
@@ -42,18 +49,33 @@ async function connectToWhatsApp() {
         if (connection === 'close') {
             const reason = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
 
-            if (reason === DisconnectReason.loggedOut) {
-                console.log('Dispositivo desvinculado. Eliminando sesión y reiniciando para obtener un nuevo QR...');
-                if (fs.existsSync('./sessions')) {
-                    fs.rmSync('./sessions', { recursive: true, force: true });
+            // Lógica de reconexión mejorada
+            let shouldReconnect = reason !== DisconnectReason.loggedOut && reason !== DisconnectReason.connectionReplaced;
+
+            if (reason === DisconnectReason.badSession) {
+                console.error('Sesión corrupta. Eliminando archivo de sesión y reconectando...');
+                const credsFile = path.join(__dirname, 'sessions', 'creds.json');
+                if (fs.existsSync(credsFile)) {
+                    fs.unlinkSync(credsFile);
                 }
-                connectToWhatsApp();
-            } else if (reason === DisconnectReason.connectionReplaced) {
-                console.log('Conexión reemplazada. Otra sesión se ha abierto. No se reconectará.');
-            } else {
-                console.log('Conexión perdida. Razón:', reason, '. Intentando reconectar...');
-                connectToWhatsApp();
+                // Forzar la reconexión para generar una nueva sesión.
+                shouldReconnect = true;
+            } else if (reason === DisconnectReason.loggedOut) {
+                console.log('Dispositivo desvinculado. No se reconectará automáticamente. Por favor, escanee el nuevo QR.');
+                // Eliminar la sesión para forzar un nuevo QR en el próximo inicio.
+                const credsFile = path.join(__dirname, 'sessions', 'creds.json');
+                if (fs.existsSync(credsFile)) {
+                    fs.unlinkSync(credsFile);
+                }
             }
+
+            if (shouldReconnect) {
+                console.log('Conexión perdida. Razón:', DisconnectReason[reason] || reason, '. Intentando reconectar...');
+                connectToWhatsApp();
+            } else {
+                console.log('Conexión cerrada. Razón:', DisconnectReason[reason] || reason, '. No se reconectará.');
+            }
+
         } else if (connection === 'open') {
             console.log('Conexión abierta');
             if (firstConnection) {
