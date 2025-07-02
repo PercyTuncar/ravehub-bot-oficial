@@ -10,8 +10,11 @@ const User = require('../models/User');
  */
 const findOrCreateUser = async (jid, groupId, name = '') => {
     let user = await User.findOne({ jid, groupId });
+
+    // Si el usuario no existe, lo creamos.
     if (!user) {
-        const userName = name || jid.split('@')[0];
+        // Usar el pushName si está disponible, de lo contrario, el JID como último recurso.
+        const userName = (name && name.trim() !== '') ? name : jid.split('@')[0];
         try {
             user = new User({
                 jid,
@@ -19,16 +22,25 @@ const findOrCreateUser = async (jid, groupId, name = '') => {
                 name: userName,
             });
             await user.save();
-            console.log(`[DB] Nuevo usuario creado en grupo ${groupId}: ${jid}`);
+            console.log(`[DB] Nuevo usuario creado en grupo ${groupId}: ${jid} con nombre ${userName}`);
         } catch (err) {
-            // Si ocurre un error de duplicado, buscar el usuario existente
+            // Manejo de condición de carrera: si el usuario se crea entre la búsqueda y el guardado.
             if (err.code === 11000) {
                 user = await User.findOne({ jid, groupId });
             } else {
                 throw err;
             }
         }
+    } else {
+        // Si el usuario ya existe, verificamos si su nombre ha cambiado.
+        // Actualizar solo si el nuevo nombre (pushName) es válido y diferente al guardado.
+        if (name && name.trim() !== '' && user.name !== name) {
+            console.log(`[DB] Actualizando nombre para ${jid} en grupo ${groupId}. De: "${user.name}" a: "${name}"`);
+            user.name = name;
+            await user.save();
+        }
     }
+
     return user;
 };
 
