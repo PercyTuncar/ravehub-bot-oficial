@@ -4,7 +4,7 @@ const qrcode = require('qrcode-terminal');
 const pino = require('pino');
 const fs = require('fs');
 const path = require('path');
-const makeBufferedAuthStore = require('./utils/bufferedAuthStore');
+const makeFileAuthStore = require('./utils/bufferedAuthStore'); // Renombrado para claridad
 const connectDB = require('./config/database');
 const eventHandler = require('./handlers/eventHandler');
 const loadCommands = require('./handlers/commandHandler');
@@ -17,67 +17,61 @@ let firstConnection = true;
 // Cargar todos los comandos y sus alias 
 const commands = loadCommands();
 
-// Asegurarse de que el directorio de sesiones exista antes de cualquier otra cosa.
+// La ruta al directorio de sesiones, resuelta de forma absoluta.
 const sessionsDir = path.join(__dirname, 'sessions');
+const credsFile = path.join(sessionsDir, 'creds.json');
+
+// Asegurarse de que el directorio de sesiones exista síncronamente al inicio.
 if (!fs.existsSync(sessionsDir)) {
     fs.mkdirSync(sessionsDir, { recursive: true });
 }
 
 async function connectToWhatsApp() {
-    // El store ahora solo necesita el nombre de la carpeta.
-    const { state, saveCreds } = await makeBufferedAuthStore('sessions');
+    // El store ahora se inicializa con la ruta completa al archivo y debe ser esperado.
+    const authStore = await makeFileAuthStore(credsFile).init();
 
     sock = makeWASocket({
-        auth: state,
+        auth: authStore.state,
         logger: pino({ level: 'warn' }),
-        // Emular un navegador para mejorar la estabilidad de la conexión.
         browser: Browsers.macOS('Desktop'),
-        // No imprimir el QR en la terminal, se manejará en el evento 'connection.update'
-        printQRInTerminal: false,
+        printQRInTerminal: false, // El QR se maneja manualmente.
     });
 
     setSocket(sock);
 
-    sock.ev.on('creds.update', saveCreds);
+    // Guardar credenciales cuando se actualicen.
+    sock.ev.on('creds.update', authStore.saveCreds);
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) {
+            console.log('Nuevo QR Code generado. Por favor, escanéelo.');
             qrcode.generate(qr, { small: true });
         }
 
         if (connection === 'close') {
             const reason = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
-
-            // Lógica de reconexión mejorada
             let shouldReconnect = reason !== DisconnectReason.loggedOut && reason !== DisconnectReason.connectionReplaced;
 
-            if (reason === DisconnectReason.badSession) {
-                console.error('Sesión corrupta. Eliminando archivo de sesión y reconectando...');
-                const credsFile = path.join(__dirname, 'sessions', 'creds.json');
-                if (fs.existsSync(credsFile)) {
-                    fs.unlinkSync(credsFile);
-                }
-                // Forzar la reconexión para generar una nueva sesión.
+            if (reason === DisconnectReason.badSession || reason === DisconnectReason.timedOut || reason === DisconnectReason.restartRequired) {
+                console.error(`Sesión inválida o error crítico (${DisconnectReason[reason]}). Limpiando credenciales y reconectando...`);
+                await authStore.clearCreds();
                 shouldReconnect = true;
             } else if (reason === DisconnectReason.loggedOut) {
-                console.log('Dispositivo desvinculado. No se reconectará automáticamente. Por favor, escanee el nuevo QR.');
-                // Eliminar la sesión para forzar un nuevo QR en el próximo inicio.
-                const credsFile = path.join(__dirname, 'sessions', 'creds.json');
-                if (fs.existsSync(credsFile)) {
-                    fs.unlinkSync(credsFile);
-                }
+                console.log('Dispositivo desvinculado. Limpiando credenciales. Escanee el nuevo QR para continuar.');
+                await authStore.clearCreds();
+                shouldReconnect = false; // No reconectar, esperar a que se escanee el QR.
             }
 
             if (shouldReconnect) {
-                console.log('Conexión perdida. Razón:', DisconnectReason[reason] || reason, '. Intentando reconectar...');
+                console.log(`Conexión perdida. Razón: ${DisconnectReason[reason] || reason}. Reconectando...`);
                 connectToWhatsApp();
             } else {
-                console.log('Conexión cerrada. Razón:', DisconnectReason[reason] || reason, '. No se reconectará.');
+                console.log(`Conexión cerrada. Razón: ${DisconnectReason[reason] || reason}. No se reconectará automáticamente.`);
+                // El proceso podría terminar aquí o esperar a que el usuario reinicie manualmente.
             }
-
         } else if (connection === 'open') {
-            console.log('Conexión abierta');
+            console.log('Conexión abierta y establecida.');
             if (firstConnection) {
                 let menu = `╭───≽ *BOT CONECTADO* ≼───╮
 │
