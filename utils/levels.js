@@ -421,16 +421,16 @@ function getEligibleJobs(userLevel) {
     // Para nivel 10, todos los trabajos con cooldown aleatorio máximo
     return allJobs.map(job => {
       let cooldown;
-      if (job.level === 1) cooldown = Math.floor(Math.random() * 5) + 1; // 1-5
-      else if (job.level === 2) cooldown = Math.floor(Math.random() * 4) + 2; // 2-5
-      else if (job.level === 3) cooldown = Math.floor(Math.random() * 8) + 8; // 8-15
-      else if (job.level === 4) cooldown = Math.floor(Math.random() * 8) + 15; // 15-22
-      else if (job.level === 5) cooldown = Math.floor(Math.random() * 9) + 22; // 22-30
-      else if (job.level === 6) cooldown = Math.floor(Math.random() * 10) + 30; // 30-39
-      else if (job.level === 7) cooldown = Math.floor(Math.random() * 11) + 39; // 39-49
-      else if (job.level === 8) cooldown = Math.floor(Math.random() * 12) + 49; // 49-60
-      else if (job.level === 9) cooldown = Math.floor(Math.random() * 13) + 60; // 60-72
-      else cooldown = Math.floor(Math.random() * 14) + 72; // 72-85 para nivel 10+
+      if (job.level === 1) cooldown = Math.floor(Math.random() * 3) + 1;      // 1-3 min
+      else if (job.level === 2) cooldown = Math.floor(Math.random() * 4) + 3; // 3-6 min
+      else if (job.level === 3) cooldown = Math.floor(Math.random() * 6) + 3; // 3-8 min
+      else if (job.level === 4) cooldown = Math.floor(Math.random() * 7) + 4; // 4-10 min
+      else if (job.level === 5) cooldown = Math.floor(Math.random() * 8) + 5; // 5-12 min
+      else if (job.level === 6) cooldown = Math.floor(Math.random() * 9) + 6; // 6-14 min
+      else if (job.level === 7) cooldown = Math.floor(Math.random() * 10) + 7; // 7-16 min
+      else if (job.level === 8) cooldown = Math.floor(Math.random() * 11) + 8; // 8-18 min
+      else if (job.level === 9) cooldown = Math.floor(Math.random() * 10) + 9; // 9-18 min
+      else cooldown = Math.floor(Math.random() * 11) + 10; // 10-20 min para nivel 10+
       return { ...job, cooldown };
     });
   }
@@ -438,16 +438,16 @@ function getEligibleJobs(userLevel) {
   const jobs = allJobs.filter(job => job.level <= userLevel);
   return jobs.map(job => {
     let cooldown;
-    if (job.level === 1) cooldown = Math.floor(Math.random() * 5) + 1; // 1-5
-    else if (job.level === 2) cooldown = Math.floor(Math.random() * 4) + 2; // 2-5
-    else if (job.level === 3) cooldown = Math.floor(Math.random() * 8) + 8; // 8-15
-    else if (job.level === 4) cooldown = Math.floor(Math.random() * 8) + 15; // 15-22
-    else if (job.level === 5) cooldown = Math.floor(Math.random() * 9) + 22; // 22-30
-    else if (job.level === 6) cooldown = Math.floor(Math.random() * 10) + 30; // 30-39
-    else if (job.level === 7) cooldown = Math.floor(Math.random() * 11) + 39; // 39-49
-    else if (job.level === 8) cooldown = Math.floor(Math.random() * 12) + 49; // 49-60
-    else if (job.level === 9) cooldown = Math.floor(Math.random() * 13) + 60; // 60-72
-    else cooldown = Math.floor(Math.random() * 14) + 72; // 72-85 para nivel 10+
+    if (job.level === 1) cooldown = Math.floor(Math.random() * 3) + 1;      // 1-3 min
+    else if (job.level === 2) cooldown = Math.floor(Math.random() * 4) + 3; // 3-6 min
+    else if (job.level === 3) cooldown = Math.floor(Math.random() * 6) + 3; // 3-8 min
+    else if (job.level === 4) cooldown = Math.floor(Math.random() * 7) + 4; // 4-10 min
+    else if (job.level === 5) cooldown = Math.floor(Math.random() * 8) + 5; // 5-12 min
+    else if (job.level === 6) cooldown = Math.floor(Math.random() * 9) + 6; // 6-14 min
+    else if (job.level === 7) cooldown = Math.floor(Math.random() * 10) + 7; // 7-16 min
+    else if (job.level === 8) cooldown = Math.floor(Math.random() * 11) + 8; // 8-18 min
+    else if (job.level === 9) cooldown = Math.floor(Math.random() * 10) + 9; // 9-18 min
+    else cooldown = Math.floor(Math.random() * 11) + 10; // 10-20 min para nivel 10+
     return { ...job, cooldown };
   });
 }
