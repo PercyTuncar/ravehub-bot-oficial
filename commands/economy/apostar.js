@@ -77,7 +77,7 @@ module.exports = {
 
 ¡Mucha suerte, @${jid.split('@')[0]}! 🎰
 
-💵 Apuesta aceptado de *_${currency} ${betAmount}_*.
+💵 Apuesta aceptada de *_${currency} ${betAmount}_*.
 
       ELIGE TU JUGADA,       
 
