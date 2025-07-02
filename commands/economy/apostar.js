@@ -46,10 +46,30 @@ El crupier está barajando las cartas...`,
 
     await sock.sendMessage(chatId, { text: `Revelando las cartas...` });
     await new Promise(resolve => setTimeout(resolve, 2000));
-    await sock.sendMessage(chatId, { text: `*Carta Izquierda:* ${leftCard}` });
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    await sock.sendMessage(chatId, { text: `*Carta Derecha:* ${rightCard}` });
-    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    if (side === 'izquierda' || side === 'derecha') {
+        const userCard = side === 'izquierda' ? leftCard : rightCard;
+        const houseCard = side === 'izquierda' ? rightCard : leftCard;
+        const userCardName = side.charAt(0).toUpperCase() + side.slice(1);
+
+        await sock.sendMessage(chatId, {
+            text: `@${jid.split('@')[0]}, tu carta (${userCardName}) es: *${userCard}*`,
+            mentions: [jid]
+        });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        await sock.sendMessage(chatId, { text: `El crupier voltea la otra carta...` });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        await sock.sendMessage(chatId, { text: `La otra carta es: *${houseCard}*` });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    } else {
+        // Flujo de revelación para la apuesta de empate
+        await sock.sendMessage(chatId, { text: `*Carta Izquierda:* ${leftCard}` });
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        await sock.sendMessage(chatId, { text: `*Carta Derecha:* ${rightCard}` });
+        await new Promise(resolve => setTimeout(resolve, 2000));
+    }
 
     let resultText = '';
     let win = false;
