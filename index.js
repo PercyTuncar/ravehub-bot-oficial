@@ -3,7 +3,8 @@ const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
 const pino = require('pino');
 const fs = require('fs');
-const bufferedAuthStore = require('./utils/bufferedAuthStore');
+const path = require('path');
+const { makeBufferedAuthStore } = require('./utils/bufferedAuthStore');
 const connectDB = require('./config/database');
 const eventHandler = require('./handlers/eventHandler');
 const loadCommands = require('./handlers/commandHandler');
@@ -17,7 +18,13 @@ let firstConnection = true;
 const commands = loadCommands();
 
 async function connectToWhatsApp() {
-    const { state, saveCreds } = await bufferedAuthStore('sessions');
+    const sessionsDir = 'sessions';
+    if (!fs.existsSync(sessionsDir)) {
+        fs.mkdirSync(sessionsDir);
+    }
+    const authFile = path.join(sessionsDir, 'auth_info.json');
+
+    const { state, saveCreds } = makeBufferedAuthStore(fs, authFile);
 
     sock = makeWASocket({
         auth: state,
