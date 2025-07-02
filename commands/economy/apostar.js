@@ -38,24 +38,68 @@ El crupier está barajando las cartas...`,
     const cardValues = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
     const cardSuits = ['♠️', '♥️', '♦️', '♣️'];
 
-    const playerCardValue = Math.floor(Math.random() * cardValues.length);
-    const houseCardValue = Math.floor(Math.random() * cardValues.length);
+    const leftCardValue = Math.floor(Math.random() * cardValues.length);
+    const rightCardValue = Math.floor(Math.random() * cardValues.length);
 
-    const playerCard = `${cardValues[playerCardValue]} ${cardSuits[Math.floor(Math.random() * cardSuits.length)]}`;
-    const houseCard = `${cardValues[houseCardValue]} ${cardSuits[Math.floor(Math.random() * cardSuits.length)]}`;
+    const leftCard = `${cardValues[leftCardValue]} ${cardSuits[Math.floor(Math.random() * cardSuits.length)]}`;
+    const rightCard = `${cardValues[rightCardValue]} ${cardSuits[Math.floor(Math.random() * cardSuits.length)]}`;
 
-    await sock.sendMessage(chatId, { text: `Tu carta es... *${playerCard}*` });
+    await sock.sendMessage(chatId, { text: `Revelando las cartas...` });
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await sock.sendMessage(chatId, { text: `*Carta Izquierda:* ${leftCard}` });
     await new Promise(resolve => setTimeout(resolve, 1500));
-    await sock.sendMessage(chatId, { text: `El crupier voltea su carta...` });
+    await sock.sendMessage(chatId, { text: `*Carta Derecha:* ${rightCard}` });
     await new Promise(resolve => setTimeout(resolve, 2000));
-    await sock.sendMessage(chatId, { text: `La carta de la casa es... *${houseCard}*` });
-    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    let resultText = '';
+    let win = false;
+    let loss = false;
+    let multiplier = 0;
+    let netWinnings = 0; // Ganancia/pérdida neta
+
+    // Determinar si el jugador ganó basado en su apuesta (side)
+    const playerWon = (side === 'izquierda' && leftCardValue > rightCardValue) || 
+                      (side === 'derecha' && rightCardValue > leftCardValue);
+
+    if (side === 'empate') {
+        if (leftCardValue === rightCardValue) {
+            win = true;
+            multiplier = 5;
+            const totalPayout = betAmount * multiplier;
+            netWinnings = totalPayout - betAmount;
+            user.economy.wallet += totalPayout;
+            resultText = `🎉 ¡Increíble! ¡Es un empate! Ganaste *${currency} ${totalPayout}*.`;
+        } else {
+            loss = true;
+            netWinnings = -betAmount;
+            resultText = `❌ ¡No fue un empate! Perdiste *${currency} ${betAmount}*.`;
+        }
+    } else {
+        if (leftCardValue === rightCardValue) {
+            // Si hay empate y no se apostó a empate, el jugador pierde.
+            loss = true;
+            netWinnings = -betAmount;
+            resultText = `😐 ¡Fue un empate! Como no apostaste a 'empate', pierdes *${currency} ${betAmount}*.`;
+            // No se actualizan las estadísticas de empates del jugador, porque no fue su apuesta.
+        } else if (playerWon) {
+            win = true;
+            multiplier = 2;
+            const totalPayout = betAmount * multiplier;
+            netWinnings = totalPayout - betAmount;
+            user.economy.wallet += totalPayout;
+            resultText = `🎉 ¡Felicidades, @${jid.split('@')[0]}! Ganaste *${currency} ${totalPayout}*.`;
+        } else {
+            loss = true;
+            netWinnings = -betAmount;
+            resultText = `❌ ¡Mala suerte, @${jid.split('@')[0]}! Perdiste *${currency} ${betAmount}*.`;
+        }
+    }
 
     // Registrar el resultado del juego para las estadísticas generales
     let gameResultForLog;
-    if (playerCardValue > houseCardValue) {
+    if (leftCardValue > rightCardValue) {
         gameResultForLog = 'izquierda';
-    } else if (playerCardValue < houseCardValue) {
+    } else if (leftCardValue < rightCardValue) {
         gameResultForLog = 'derecha';
     } else {
         gameResultForLog = 'empate';
@@ -65,7 +109,10 @@ El crupier está barajando las cartas...`,
         const gameLog = new GameLog({
             gameName: 'carta mayor',
             groupId: chatId,
+            jid: jid,
             result: gameResultForLog,
+            betAmount: betAmount,
+            winnings: netWinnings, // Registrar ganancia/pérdida neta
             timestamp: new Date()
         });
         await gameLog.save();
@@ -73,49 +120,10 @@ El crupier está barajando las cartas...`,
         console.error('Error al guardar el log del juego:', error);
     }
 
-    let resultText = '';
-    let win = false;
-    let loss = false;
-    let multiplier = 0;
-
-    // Determinar si el jugador ganó basado en su apuesta (side)
-    const playerWon = (side === 'izquierda' && playerCardValue > houseCardValue) || 
-                      (side === 'derecha' && playerCardValue < houseCardValue);
-
-    if (side === 'empate') {
-        if (playerCardValue === houseCardValue) {
-            win = true;
-            multiplier = 5;
-            resultText = `🎉 ¡Increíble! ¡Es un empate! Ganaste *${currency} ${betAmount * multiplier}*.`;
-        } else {
-            loss = true;
-            resultText = `❌ ¡No fue un empate! Perdiste *${currency} ${betAmount}*.`;
-        }
-    } else {
-        if (playerCardValue === houseCardValue) {
-            user.economy.wallet += betAmount; // Devolver apuesta en caso de empate
-            await user.save();
-            resultText = `😐 ¡Es un empate! Se te devolvió tu apuesta de *${currency} ${betAmount}*.`;
-            await updateGameStats(jid, chatId, 'cartaMayor', { ties: 1 });
-            endGameSession(jid);
-            return sock.sendMessage(chatId, { text: resultText, mentions: [jid] });
-        } else if (playerWon) {
-            win = true;
-            multiplier = 2;
-            resultText = `🎉 ¡Felicidades, @${jid.split('@')[0]}! Ganaste *${currency} ${betAmount * multiplier}*.`;
-        } else {
-            loss = true;
-            resultText = `❌ ¡Mala suerte, @${jid.split('@')[0]}! Perdiste *${currency} ${betAmount}*.`;
-        }
-    }
-
     if (win) {
-        const amountWon = betAmount * multiplier;
-        user.economy.wallet += amountWon;
-        const profit = amountWon - betAmount;
-        await updateGameStats(jid, chatId, 'cartaMayor', { wins: 1, moneyChange: profit });
+        await updateGameStats(jid, chatId, 'cartaMayor', { wins: 1, moneyChange: netWinnings });
     } else if (loss) {
-        await updateGameStats(jid, chatId, 'cartaMayor', { losses: 1, moneyChange: -betAmount });
+        await updateGameStats(jid, chatId, 'cartaMayor', { losses: 1, moneyChange: netWinnings });
     }
     
     await user.save();
@@ -171,11 +179,7 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar *${currency} ${betAmount}*.` });
             }
 
-            // Retirar la apuesta de la cartera
-            user.economy.wallet -= betAmount;
-            await user.save();
-
-            // Iniciar la sesión de juego
+            // Iniciar la sesión de juego ANTES de retirar la apuesta
             startGameSession(jid, betAmount);
 
             const sideArg = args[1] ? args[1].toLowerCase() : null;
@@ -183,9 +187,12 @@ module.exports = {
 
             if (sideArg && validSides.includes(sideArg)) {
                 // Jugar directamente si el lado es válido
+                // Retirar la apuesta de la cartera JUSTO ANTES de jugar
+                user.economy.wallet -= betAmount;
+                await user.save();
                 await playGame(sock, chatId, jid, user, betAmount, sideArg);
             } else {
-                // Flujo original si no se proporciona un lado válido
+                // Flujo original: preguntar por el lado
                 const randomImage = casinoImages[Math.floor(Math.random() * casinoImages.length)];
 
                 await sock.sendMessage(chatId, {
@@ -214,14 +221,10 @@ module.exports = {
                     session.timer = setTimeout(async () => {
                         if (getGameSession(jid)) { // Verificar si la sesión todavía existe
                             await sock.sendMessage(chatId, {
-                                text: `⌛ @${jid.split('@')[0]}, se agotó el tiempo para tu jugada.
-
-Tu apuesta de *${currency} ${betAmount}* ha sido devuelta a tu cartera.`,
+                                text: `⌛ @${jid.split('@')[0]}, se agotó el tiempo para tu jugada. Tu apuesta ha sido cancelada.`,
                                 mentions: [jid]
                             });
-                            // Devolver la apuesta
-                            user.economy.wallet += betAmount;
-                            await user.save();
+                            // No es necesario devolver la apuesta porque nunca se retiró
                             endGameSession(jid);
                         }
                     }, 30000); // 30 segundos
@@ -231,13 +234,8 @@ Tu apuesta de *${currency} ${betAmount}* ha sido devuelta a tu cartera.`,
         } catch (error) {
             console.error('Error en el comando apostar:', error);
             await sock.sendMessage(chatId, { text: '⚙️ Ocurrió un error al iniciar el juego.' });
-            // Si hubo un error, devolver el dinero si ya se había restado
-            const session = getGameSession(jid);
-            if (session) {
-                const user = await findOrCreateUser(jid, chatId, message.pushName);
-                user.economy.wallet += session.betAmount;
-                await user.save();
-            }
+            // No es necesario devolver dinero aquí porque la sesión se limpia
+            // y el dinero solo se retira al jugar.
             endGameSession(jid); // Asegurarse de limpiar la sesión si hay un error
         }
     }
