@@ -68,7 +68,12 @@ const makeBufferedAuthStore = async (folderName) => {
                     return keys[key];
                 },
                 set: (data) => {
-                    Object.assign(keys, data);
+                    for (const type in data) {
+                        for (const id in data[type]) {
+                            const key = `${type}:${id}`;
+                            keys[key] = data[type][id];
+                        }
+                    }
                     saveState(); // Guardar en segundo plano
                 },
             },
