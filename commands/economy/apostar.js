@@ -14,11 +14,85 @@ const casinoImages = [
     'https://res.cloudinary.com/amadodedios/image/upload/v1751431245/casino-3_qcilqk.webp'
 ];
 
+async function playGame(sock, chatId, jid, user, betAmount, side) {
+    const currency = await getCurrency(chatId);
+    const randomImage = casinoImages[Math.floor(Math.random() * casinoImages.length)];
+
+    await sock.sendMessage(chatId, {
+        image: { url: randomImage },
+        caption: `*🃏 ¡Bienvenido al Casino RaveHub! 🃏*
+
+¡Mucha suerte, @${jid.split('@')[0]}! 🎰
+
+*Tu jugada:*
+> *Monto:* ${currency} ${betAmount}
+> *Lado:* ${side.charAt(0).toUpperCase() + side.slice(1)}
+
+El crupier está barajando las cartas...`,
+        mentions: [jid]
+    });
+
+    await new Promise(resolve => setTimeout(resolve, 2000)); // Pausa de 2 segundos
+
+    const cardValues = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+    const cardSuits = ['♠️', '♥️', '♦️', '♣️'];
+
+    const playerCardValue = Math.floor(Math.random() * cardValues.length);
+    const houseCardValue = Math.floor(Math.random() * cardValues.length);
+
+    const playerCard = `${cardValues[playerCardValue]} ${cardSuits[Math.floor(Math.random() * cardSuits.length)]}`;
+    const houseCard = `${cardValues[houseCardValue]} ${cardSuits[Math.floor(Math.random() * cardSuits.length)]}`;
+
+    await sock.sendMessage(chatId, { text: `Tu carta es... *${playerCard}*` });
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await sock.sendMessage(chatId, { text: `El crupier voltea su carta...` });
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await sock.sendMessage(chatId, { text: `La carta de la casa es... *${houseCard}*` });
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    let resultText = '';
+    let win = false;
+    let multiplier = 0;
+
+    if (side === 'empate') {
+        if (playerCardValue === houseCardValue) {
+            win = true;
+            multiplier = 5;
+            resultText = `🎉 ¡Increíble! ¡Es un empate! Ganaste *${currency} ${betAmount * multiplier}*.`;
+        } else {
+            resultText = `❌ ¡No fue un empate! Perdiste *${currency} ${betAmount}*.`;
+        }
+    } else {
+        const playerWins = (side === 'izquierda' && playerCardValue > houseCardValue) || (side === 'derecha' && playerCardValue < houseCardValue);
+        if (playerCardValue === houseCardValue) {
+            user.economy.wallet += betAmount; // Devolver apuesta en caso de empate
+            await user.save();
+            resultText = `😐 ¡Es un empate! Se te devolvió tu apuesta de *${currency} ${betAmount}*.`;
+            return sock.sendMessage(chatId, { text: resultText, mentions: [jid] });
+        } else if (playerWins) {
+            win = true;
+            multiplier = 2;
+            resultText = `🎉 ¡Felicidades, @${jid.split('@')[0]}! Ganaste *${currency} ${betAmount * multiplier}*.`;
+        } else {
+            resultText = `❌ ¡Mala suerte, @${jid.split('@')[0]}! Perdiste *${currency} ${betAmount}*.`;
+        }
+    }
+
+    if (win) {
+        user.economy.wallet += betAmount * multiplier;
+    }
+    
+    await user.save();
+    endGameSession(jid);
+
+    await sock.sendMessage(chatId, { text: resultText, mentions: [jid] });
+}
+
 module.exports = {
     name: 'apostar',
     description: 'Jugar a la carta mayor.',
     aliases: ['bet'],
-    usage: '.apostar <cantidad>',
+    usage: '.apostar <cantidad> [lado]',
     category: 'game', // Cambiado de 'economy' a 'game'
     async execute(message, args) {
         const sock = getSocket();
@@ -56,7 +130,6 @@ module.exports = {
 
         try {
             const user = await findOrCreateUser(jid, chatId, message.pushName);
-            const currency = await getCurrency(chatId);
 
             if (user.economy.wallet < betAmount) {
                 return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar *${currency} ${betAmount}*.` });
@@ -69,11 +142,19 @@ module.exports = {
             // Iniciar la sesión de juego
             startGameSession(jid, betAmount);
 
-            const randomImage = casinoImages[Math.floor(Math.random() * casinoImages.length)];
+            const sideArg = args[1] ? args[1].toLowerCase() : null;
+            const validSides = ['izquierda', 'derecha', 'empate'];
 
-            await sock.sendMessage(chatId, {
-                image: { url: randomImage },
-                caption: `*🃏 ¡Bienvenido al Casino RaveHub! 🃏*
+            if (sideArg && validSides.includes(sideArg)) {
+                // Jugar directamente si el lado es válido
+                await playGame(sock, chatId, jid, user, betAmount, sideArg);
+            } else {
+                // Flujo original si no se proporciona un lado válido
+                const randomImage = casinoImages[Math.floor(Math.random() * casinoImages.length)];
+
+                await sock.sendMessage(chatId, {
+                    image: { url: randomImage },
+                    caption: `*🃏 ¡Bienvenido al Casino RaveHub! 🃏*
 
 ¡Mucha suerte, @${jid.split('@')[0]}! 🎰
 
@@ -88,31 +169,39 @@ module.exports = {
 > _Gana x5 si las cartas son iguales._
 
 *Responde con tu elección. ¡Tienes 30 segundos!* ⏳`,
-                mentions: [jid]
-            });
+                    mentions: [jid]
+                });
 
-            // Configurar el temporizador de inactividad
-            const session = getGameSession(jid);
-            if (session) {
-                session.timer = setTimeout(async () => {
-                    if (getGameSession(jid)) { // Verificar si la sesión todavía existe
-                        await sock.sendMessage(chatId, {
-                            text: `⌛ @${jid.split('@')[0]}, se agotó el tiempo para tu jugada.
+                // Configurar el temporizador de inactividad
+                const session = getGameSession(jid);
+                if (session) {
+                    session.timer = setTimeout(async () => {
+                        if (getGameSession(jid)) { // Verificar si la sesión todavía existe
+                            await sock.sendMessage(chatId, {
+                                text: `⌛ @${jid.split('@')[0]}, se agotó el tiempo para tu jugada.
 
 Tu apuesta de *${currency} ${betAmount}* ha sido devuelta a tu cartera.`,
-                            mentions: [jid]
-                        });
-                        // Devolver la apuesta
-                        user.economy.wallet += betAmount;
-                        await user.save();
-                        endGameSession(jid);
-                    }
-                }, 30000); // 30 segundos
+                                mentions: [jid]
+                            });
+                            // Devolver la apuesta
+                            user.economy.wallet += betAmount;
+                            await user.save();
+                            endGameSession(jid);
+                        }
+                    }, 30000); // 30 segundos
+                }
             }
 
         } catch (error) {
             console.error('Error en el comando apostar:', error);
             await sock.sendMessage(chatId, { text: '⚙️ Ocurrió un error al iniciar el juego.' });
+            // Si hubo un error, devolver el dinero si ya se había restado
+            const session = getGameSession(jid);
+            if (session) {
+                const user = await findOrCreateUser(jid, chatId, message.pushName);
+                user.economy.wallet += session.betAmount;
+                await user.save();
+            }
             endGameSession(jid); // Asegurarse de limpiar la sesión si hay un error
         }
     }
