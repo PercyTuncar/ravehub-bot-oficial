@@ -63,15 +63,23 @@ module.exports = {
 
             await sock.sendMessage(chatId, {
                 image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/v1751218082/actualizado_casino_ravehub-min_rrojpr.jpg' },
-                caption: `*¡Bienvenido al Casino RaveHub, @${jid.split('@')[0]}!* 🎰
+                caption: `*🃏 ¡Bienvenido al Casino RaveHub! 🃏*
 
-Tu apuesta de *${currency} ${betAmount}* ha sido aceptada.
+¡Mucha suerte, @${jid.split('@')[0]}! 🎰
 
-*Elige tu jugada:*
-> • *Izquierda* o *Derecha*: Gana x2 si tu carta es mayor.
-> • *Empate*: Gana x5 si las cartas son iguales.
+Se ha aceptado tu apuesta de *_${currency} ${betAmount}_*.
 
-Responde con tu elección. ¡Tienes 30 segundos!`,
+
+*      ELIGE TU JUGADA,       *
+*└─── ･ ｡ﾟ☆: *.☽ .* :☆ﾟ. ───┘*
+
+> *Izquierda* o *Derecha* ♠️♥️
+> _Gana x2 si tu carta es mayor._
+
+> *Empate* ♦️♣️
+> _Gana x5 si las cartas son iguales._
+
+*Responde con tu elección. ¡Tienes 30 segundos!* ⏳`,
                 mentions: [jid]
             });
 
