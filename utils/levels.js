@@ -1,14 +1,14 @@
 const levelNames = [
-  { name: 'Nivel Pollito', emoji: '🐣' },
-  { name: 'Nivel Pulpin', emoji: '🤝' },
-  { name: 'Nivel Chamba', emoji: '💼' },
-  { name: 'Nivel Leder', emoji: '🪙' },
-  { name: 'Nivel Mostrito', emoji: '😈' },
-  { name: 'Nivel Crak', emoji: '🪙👌' },
-  { name: 'Nivel Tigre', emoji: '🐯💵' },
-  { name: 'Nivel Maestro', emoji: '🧠💼💵' },
-  { name: 'Nivel Pitucazo', emoji: '👑💸💵🪙' },
-  { name: 'Nivel King de Kines', emoji: '🔥👑💰🦁💵💵💵' },
+  { name: 'Pollito', emoji: '🐣' },
+  { name: 'Pulpin', emoji: '🤝' },
+  { name: 'Chamba', emoji: '💼' },
+  { name: 'Leder', emoji: '🪙' },
+  { name: 'Mostrito', emoji: '😈' },
+  { name: 'Crak', emoji: '🪙👌' },
+  { name: 'Tigre', emoji: '🐯💵' },
+  { name: 'Maestro', emoji: '🧠💼💵' },
+  { name: 'Pitucazo', emoji: '👑💸💵🪙' },
+  { name: 'King de Kines', emoji: '🔥👑💰🦁💵💵💵' },
 ];
 
 // Dificultad aumentada: se requiere mucho más XP para cada nivel
