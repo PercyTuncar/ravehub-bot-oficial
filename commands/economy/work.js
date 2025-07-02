@@ -56,7 +56,7 @@ module.exports = {
 
             // Mensaje principal del trabajo
             let workResponse = `🔨════════════ 🔨
-*💼  BUEN TRABAJO 💼*
+*💼  BUEN TRABAJO  💼*
 🔨════════════ 🔨
 
 👤 @${senderJid.split('@')[0]}
