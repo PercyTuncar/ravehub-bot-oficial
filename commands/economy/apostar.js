@@ -2,6 +2,7 @@ const { findOrCreateUser, updateGameStats } = require('../../utils/userUtils');
 const { startGameSession, getGameSession, endGameSession } = require('../../utils/gameUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const { getSocket } = require('../../bot');
+const GameLog = require('../../models/GameLog'); // Añadir el modelo de GameLog
 
 const MIN_BET = 50;
 const MAX_BET = 5000;
@@ -50,6 +51,28 @@ El crupier está barajando las cartas...`,
     await sock.sendMessage(chatId, { text: `La carta de la casa es... *${houseCard}*` });
     await new Promise(resolve => setTimeout(resolve, 2000));
 
+    // Registrar el resultado del juego para las estadísticas generales
+    let gameResultForLog;
+    if (playerCardValue > houseCardValue) {
+        gameResultForLog = 'izquierda';
+    } else if (playerCardValue < houseCardValue) {
+        gameResultForLog = 'derecha';
+    } else {
+        gameResultForLog = 'empate';
+    }
+
+    try {
+        const gameLog = new GameLog({
+            gameName: 'carta mayor',
+            groupId: chatId,
+            result: gameResultForLog,
+            timestamp: new Date()
+        });
+        await gameLog.save();
+    } catch (error) {
+        console.error('Error al guardar el log del juego:', error);
+    }
+
     let resultText = '';
     let win = false;
     let loss = false;
@@ -65,7 +88,8 @@ El crupier está barajando las cartas...`,
             resultText = `❌ ¡No fue un empate! Perdiste *${currency} ${betAmount}*.`;
         }
     } else {
-        const playerWins = (side === 'izquierda' && playerCardValue > houseCardValue) || (side === 'derecha' && playerCardValue < houseCardValue);
+        const playerWins = playerCardValue > houseCardValue;
+
         if (playerCardValue === houseCardValue) {
             user.economy.wallet += betAmount; // Devolver apuesta en caso de empate
             await user.save();
