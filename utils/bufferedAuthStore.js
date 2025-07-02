@@ -90,4 +90,4 @@ const makeBufferedAuthStore = (fs, path) => {
     };
 };
 
-module.exports = { makeBufferedAuthStore };
+module.exports = makeBufferedAuthStore;
