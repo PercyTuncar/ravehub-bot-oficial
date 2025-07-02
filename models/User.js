@@ -13,6 +13,17 @@ const userSchema = new mongoose.Schema({
   economy: {
     wallet: { type: Number, default: 0 },
     bank: { type: Number, default: 0 },
+    bankCapacity: { type: Number, default: 1000 }
+  },
+  gameStats: {
+    cartaMayor: {
+      gamesPlayed: { type: Number, default: 0 },
+      wins: { type: Number, default: 0 },
+      losses: { type: Number, default: 0 },
+      ties: { type: Number, default: 0 },
+      moneyWon: { type: Number, default: 0 },
+      moneyLost: { type: Number, default: 0 }
+    }
   },
   pendingLoan: {
     borrowerJid: { type: String, default: null },
@@ -31,7 +42,7 @@ const userSchema = new mongoose.Schema({
     paidLate: { type: Number, default: 0 },
   },
   warnings: { type: Number, default: 0 },
-  lastWork: { type: Date, default: null },
+  lastWorked: { type: Date, default: null },
   isBanned: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 }, {

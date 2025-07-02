@@ -1,4 +1,4 @@
-const { findOrCreateUser } = require('../../utils/userUtils');
+const { findOrCreateUser, updateGameStats } = require('../../utils/userUtils');
 const { startGameSession, getGameSession, endGameSession } = require('../../utils/gameUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const { getSocket } = require('../../bot');
@@ -52,6 +52,7 @@ El crupier está barajando las cartas...`,
 
     let resultText = '';
     let win = false;
+    let loss = false;
     let multiplier = 0;
 
     if (side === 'empate') {
@@ -60,6 +61,7 @@ El crupier está barajando las cartas...`,
             multiplier = 5;
             resultText = `🎉 ¡Increíble! ¡Es un empate! Ganaste *${currency} ${betAmount * multiplier}*.`;
         } else {
+            loss = true;
             resultText = `❌ ¡No fue un empate! Perdiste *${currency} ${betAmount}*.`;
         }
     } else {
@@ -68,18 +70,26 @@ El crupier está barajando las cartas...`,
             user.economy.wallet += betAmount; // Devolver apuesta en caso de empate
             await user.save();
             resultText = `😐 ¡Es un empate! Se te devolvió tu apuesta de *${currency} ${betAmount}*.`;
+            await updateGameStats(jid, chatId, 'cartaMayor', { ties: 1 });
+            endGameSession(jid);
             return sock.sendMessage(chatId, { text: resultText, mentions: [jid] });
         } else if (playerWins) {
             win = true;
             multiplier = 2;
             resultText = `🎉 ¡Felicidades, @${jid.split('@')[0]}! Ganaste *${currency} ${betAmount * multiplier}*.`;
         } else {
+            loss = true;
             resultText = `❌ ¡Mala suerte, @${jid.split('@')[0]}! Perdiste *${currency} ${betAmount}*.`;
         }
     }
 
     if (win) {
-        user.economy.wallet += betAmount * multiplier;
+        const amountWon = betAmount * multiplier;
+        user.economy.wallet += amountWon;
+        const profit = amountWon - betAmount;
+        await updateGameStats(jid, chatId, 'cartaMayor', { wins: 1, moneyChange: profit });
+    } else if (loss) {
+        await updateGameStats(jid, chatId, 'cartaMayor', { losses: 1, moneyChange: -betAmount });
     }
     
     await user.save();

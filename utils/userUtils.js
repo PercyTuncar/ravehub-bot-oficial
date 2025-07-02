@@ -32,4 +32,58 @@ const findOrCreateUser = async (jid, groupId, name = '') => {
     return user;
 };
 
-module.exports = { findOrCreateUser };
+/**
+ * Actualiza las estadísticas de juego para un usuario.
+ * @param {string} jid - El JID del usuario.
+ * @param {string} groupId - El ID del grupo.
+ * @param {string} gameName - El nombre del juego (ej. 'cartaMayor').
+ * @param {object} statsUpdate - Objeto con las estadísticas a actualizar.
+ * @param {number} [statsUpdate.wins=0] - Victorias a sumar.
+ * @param {number} [statsUpdate.losses=0] - Derrotas a sumar.
+ * @param {number} [statsUpdate.ties=0] - Empates a sumar.
+ * @param {number} [statsUpdate.moneyChange=0] - Cambio en el dinero.
+ */
+const updateGameStats = async (jid, groupId, gameName, statsUpdate) => {
+    try {
+        const user = await findOrCreateUser(jid, groupId);
+        if (!user) {
+            console.error(`[DB] Usuario no encontrado con JID: ${jid} en grupo ${groupId}`);
+            return;
+        }
+
+        const { wins = 0, losses = 0, ties = 0, moneyChange = 0 } = statsUpdate;
+
+        if (!user.gameStats) {
+            user.gameStats = {};
+        }
+        if (!user.gameStats[gameName]) {
+            user.gameStats[gameName] = {
+                gamesPlayed: 0,
+                wins: 0,
+                losses: 0,
+                ties: 0,
+                moneyWon: 0,
+                moneyLost: 0,
+            };
+        }
+
+        const stats = user.gameStats[gameName];
+        
+        stats.gamesPlayed += (wins + losses + ties);
+        stats.wins += wins;
+        stats.losses += losses;
+        stats.ties += ties;
+
+        if (moneyChange > 0) {
+            stats.moneyWon += moneyChange;
+        } else if (moneyChange < 0) {
+            stats.moneyLost += Math.abs(moneyChange);
+        }
+
+        await user.save();
+    } catch (error) {
+        console.error(`[DB] Error al actualizar estadísticas de juego para ${jid}:`, error);
+    }
+};
+
+module.exports = { findOrCreateUser, updateGameStats };

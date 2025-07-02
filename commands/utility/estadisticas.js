@@ -27,7 +27,7 @@ module.exports = {
             }).sort({ timestamp: -1 });
 
             if (gameLogs.length === 0) {
-                return sock.sendMessage(jid, { text: `📈 No se encontraron estadísticas para el juego "${gameName}" en las últimas 24 horas.` });
+                return sock.sendMessage(jid, { text: `📈 No se encontraron estadísticas para el juego \"${gameName}\" en las últimas 24 horas.` });
             }
 
             // 1. Últimas 5 jugadas
@@ -53,7 +53,7 @@ module.exports = {
 
             // Formatear el mensaje de estadísticas
             const statsMessage = `
-*📊 Estadísticas de "${gameName.toUpperCase()}" (Últimas 24H)*
+*📊 Estadísticas de \"${gameName.toUpperCase()}\" (Últimas 24H)*
 
 *Total de Jugadas:* ${totalPlays}
 
