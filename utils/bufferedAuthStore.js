@@ -45,7 +45,14 @@ const makeFileAuthStore = (filePath) => {
                     return keys[key];
                 },
                 set: (data) => {
-                    Object.assign(keys, data);
+                    // La lógica correcta para guardar las claves.
+                    // Object.assign es incorrecto aquí, ya que no aplana la estructura de claves.
+                    for (const type in data) {
+                        for (const id in data[type]) {
+                            const key = `${type}:${id}`;
+                            keys[key] = data[type][id];
+                        }
+                    }
                     saveState();
                 },
             },
