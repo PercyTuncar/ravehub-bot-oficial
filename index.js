@@ -22,7 +22,7 @@ async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        logger: pino({ level: 'warn' }),
+        logger: pino({ level: 'error' }), // Cambiado a 'error' para reducir logs
         browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false, // El QR se maneja manualmente.
     });
@@ -31,6 +31,13 @@ async function connectToWhatsApp() {
 
     // Guardar credenciales cuando se actualicen.
     sock.ev.on('creds.update', saveCreds);
+
+    // Desacoplar el procesamiento de mensajes para no bloquear el event loop
+    sock.ev.on('messages.upsert', (msg) => {
+        setImmediate(() => {
+            eventHandler(msg).catch(console.error);
+        });
+    });
 
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
