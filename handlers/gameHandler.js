@@ -1,41 +1,32 @@
+const { getGameSession, endGameSession } = require('./gameUtils');
+const cartaMayor = require('../games/cartaMayor');
 const { getSocket } = require('../bot');
-const { getGameSession, endGameSession } = require('../utils/gameUtils');
-const cartaMayor = require('../games/cartaMayor'); // Import the whole module
 
-async function handleGameMessage(message) {
+async function handleGameResponse(msg) {
     const sock = getSocket();
-    const jid = message.key.participant || message.key.remoteJid;
-    const session = await getGameSession(jid); // Ahora es asíncrono
+    const jid = msg.key.participant || msg.key.remoteJid;
+    const chatId = msg.key.remoteJid;
 
-    if (!session) {
-        return false;
-    }
+    const session = await getGameSession(jid);
+    if (!session) return;
 
-    // Extraer el texto del mensaje, considerando ambas estructuras posibles
-    const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
-    const choice = messageText.toLowerCase().trim();
+    // Extraer el texto del mensaje de forma robusta
+    const messageText = (msg.message?.conversation || msg.message?.extendedTextMessage?.text || '').trim().toLowerCase();
 
-    if (session.game === 'cartaMayor') {
-        // Check for valid choices for the game
-        if (['izquierda', 'derecha', 'empate'].includes(choice)) {
-            // 1. Finalizar la sesión para detener el temporizador de reembolso
-            await endGameSession(jid);
+    if (!messageText) return; // Ignorar si no hay texto
 
-            // 2. Proceder con la lógica del juego, pasando los datos de la sesión
-            // Ahora, la lógica del juego descontará el dinero.
-            await cartaMayor.handleInteractiveChoice(
-                sock,
-                message.key.remoteJid,
-                jid,
-                session.user, // Usamos el estado del usuario guardado en la sesión
-                session.betAmount,
-                choice
-            );
-            return true;
+    const validChoices = ['izquierda', 'derecha', 'empate'];
+
+    if (validChoices.includes(messageText)) {
+        // Detener el temporizador de expiración ya que el usuario ha respondido
+        endGameSession(jid); // Esto ahora solo limpia la sesión y el temporizador
+
+        if (session.gameType === 'cartaMayor') {
+            // Pasar los datos de la sesión al manejador del juego
+            await cartaMayor.handleInteractiveChoice(sock, chatId, jid, session.data.user, session.data.betAmount, messageText);
         }
+        // Aquí se podrían añadir más `else if` para otros juegos
     }
-
-    return false;
 }
 
-module.exports = { handleGameMessage };
+module.exports = { handleGameResponse };
