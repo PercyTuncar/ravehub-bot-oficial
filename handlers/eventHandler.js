@@ -1,5 +1,5 @@
 const commandHandler = require('./commandHandler');
-const { handleGameMessage } = require('./gameHandler');
+const { handleGameResponse } = require('./gameHandler');
 const { getGameSession } = require('../utils/gameUtils');
 const { handleLoanResponse, getLoanSession } = require('./loanSessionHandler'); // Updated import
 const GroupSettings = require('../models/GroupSettings');
@@ -26,7 +26,7 @@ module.exports = async (m) => {
 
     // --- Game Handler Integration ---
     if (getGameSession(jid)) {
-        const gameHandled = await handleGameMessage(message);
+        const gameHandled = await handleGameResponse(message);
         if (gameHandled) {
             return; // Detener el procesamiento si el mensaje fue manejado por el juego
         }
