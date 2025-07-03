@@ -91,8 +91,8 @@ module.exports = {
 ${user.debts && user.debts.length > 0 ?
     user.debts.map((debt) => {
         mentions.push(debt.lender.jid);
-        return `> 💸 Debes \`${currency} ${debt.amount.toLocaleString()}\` a @${debt.lender.jid.split('@')[0]}\\n>    _${debt.interest * 100}% interés diario_`;
-    }).join('\\n') :
+        return `> 💸 Debes \`${currency} ${debt.amount.toLocaleString()}\` a @${debt.lender.jid.split('@')[0]}\n>    _${debt.interest * 100}% interés diario_`;
+    }).join('\n') :
     '> ✅ _Sin deudas pendientes_'}
 -----------------------------------
 🎒 *INVENTARIO*
@@ -101,10 +101,9 @@ ${user.inventory && user.inventory.length > 0 ?
         const emoji = item.itemId?.emoji || "📦";
         const quantity = item.quantity > 1 ? `x${item.quantity}` : '';
         return `> ${emoji} *${item.name}* ${quantity}`;
-    }).join('\\n') :
+    }).join('\n') :
     '> 📭 _Inventario vacío_'}
------------------------------------
-> _\\"La felicidad es la clave del éxito.\\"_`;
+-----------------------------------`;
 
             await sock.sendMessage(
                 chatId,
