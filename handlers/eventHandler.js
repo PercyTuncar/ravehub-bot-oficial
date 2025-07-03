@@ -25,10 +25,11 @@ module.exports = async (m) => {
     }
 
     // --- Game Handler Integration ---
-    if (getGameSession(jid)) {
+    const session = await getGameSession(jid);
+    if (session) {
         const gameHandled = await handleGameResponse(message);
         if (gameHandled) {
-            return; // Detener el procesamiento si el mensaje fue manejado por el juego
+            return; // ¡CORRECCIÓN CRÍTICA! Detener el procesamiento si el juego manejó el mensaje.
         }
     }
 
