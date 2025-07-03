@@ -1,4 +1,4 @@
-const { getGameSession, endGameSession } = require('./gameUtils');
+const { getGameSession, endGameSession } = require('../utils/gameUtils');
 const cartaMayor = require('../games/cartaMayor');
 const { getSocket } = require('../bot');
 
