@@ -27,27 +27,34 @@ module.exports = {
                 totalWealth: user.economy.wallet + user.economy.bank
             })).sort((a, b) => b.totalWealth - a.totalWealth).slice(0, 10);
 
+            if (rankedUsers.length === 0) {
+                return sock.sendMessage(chatId, { text: 'Aún no hay usuarios con riqueza registrada para mostrar un ranking.' });
+            }
+
             const mentions = [];
-            let rankingMessage = [
-                `*╭───≽ 💵 LOS MÁS RICOS DEL GRUPO 💵 ≼───*`,
-                `*│*`,
-                `*│* Top 10 pitucos de este grupo 💵._`,
-                `*│*`
-            ];
+            let rankingMessage = `*♛ LOS MÁS RICOS ♛*\\n_La crème de la crème de este grupo_\\n`;
 
             rankedUsers.forEach((user, index) => {
                 if (user.jid && typeof user.jid === 'string') {
-                    const rankEmoji = ['🥇', '🥈', '🥉'][index] || `*${index + 1}.*`;
-                    rankingMessage.push(`*│* ${rankEmoji} @${user.jid.split('@')[0]} - ${currency} ${user.totalWealth.toLocaleString()}`);
+                    const userTag = `@${user.jid.split('@')[0]}`;
+                    const wealth = `${currency} ${user.totalWealth.toLocaleString()}`;
                     mentions.push(user.jid);
+
+                    if (index === 0) {
+                        rankingMessage += `\\n🥇 *${userTag}*\\n      \`${wealth}\``;
+                    } else if (index === 1) {
+                        rankingMessage += `\\n\\n🥈 *${userTag}*\\n      \`${wealth}\``;
+                    } else if (index === 2) {
+                        rankingMessage += `\\n\\n🥉 *${userTag}*\\n      \`${wealth}\``;
+                    } else {
+                        if (index === 3) rankingMessage += `\\n\\n`; // Espacio antes de la lista normal
+                        rankingMessage += `*${index + 1}.* ${userTag} - \`${wealth}\`\\n`;
+                    }
                 }
             });
 
-            rankingMessage.push(`*│*`);
-            rankingMessage.push(`*╰─────────────────≽*`);
-
             await sock.sendMessage(chatId, { 
-                text: rankingMessage.join('\n'),
+                text: rankingMessage.trim(),
                 mentions 
             });
 
