@@ -103,6 +103,9 @@ async function handleInteractiveChoice(sock, chatId, jid, userState, betAmount, 
 
     await user.save();
 
+    // Finalizar la sesión del juego ahora que ha concluido
+    endGameSession(jid);
+
     await sock.sendMessage(chatId, { text: result.text, mentions: [jid] });
 }
 

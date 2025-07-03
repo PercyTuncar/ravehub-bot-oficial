@@ -18,8 +18,9 @@ async function handleGameResponse(msg) {
     const validChoices = ['izquierda', 'derecha', 'empate'];
 
     if (validChoices.includes(messageText)) {
-        // Detener el temporizador de expiración ya que el usuario ha respondido
-        endGameSession(jid); // Esto ahora solo limpia la sesión y el temporizador
+        // El temporizador de expiración se detiene implícitamente al procesar la respuesta.
+        // La sesión se eliminará en la lógica del juego después de que termine.
+        // endGameSession(jid); // NO llamar aquí
 
         if (session.gameType === 'cartaMayor') {
             // Pasar los datos de la sesión al manejador del juego
