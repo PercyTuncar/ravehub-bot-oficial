@@ -28,19 +28,13 @@ async function startGameSession(jid, groupId, gameName, sessionData) {
             const expiredSession = await GameSession.findOneAndDelete({ jid });
 
             if (expiredSession) {
-                console.log(`[GameSession] Sesión de ${jid} expirada. Reembolsando...`);
-                // Si la sesión existía y se borró, significa que el usuario no respondió.
-                // Procedemos a devolver el dinero.
-                const user = await User.findOne({ jid, groupId });
-                if (user) {
-                    user.economy.wallet += expiredSession.betAmount;
-                    await user.save();
-
-                    await sock.sendMessage(groupId, {
-                        text: `⌛ @${jid.split('@')[0]}, se agotó el tiempo para tu jugada. Tu apuesta de ${expiredSession.betAmount} ha sido devuelta a tu cartera.`,
-                        mentions: [jid]
-                    });
-                }
+                console.log(`[GameSession] Sesión de ${jid} expirada.`);
+                // Ya no necesitamos buscar al usuario ni modificar su cartera.
+                // Simplemente enviamos una notificación correcta.
+                await sock.sendMessage(groupId, {
+                    text: `⌛ @${jid.split('@')[0]}, se agotó el tiempo para tu jugada. La partida ha sido cancelada (tu apuesta no fue descontada).`,
+                    mentions: [jid]
+                });
             }
         } catch (error) {
             console.error("Error en el temporizador de expiración de sesión:", error);
