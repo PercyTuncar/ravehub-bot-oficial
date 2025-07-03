@@ -78,10 +78,10 @@ module.exports = {
 ├ 📍 *Residencia:* ${residence}
 │
 ├─ 📊 *ESTADÍSTICAS*
-│  ├ 🏆 *Nivel:* \`${getLevelName(user.level)}\`
-│  ├ ⚡ *XP:* \`${xpProgress}\`
-│  ├ 🎯 *Reputación:* \`${reputation}\`
-│  └ ⚖️ *Deuda Judicial:* \`${currency} ${user.judicialDebt.toLocaleString()}\`
+│  > 🏆 *Nivel:* \`${getLevelName(user.level)}\`
+│  > ⚡ *XP:* \`${xpProgress}\`
+│  > 🎯 *Reputación:* \`${reputation}\`
+│  > ⚖️ *Deuda Judicial:* \`${currency} ${user.judicialDebt.toLocaleString()}\`
 │
 ├─ 💰 *ECONOMÍA*
 │  ├ 💵 *Cartera:* \`${currency} ${user.economy.wallet.toLocaleString()}\`
