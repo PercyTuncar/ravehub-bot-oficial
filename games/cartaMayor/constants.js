@@ -9,8 +9,4 @@ const casinoImages = [
     'https://res.cloudinary.com/amadodedios/image/upload/v1751431245/casino-3_qcilqk.webp'
 ];
 
-module.exports = {
-    MIN_BET,
-    MAX_BET,
-    casinoImages
-};
+module.exports = { MIN_BET, MAX_BET, casinoImages };

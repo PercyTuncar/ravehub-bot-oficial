@@ -59,11 +59,11 @@ async function startInteractiveGame(sock, chatId, jid, user, betAmount) {
 }
 
 async function handleInteractiveChoice(sock, chatId, jid, userState, betAmount, side) {
-    const currency = await getCurrency(chatId);
     const user = await findOrCreateUser(jid, chatId); // Obtener el estado más reciente del usuario
 
     // Verificar si aún tiene fondos (podría haberlos gastado en otro lugar)
     if (user.economy.wallet < betAmount) {
+        endGameSession(jid);
         return sock.sendMessage(chatId, { text: `¡Oh, no! Parece que ya no tienes fondos suficientes para esta apuesta.` });
     }
 

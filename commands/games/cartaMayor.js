@@ -6,18 +6,17 @@ const cartaMayor = require('../../games/cartaMayor');
 const { MIN_BET, MAX_BET } = require('../../games/cartaMayor/constants');
 
 module.exports = {
-    name: 'carta-mayor',
+    name: 'apostar',
     description: 'Jugar a la carta mayor.',
-    aliases: ['apostar', 'bet'],
+    aliases: ['bet', 'carta-mayor'],
     usage: '.apostar <cantidad> [lado]',
     category: 'game',
     async execute(message, args) {
         const sock = getSocket();
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
-        const currency = await getCurrency(chatId);
 
-        if (getGameSession(jid)) {
+        if (await getGameSession(jid)) {
             return sock.sendMessage(chatId, {
                 text: `🚫 @${jid.split('@')[0]}, ya tienes una partida en curso. Termínala antes de iniciar otra.`,
                 mentions: [jid]
@@ -30,17 +29,18 @@ module.exports = {
         }
 
         const betAmount = parseInt(betAmountStr, 10);
+        const currency = await getCurrency(chatId);
 
         if (betAmount < MIN_BET) {
             return sock.sendMessage(chatId, { 
-                text: `📉 @${jid.split('@')[0]}, la apuesta mínima es de *${await getCurrency(chatId)} ${MIN_BET}*.`,
+                text: `📉 @${jid.split('@')[0]}, la apuesta mínima es de *${currency} ${MIN_BET}*.`,
                 mentions: [jid]
             });
         }
 
         if (betAmount > MAX_BET) {
             return sock.sendMessage(chatId, { 
-                text: `📈 @${jid.split('@')[0]}, la apuesta máxima es de *${await getCurrency(chatId)} ${MAX_BET}*.`,
+                text: `📈 @${jid.split('@')[0]}, la apuesta máxima es de *${currency} ${MAX_BET}*.`,
                 mentions: [jid]
             });
         }
@@ -49,21 +49,26 @@ module.exports = {
             const user = await findOrCreateUser(jid, chatId, message.pushName);
 
             if (user.economy.wallet < betAmount) {
-                return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar.` });
+                return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar *${currency} ${betAmount}*.` });
             }
 
-            // ¡YA NO SE DESCUENTA EL DINERO AQUÍ!
-            // Se pasa el objeto 'user' completo para que la sesión tenga todos los datos necesarios.
             await startGameSession(jid, chatId, 'cartaMayor', { betAmount, user: user.toObject() });
 
-            // El resto de la lógica (enviar mensaje interactivo) se mueve a la lógica del juego
-            // para mantener el comando limpio.
-            await cartaMayor.startInteractiveGame(sock, chatId, jid, user, betAmount);
+            const sideArg = args[1] ? args[1].toLowerCase() : null;
+            const validSides = ['izquierda', 'derecha', 'empate'];
+
+            if (sideArg && validSides.includes(sideArg)) {
+                // Si el usuario especifica un lado, el gameHandler lo procesará directamente.
+                // El gameHandler llamará a handleInteractiveChoice.
+            } else {
+                // Si no, iniciar el juego interactivo.
+                await cartaMayor.startInteractiveGame(sock, chatId, jid, user, betAmount);
+            }
 
         } catch (error) {
-            console.error('Error al ejecutar el comando apostar:', error);
+            console.error('Error en el comando apostar:', error);
             endGameSession(jid); // Limpiar sesión en caso de error
-            return sock.sendMessage(chatId, { text: 'Error al iniciar el juego.' });
+            return sock.sendMessage(chatId, { text: '⚙️ Ocurrió un error al iniciar el juego.' });
         }
     }
 };
