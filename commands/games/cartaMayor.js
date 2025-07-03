@@ -1,3 +1,4 @@
+const { MessageMedia } = require('whatsapp-web.js');
 const { startGame, playDirectGame } = require('../../games/cartaMayor');
 const { MIN_BET, MAX_BET } = require('../../games/cartaMayor/constants');
 const User = require('../../models/User');
@@ -24,10 +25,16 @@ module.exports = {
             return client.sendMessage(message.from, 'No tienes suficientes coins para esa apuesta.');
         }
 
+        let gameResult;
         if (choice && (choice === 'yo' || choice === 'bot')) {
-            await playDirectGame(client, message, args);
+            gameResult = await playDirectGame(message, args);
         } else {
-            await startGame(client, message, args);
+            gameResult = await startGame(client, message, args);
+        }
+
+        if (gameResult && gameResult.caption) {
+            const image = await MessageMedia.fromUrl(gameResult.imageUrl);
+            await client.sendMessage(message.from, image, { caption: gameResult.caption, mentions: gameResult.mentions });
         }
     },
 };
