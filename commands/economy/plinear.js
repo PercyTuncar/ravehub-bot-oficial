@@ -38,7 +38,7 @@ module.exports = {
             const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
             const target = await findOrCreateUser(mentionedJid, chatId, targetName);
 
-            // --- Lógica de Deuda Refactorizada ---
+            // --- Lógica de Deuda Refactorizada (usando la de yapear.js) ---
             let debtMessage = '';
             const debtToTarget = await Debt.findOne({ borrower: sender._id, lender: target._id, groupId: chatId });
 
@@ -46,15 +46,15 @@ module.exports = {
                 const paymentForDebt = Math.min(amount, debtToTarget.amount);
                 debtToTarget.amount -= paymentForDebt;
 
-                if (debtToTarget.amount <= 0) {
+                debtMessage = `\n\nℹ️ De tu Plin, se usaron *${currency} ${paymentForDebt.toLocaleString()}* para pagar tu deuda.`;
+
+                if (debtToTarget.amount <= 0.01) { // Umbral para comparación de flotantes
                     await Debt.findByIdAndDelete(debtToTarget._id);
-                    // Asegurarse de que la deuda se elimina de las referencias de ambos usuarios
                     sender.debts.pull(debtToTarget._id);
-                    target.loans.pull(debtToTarget._id);
-                    debtMessage = `\n\nℹ️ Con este Plin, has saldado completamente tu deuda de *${currency} ${paymentForDebt.toFixed(2)}* con @${target.jid.split('@')[0]}. ¡Estás libre de deudas con esta persona!`;
+                    debtMessage += `\n¡Felicidades! Has saldado tu deuda por completo. 🎉`;
                 } else {
                     await debtToTarget.save();
-                    debtMessage = `\n\nℹ️ De este monto, *${currency} ${paymentForDebt.toFixed(2)}* se usaron para pagar tu deuda con @${target.jid.split('@')[0]}. Deuda restante: *${currency} ${debtToTarget.amount.toFixed(2)}*.`;
+                    debtMessage += `\nDeuda restante: *${currency} ${debtToTarget.amount.toLocaleString()}*.`;
                 }
             }
 
@@ -65,8 +65,10 @@ module.exports = {
             await sender.save();
             await target.save();
 
+            const finalMessage = `✅ Plin exitoso de *${currency} ${amount.toLocaleString()}* a @${target.jid.split('@')[0]}.${debtMessage}`;
+
             await sock.sendMessage(chatId, { 
-                text: `✅ Plin exitoso de *${currency} ${amount.toFixed(2)}* a @${mentionedJid.split('@')[0]}.${debtMessage}\n\n*Tu nuevo saldo en banco:* ${currency} ${sender.economy.bank.toFixed(2)}`,
+                text: finalMessage,
                 mentions: [senderJid, mentionedJid]
             });
 
