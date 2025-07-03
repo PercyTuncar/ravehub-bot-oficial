@@ -72,58 +72,44 @@ module.exports = {
                 profilePicUrl = 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751131351/portadasinfoto_gz9kk2.jpg'; // URL de imagen por defecto corregida
             }
 
-            const profileMessage = `┌─────────────────────┐
-│    🌟 *MI PERFIL* 🌟    │
-└─────────────────────┘
-
-👤 Usuario: *@${jid.split("@" )[0]}*
-📛 Nombre: ${user.name}
-📍 Vive en: ${residence}
-
-┏━━━━━━━━━━━━━━━━━━━━━┓
-┃ 📊 *ESTADÍSTICAS*
-┣━━━━━━━━━━━━━━━━━━━━━┫
-┃ 🏆 Nivel: \`${getLevelName(user.level)}\`
-┃ ⚡ XP: \`${xpProgress}\`
-┃ 🎯 Reputación: \`${reputation}\`
-┃ ⚖️ Deuda Judicial: \`${currency} ${user.judicialDebt.toLocaleString()}\`
-┗━━━━━━━━━━━━━━━━━━━━━┛
-
-┏━━━━━━━━━━━━━━━━━━━━━┓
-┃ 💰 *ECONOMÍA*
-┣━━━━━━━━━━━━━━━━━━━━━┫
-┃ 💵 Cartera: \`${currency} ${user.economy.wallet.toLocaleString()}\`
-┃ 🏦 Banco: \`${currency} ${user.economy.bank.toLocaleString()}\`
-┗━━━━━━━━━━━━━━━━━━━━━┛
-
+            const profileMessage = `╭─「 *@${jid.split("@")[0]}* 」
+│
+├ 📛 *Nombre:* ${user.name}
+├ 📍 *Residencia:* ${residence}
+│
+├─ 📊 *ESTADÍSTICAS*
+│  ├ 🏆 *Nivel:* \`${getLevelName(user.level)}\`
+│  ├ ⚡ *XP:* \`${xpProgress}\`
+│  ├ 🎯 *Reputación:* \`${reputation}\`
+│  └ ⚖️ *Deuda Judicial:* \`${currency} ${user.judicialDebt.toLocaleString()}\`
+│
+├─ 💰 *ECONOMÍA*
+│  ├ 💵 *Cartera:* \`${currency} ${user.economy.wallet.toLocaleString()}\`
+│  └ 🏦 *Banco:* \`${currency} ${user.economy.bank.toLocaleString()}\`
+│
 ┏━━━━━━━━━━━━━━━━━━━━━┓
 ┃ 🧾 *DEUDAS*
-┣━━━━━━━━━━━━━━━━━━━━━┫
+┃━━━━━━━━━━━━━━━━━━━━━┫
 ${user.debts && user.debts.length > 0 ? 
     user.debts.map((debt) => {
         mentions.push(debt.lender.jid);
-        return `┃ 💸 \`${currency} ${debt.amount.toLocaleString()}\` → @${debt.lender.jid.split('@')[0]}
-┃    _${debt.interest * 100}% diario_`;
+        return `┃ 💸 \`${currency} ${debt.amount.toLocaleString()}\` a @${debt.lender.jid.split('@')[0]}\n┃    _${debt.interest * 100}% interés diario_`;
     }).join('\n') :
     '┃ ✅ _Sin deudas pendientes_'}
 ┗━━━━━━━━━━━━━━━━━━━━━┛
 
-┏━━━━━━━━━━━━━━━━━━━━━┓
-┃ 🎒 *INVENTARIO*
-┣━━━━━━━━━━━━━━━━━━━━━┫
+├─ 🎒 *INVENTARIO*
 ${user.inventory && user.inventory.length > 0 ? 
-    user.inventory.map((item) => {
+    user.inventory.map((item, index, arr) => {
         const emoji = item.itemId?.emoji || "📦";
         const quantity = item.quantity > 1 ? `x${item.quantity}` : '';
-        return `┃ ${emoji} *${item.name}* ${quantity}`;
+        const isLast = index === arr.length - 1;
+        const lineChar = isLast ? '└' : '├';
+        return `│  ${lineChar} ${emoji} *${item.name}* ${quantity}`;
     }).join('\n') :
-    '┃ 📭 _Inventario vacío_'}
-┗━━━━━━━━━━━━━━━━━━━━━┛
-
-> _\"El éxito no es la clave de la felicidad.
-> La felicidad es la clave del éxito.\"_
-
-\`\`\`Última actualización: ${new Date().toLocaleString('es-ES', { timeZone: 'America/Lima' })}\`\`\``;
+    '│  └ 📭 _Inventario vacío_'}
+│
+╰─ ➤ _La felicidad es la clave del éxito._`;
 
             await sock.sendMessage(
                 chatId,
