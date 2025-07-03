@@ -32,7 +32,7 @@ module.exports = {
             }
 
             const mentions = [];
-            let rankingMessage = `*♛ LOS MÁS RICOS ♛*\\n_La crème de la crème de este grupo_\\n`;
+            let rankingMessage = `*♛ LOS MÁS RICOS ♛*\\n_La crème de la crème de este grupo_`;
 
             rankedUsers.forEach((user, index) => {
                 if (user.jid && typeof user.jid === 'string') {
@@ -41,14 +41,14 @@ module.exports = {
                     mentions.push(user.jid);
 
                     if (index === 0) {
-                        rankingMessage += `\\n🥇 *${userTag}*\\n      \`${wealth}\``;
+                        rankingMessage += `\\n\\n🥇 *${userTag}*\\n      \`${wealth}\``;
                     } else if (index === 1) {
                         rankingMessage += `\\n\\n🥈 *${userTag}*\\n      \`${wealth}\``;
                     } else if (index === 2) {
                         rankingMessage += `\\n\\n🥉 *${userTag}*\\n      \`${wealth}\``;
                     } else {
-                        if (index === 3) rankingMessage += `\\n\\n`; // Espacio antes de la lista normal
-                        rankingMessage += `*${index + 1}.* ${userTag} - \`${wealth}\`\\n`;
+                        if (index === 3) rankingMessage += `\\n\\n-----------------------------------`;
+                        rankingMessage += `\\n*${index + 1}.* ${userTag} - \`${wealth}\``;
                     }
                 }
             });
