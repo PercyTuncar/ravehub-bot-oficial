@@ -221,5 +221,6 @@ module.exports = {
   xpTable,
   allJobs,
   getLevelName,
+  getEligibleJobs,
   cooldownRanges,
 };
