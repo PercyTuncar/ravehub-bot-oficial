@@ -11,8 +11,9 @@ async function handleGameMessage(message) {
         return false;
     }
 
-    // The user's choice is the whole message body, converted to lower case.
-    const choice = (message.message.conversation || '').toLowerCase().trim();
+    // Extraer el texto del mensaje, considerando ambas estructuras posibles
+    const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+    const choice = messageText.toLowerCase().trim();
 
     if (session.game === 'cartaMayor') {
         // Check for valid choices for the game
