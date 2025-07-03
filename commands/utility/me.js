@@ -76,9 +76,9 @@ module.exports = {
 │    🌟 *MI PERFIL* 🌟    │
 └─────────────────────┘
 
-👤 *@${jid.split("@" )[0]}*
-📛 ${user.name}
-📍 ${residence}
+👤 Usuario: *@${jid.split("@" )[0]}*
+📛 Nombre: ${user.name}
+📍 Vive en: ${residence}
 
 ┏━━━━━━━━━━━━━━━━━━━━━┓
 ┃ 📊 *ESTADÍSTICAS*
