@@ -4,6 +4,7 @@ const {
   getEligibleJobs,
   xpTable,
   getLevelName,
+  cooldownRanges, // Importar los rangos de cooldown
 } = require("../../utils/levels");
 const { getDebtReminderMessage } = require("../../utils/debtUtils"); // Cambiado de sendDebtReminder a getDebtReminderMessage
 const { getCurrency } = require("../../utils/groupUtils");
@@ -57,13 +58,19 @@ module.exports = {
       const earnings = job.salary;
       const xpGained = Math.floor(earnings / 10);
 
+      // Calcular el cooldown aleatorio basado en el nivel del usuario
+      const userLevel = user.level;
+      const range = cooldownRanges[userLevel] || { min: 1, max: 2 }; // Fallback por si el nivel no está en los rangos
+      const randomCooldownMinutes =
+        Math.floor(Math.random() * (range.max - range.min + 1)) + range.min;
+
       // Las ganancias van directamente a la cartera, sin deducción de deuda judicial aquí.
       user.economy.wallet += earnings;
       user.xp += xpGained;
 
-      // Guardar el cooldown y el estado del usuario ANTES de enviar mensajes
+      // Guardar el cooldown aleatorio y el estado del usuario ANTES de enviar mensajes
       user.cooldowns.work = new Date(
-        new Date().getTime() + job.cooldown * 60 * 1000
+        new Date().getTime() + randomCooldownMinutes * 60 * 1000
       );
       user.lastWork = new Date();
       await user.save();
