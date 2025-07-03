@@ -75,7 +75,7 @@ module.exports = {
             const profileMessage = `*✨ PERFIL DE @${jid.split("@")[0]} ✨*
 
 *👤 Nombre:* ${user.name}
-*📍 Residencia:* ${residence}
+*📍 Vive en:* ${residence}
 -----------------------------------
 📊 *ESTADÍSTICAS*
 > *Nivel:* \`${getLevelName(user.level)}\`
