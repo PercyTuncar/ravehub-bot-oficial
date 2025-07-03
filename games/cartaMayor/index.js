@@ -1,4 +1,3 @@
-const { MessageMedia } = require('whatsapp-web.js');
 const { updateGameStats } = require('../../utils/userUtils');
 const { endGameSession } = require('../../utils/gameUtils');
 const GameLog = require('../../models/GameLog');
