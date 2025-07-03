@@ -1,11 +1,11 @@
 const { getSocket } = require('../bot');
-const { getGameSession } = require('../utils/gameUtils');
+const { getGameSession, endGameSession } = require('../utils/gameUtils');
 const cartaMayor = require('../games/cartaMayor'); // Import the whole module
 
-async function handleGameMessage(message) { // client is not used, so it can be removed
+async function handleGameMessage(message) {
     const sock = getSocket();
     const jid = message.key.participant || message.key.remoteJid;
-    const session = getGameSession(jid);
+    const session = await getGameSession(jid); // Ahora es asíncrono
 
     if (!session) {
         return false;
@@ -17,8 +17,19 @@ async function handleGameMessage(message) { // client is not used, so it can be 
     if (session.game === 'cartaMayor') {
         // Check for valid choices for the game
         if (['izquierda', 'derecha', 'empate'].includes(choice)) {
-            // Call the correct function from the cartaMayor module
-            await cartaMayor.handleInteractiveChoice(sock, message.key.remoteJid, jid, session.user, session.betAmount, choice);
+            // 1. Finalizar la sesión para detener el temporizador de reembolso
+            await endGameSession(jid);
+
+            // 2. Proceder con la lógica del juego, pasando los datos de la sesión
+            // Ahora, la lógica del juego descontará el dinero.
+            await cartaMayor.handleInteractiveChoice(
+                sock,
+                message.key.remoteJid,
+                jid,
+                session.user, // Usamos el estado del usuario guardado en la sesión
+                session.betAmount,
+                choice
+            );
             return true;
         }
     }

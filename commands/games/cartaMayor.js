@@ -49,33 +49,21 @@ module.exports = {
             const user = await findOrCreateUser(jid, chatId, message.pushName);
 
             if (user.economy.wallet < betAmount) {
-                return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar *${currency} ${betAmount}*.` });
+                return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar.` });
             }
 
-            // Restar el dinero de la cartera ANTES de empezar el juego
-            user.economy.wallet -= betAmount;
-            await user.save();
+            // ¡YA NO SE DESCUENTA EL DINERO AQUÍ!
+            // Se pasa el objeto 'user' completo para que la sesión tenga todos los datos necesarios.
+            await startGameSession(jid, chatId, 'cartaMayor', { betAmount, user: user.toObject() });
 
-            startGameSession(jid, 'cartaMayor', { betAmount, user });
-
-            const side = args[1] ? args[1].toLowerCase() : null;
-
-            if (side && ['izquierda', 'derecha', 'empate'].includes(side)) {
-                // Flujo de juego con lado especificado
-                await cartaMayor.play(sock, chatId, jid, user, betAmount, side);
-            } else {
-                // Flujo de juego interactivo
-                await cartaMayor.startInteractiveGame(sock, chatId, jid, user, betAmount);
-            }
+            // El resto de la lógica (enviar mensaje interactivo) se mueve a la lógica del juego
+            // para mantener el comando limpio.
+            await cartaMayor.startInteractiveGame(sock, chatId, jid, user, betAmount);
 
         } catch (error) {
             console.error('Error al ejecutar el comando apostar:', error);
-            // Reembolsar en caso de error
-            const user = await findOrCreateUser(jid, chatId, message.pushName);
-            user.economy.wallet += betAmount;
-            await user.save();
-            endGameSession(jid);
-            return sock.sendMessage(chatId, { text: 'Error al iniciar el juego. Se te ha devuelto el dinero.' });
+            endGameSession(jid); // Limpiar sesión en caso de error
+            return sock.sendMessage(chatId, { text: 'Error al iniciar el juego.' });
         }
     }
 };

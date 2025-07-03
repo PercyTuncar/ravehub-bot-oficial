@@ -1,4 +1,4 @@
-const { updateGameStats } = require('../../utils/userUtils');
+const { findOrCreateUser, updateGameStats } = require('../../utils/userUtils');
 const { endGameSession } = require('../../utils/gameUtils');
 const GameLog = require('../../models/GameLog');
 const { getRandomCard } = require('./utils');
@@ -58,8 +58,18 @@ async function startInteractiveGame(sock, chatId, jid, user, betAmount) {
     });
 }
 
-async function handleInteractiveChoice(sock, chatId, jid, user, betAmount, side) {
+async function handleInteractiveChoice(sock, chatId, jid, userState, betAmount, side) {
     const currency = await getCurrency(chatId);
+    const user = await findOrCreateUser(jid, chatId); // Obtener el estado más reciente del usuario
+
+    // Verificar si aún tiene fondos (podría haberlos gastado en otro lugar)
+    if (user.economy.wallet < betAmount) {
+        return sock.sendMessage(chatId, { text: `¡Oh, no! Parece que ya no tienes fondos suficientes para esta apuesta.` });
+    }
+
+    // ¡AQUÍ SE DESCUENTA EL DINERO!
+    user.economy.wallet -= betAmount;
+
     await sock.sendMessage(chatId, {
         text: `Has elegido: *${side.charAt(0).toUpperCase() + side.slice(1)}*\n\nEl crupier está barajando las cartas...`,
         mentions: [jid]
@@ -92,7 +102,6 @@ async function handleInteractiveChoice(sock, chatId, jid, user, betAmount, side)
     const result = determineWinner(user, betAmount, side, leftCard, rightCard);
 
     await user.save();
-    endGameSession(jid);
 
     await sock.sendMessage(chatId, { text: result.text, mentions: [jid] });
 }
