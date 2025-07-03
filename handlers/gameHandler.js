@@ -26,7 +26,11 @@ async function handleGameResponse(msg) {
             await cartaMayor.handleInteractiveChoice(sock, chatId, jid, session.data.user, session.data.betAmount, messageText);
         }
         // Aquí se podrían añadir más `else if` para otros juegos
+        return true; // ¡IMPORTANTE! Informar que el mensaje fue manejado.
     }
+
+    // Si el mensaje no es una opción válida, no fue manejado por el juego.
+    return false;
 }
 
 module.exports = { handleGameResponse };

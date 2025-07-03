@@ -52,22 +52,28 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar *${currency} ${betAmount}*.` });
             }
 
-            await startGameSession(jid, chatId, 'cartaMayor', { betAmount, user: user.toObject() });
-
             const sideArg = args[1] ? args[1].toLowerCase() : null;
             const validSides = ['izquierda', 'derecha', 'empate'];
 
             if (sideArg && validSides.includes(sideArg)) {
-                // Si el usuario especifica un lado, el gameHandler lo procesará directamente.
-                // El gameHandler llamará a handleInteractiveChoice.
+                // --- MODO DE JUEGO DIRECTO ---
+                // El juego es instantáneo, no se necesita una sesión.
+                user.economy.wallet -= betAmount; // Descontar la apuesta inmediatamente.
+                await cartaMayor.play(sock, chatId, jid, user, betAmount, sideArg);
+
             } else {
-                // Si no, iniciar el juego interactivo.
+                // --- MODO DE JUEGO INTERACTIVO ---
+                // Iniciar una sesión y esperar la respuesta del usuario.
+                await startGameSession(jid, chatId, 'cartaMayor', { betAmount, user: user.toObject() });
                 await cartaMayor.startInteractiveGame(sock, chatId, jid, user, betAmount);
             }
 
         } catch (error) {
             console.error('Error en el comando apostar:', error);
-            endGameSession(jid); // Limpiar sesión en caso de error
+            // Si se produce un error, nos aseguramos de limpiar cualquier sesión que pueda haber quedado abierta.
+            if (await getGameSession(jid)) {
+                endGameSession(jid);
+            }
             return sock.sendMessage(chatId, { text: '⚙️ Ocurrió un error al iniciar el juego.' });
         }
     }
