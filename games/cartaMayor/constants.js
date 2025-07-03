@@ -1,5 +1,5 @@
-const MIN_BET = 10;
-const MAX_BET = 1000;
+const MIN_BET = 50;
+const MAX_BET = 5000;
 
 const casinoImages = [
     'https://res.cloudinary.com/amadodedios/image/upload/v1751431245/casino-1_1_xi6eiv.webp',
@@ -10,7 +10,7 @@ const casinoImages = [
 ];
 
 module.exports = {
-  MIN_BET,
-  MAX_BET,
-  casinoImages,
+    MIN_BET,
+    MAX_BET,
+    casinoImages
 };
