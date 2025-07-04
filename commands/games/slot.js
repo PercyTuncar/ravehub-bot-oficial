@@ -47,7 +47,10 @@ module.exports = {
         }
 
         if (user.economy.wallet < betAmount) {
-            return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para apostar ${currency} ${betAmount}.` });
+            return sock.sendMessage(chatId, { 
+                text: `💸 @${jid.split('@')[0]}, no tienes suficiente dinero para apostar ${currency} ${betAmount}.`,
+                mentions: [jid]
+            });
         }
 
         // Deduct bet immediately
