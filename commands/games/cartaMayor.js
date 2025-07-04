@@ -49,7 +49,10 @@ module.exports = {
             const user = await findOrCreateUser(jid, chatId, message.pushName);
 
             if (user.economy.wallet < betAmount) {
-                return sock.sendMessage(chatId, { text: `💸 No tienes suficiente dinero para apostar *${currency} ${betAmount}*.` });
+                return sock.sendMessage(chatId, { 
+                    text: `💸 @${jid.split('@')[0]}, no tienes suficiente dinero para apostar *${currency} ${betAmount}*.`,
+                    mentions: [jid]
+                });
             }
 
             const sideArg = args[1] ? args[1].toLowerCase() : null;
