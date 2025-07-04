@@ -56,6 +56,17 @@ module.exports = async (m) => {
 
                     if (warnings >= process.env.WARN_LIMIT) {
                         await sock.groupParticipantsUpdate(chatId, [message.key.participant], 'remove');
+                        sock.sendMessage(chatId, { text: `🚫 @${message.key.participant.split('@')[0]} ha sido eliminado por alcanzar el límite de advertencias.` });
+                    } else {
+                        const text = `ANTI-LINK ACTIVADO
+
+*Usuario:* @${message.key.participant.split('@')[0]}
+*Motivo:* Envío de enlace no permitido.
+
+*Advertencias:* ${warnings}/${process.env.WARN_LIMIT}
+
+Por favor, evita enviar enlaces en este grupo.`
+                        sock.sendMessage(chatId, { text: text, mentions: [message.key.participant] });
                     }
                 }
             }
