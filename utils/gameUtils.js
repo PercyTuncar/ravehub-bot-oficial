@@ -1,5 +1,4 @@
 const GameSession = require('../models/GameSession');
-const User = require('../models/User');
 const { getSocket } = require('../bot');
 
 // Este Map guardará los temporizadores activos, asociando el JID del usuario con su temporizador.
@@ -15,9 +14,8 @@ async function startGameSession(jid, groupId, gameName, sessionData) {
     const session = new GameSession({
         jid,
         groupId,
-        gameName,
-        betAmount: sessionData.betAmount,
-        userState: sessionData.user,
+        gameType: gameName, // Corregido para que coincida con el modelo
+        data: sessionData,       // Corregido para que coincida con el modelo
     });
     await session.save();
 
@@ -56,24 +54,27 @@ function getGameSession(jid) {
     return GameSession.findOne({ jid });
 }
 
-/**
- * Finaliza una sesión de juego: detiene el temporizador y borra la sesión de la DB.
- */
-async function endGameSession(jid) {
-    // 1. Detener el temporizador para que no se ejecute el reembolso
+// NUEVA FUNCIÓN: Detiene solo el temporizador
+function stopSessionTimer(jid) {
     const timer = activeTimers.get(jid);
     if (timer) {
         clearTimeout(timer);
         activeTimers.delete(jid);
+        console.log(`[GameSession] Temporizador detenido para ${jid}.`);
+        return true;
     }
+    return false;
+}
 
-    // 2. Eliminar la sesión de la base de datos
+// MODIFICADO: Ahora solo borra la sesión de la DB
+async function endGameSession(jid) {
     await GameSession.deleteOne({ jid });
-    console.log(`[GameSession] Sesión finalizada para ${jid}.`);
+    console.log(`[GameSession] Sesión finalizada y eliminada de la DB para ${jid}.`);
 }
 
 module.exports = {
     startGameSession,
     getGameSession,
+    stopSessionTimer, // Exportar la nueva función
     endGameSession,
 };

@@ -1,5 +1,5 @@
 const { findOrCreateUser, updateGameStats } = require('../../utils/userUtils');
-const { endGameSession } = require('../../utils/gameUtils');
+const { stopSessionTimer, endGameSession } = require('../../utils/gameUtils'); // MODIFICADO: Importar stopSessionTimer
 const GameLog = require('../../models/GameLog');
 const { getRandomCard } = require('./utils');
 const { casinoImages } = require('./constants');
@@ -59,11 +59,13 @@ async function startInteractiveGame(sock, chatId, jid, user, betAmount) {
 }
 
 async function handleInteractiveChoice(sock, chatId, jid, userState, betAmount, side) {
-    // Primero, detenemos el temporizador para que el juego no expire.
-    const timer = activeTimers.get(jid);
-    if (timer) {
-        clearTimeout(timer);
-        activeTimers.delete(jid);
+    // ¡CORRECCIÓN CRÍTICA! Detener el temporizador inmediatamente.
+    const timerStopped = stopSessionTimer(jid);
+    if (!timerStopped) {
+        // Si no había temporizador, es posible que la sesión ya haya expirado.
+        console.log(`[CartaMayor] No se encontró un temporizador para ${jid}. La sesión pudo haber expirado.`);
+        // No se envía mensaje al usuario para no generar spam si ya recibió el de expiración.
+        return;
     }
 
     const user = await findOrCreateUser(jid, chatId); // Obtener el estado más reciente del usuario
