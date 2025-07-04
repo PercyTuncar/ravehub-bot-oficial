@@ -27,13 +27,13 @@ module.exports = {
 
             // --- Lógica de Vivienda ---
             const casaSanIsidro = user.inventory.find(item => item.name.toLowerCase() === 'casa en san isidro');
-            const casaAte = user.inventory.find(item => item.name.toLowerCase() === 'casa en ate');
+            const casaSJL = user.inventory.find(item => item.name.toLowerCase() === 'casa en sjl');
 
             let residence = "La calle 😢";
             if (casaSanIsidro) {
                 residence = "San Isidro 🏡";
-            } else if (casaAte) {
-                residence = "Ate 🏠";
+            } else if (casaSJL) {
+                residence = "SJL 🏠";
             }
 
             // --- Inventario Detallado ---
