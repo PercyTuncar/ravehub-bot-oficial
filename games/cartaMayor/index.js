@@ -68,16 +68,11 @@ async function handleInteractiveChoice(sock, chatId, jid, userState, betAmount, 
         return;
     }
 
-    const user = await findOrCreateUser(jid, chatId); // Obtener el estado más reciente del usuario
+    // Obtener el estado más reciente del usuario para poder AÑADIRLE las ganancias.
+    const user = await findOrCreateUser(jid, chatId);
 
-    // Verificar si aún tiene fondos (podría haberlos gastado en otro lugar)
-    if (user.economy.wallet < betAmount) {
-        endGameSession(jid); // Limpiar la sesión de la DB
-        return sock.sendMessage(chatId, { text: `¡Oh, no! Parece que ya no tienes fondos suficientes para esta apuesta.` });
-    }
-
-    // ¡AQUÍ SE DESCUENTA EL DINERO!
-    user.economy.wallet -= betAmount;
+    // La lógica de descuento de la apuesta y la verificación de fondos han sido eliminadas de aquí.
+    // La apuesta ya fue descontada en el comando inicial.
 
     await sock.sendMessage(chatId, {
         text: `Has elegido: *${side.charAt(0).toUpperCase() + side.slice(1)}*\n\nEl crupier está barajando las cartas...`,
@@ -108,12 +103,14 @@ async function handleInteractiveChoice(sock, chatId, jid, userState, betAmount, 
     await sock.sendMessage(chatId, { text: `La otra carta es: *${houseCard}*` });
     await new Promise(resolve => setTimeout(resolve, 2000));
 
+    // La función determineWinner ahora solo necesita agregar ganancias si corresponde.
     const result = determineWinner(user, betAmount, side, leftCard, rightCard);
 
+    // Guardar los cambios en el usuario (si ganó o empató).
     await user.save();
 
-    // Finalizar la sesión del juego (eliminar de la DB)
-    await endGameSession(jid);
+    // Finalizar la sesión del juego.
+    endGameSession(jid);
 
     await sock.sendMessage(chatId, { text: result.text, mentions: [jid] });
 }

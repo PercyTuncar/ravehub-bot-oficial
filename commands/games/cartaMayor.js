@@ -62,12 +62,22 @@ module.exports = {
                 // --- MODO DE JUEGO DIRECTO ---
                 // El juego es instantáneo, no se necesita una sesión.
                 user.economy.wallet -= betAmount; // Descontar la apuesta inmediatamente.
+                await user.save(); // Guardar el cambio antes de jugar
                 await cartaMayor.play(sock, chatId, jid, user, betAmount, sideArg);
 
             } else {
                 // --- MODO DE JUEGO INTERACTIVO ---
-                // Iniciar una sesión y esperar la respuesta del usuario.
-                await startGameSession(jid, chatId, 'cartaMayor', { betAmount, user: user.toObject() });
+
+                // 1. RETIRAR LA APUESTA INMEDIATAMENTE
+                user.economy.wallet -= betAmount;
+
+                // 2. GUARDAR EL CAMBIO EN LA BASE DE DATOS
+                await user.save();
+
+                // 3. INICIAR LA SESIÓN DE JUEGO
+                await startGameSession(jid, chatId, 'cartaMayor', { betAmount });
+
+                // 4. ENVIAR EL MENSAJE DE INICIO AL JUGADOR
                 await cartaMayor.startInteractiveGame(sock, chatId, jid, user, betAmount);
             }
 
