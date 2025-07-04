@@ -72,20 +72,41 @@ async function play(sock, chatId, jid, user, betAmount) {
         win = true;
         const multiplier = winSymbol.payouts[winCount];
         const winnings = betAmount * multiplier;
-        user.economy.wallet += winnings; // Refund original bet + add winnings
+        user.economy.wallet += winnings; // The bet was already deducted, so we just add the full prize
         netWinnings = winnings - betAmount;
 
+        // The user object is updated, so we can use it for the new balance
+        const newBalance = user.economy.wallet;
+
         if (winSymbol.emoji === '🎰' && winCount === 3) {
-            resultText = `🚨 *¡¡¡ JACKPOT !!!* 🚨\n\n*¡TRIPLE JACKPOT PARA ${userMention}!*\n*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})\n\n*💳 Nuevo saldo:* ${currency} ${user.economy.wallet.toLocaleString()}`;
+            resultText = `🚨 *¡¡¡ JACKPOT !!!* 🚨
+
+*¡TRIPLE JACKPOT PARA ${userMention}!*
+*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})
+
+*💳 Nuevo saldo:* ${currency} ${newBalance.toLocaleString()}`;
         } else if (winCount === 3) {
-            resultText = `🎉 *¡TRIPLE ${winSymbol.name.toUpperCase()}!* 🎉\n\n*¡Felicidades ${userMention}!*\n*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})\n\n*💳 Nuevo saldo:* ${currency} ${user.economy.wallet.toLocaleString()}`;
+            resultText = `🎉 *¡TRIPLE ${winSymbol.name.toUpperCase()}!* 🎉
+
+*¡Felicidades ${userMention}!*
+*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})
+
+*💳 Nuevo saldo:* ${currency} ${newBalance.toLocaleString()}`;
         } else {
-            resultText = `✨ *¡DOBLE ${winSymbol.name.toUpperCase()}!* ✨\n\n*¡Buena jugada, ${userMention}!*\n*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})\n\n*💳 Nuevo saldo:* ${currency} ${user.economy.wallet.toLocaleString()}`;
+            resultText = `✨ *¡DOBLE ${winSymbol.name.toUpperCase()}!* ✨
+
+*¡Buena jugada, ${userMention}!*
+*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})
+
+*💳 Nuevo saldo:* ${currency} ${newBalance.toLocaleString()}`;
         }
     } else {
-        user.economy.wallet -= betAmount; // Deduct bet on loss
+        // Bet was already deducted by the command, so we do nothing to the wallet here.
         netWinnings = -betAmount;
-        resultText = `😔 *¡No hay coincidencias, ${userMention}!* 😔\n\n*Perdiste:* ${currency} ${betAmount.toLocaleString()}\n_¡Inténtalo de nuevo!_\n\n`;
+        resultText = `😔 *¡No hay coincidencias, ${userMention}!* 😔
+
+*Perdiste:* ${currency} ${betAmount.toLocaleString()}
+_¡Inténtalo de nuevo!_`;
     }
 
     await sock.sendMessage(chatId, { text: resultText, mentions: [jid] });
