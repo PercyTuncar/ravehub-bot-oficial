@@ -1,5 +1,5 @@
 const MIN_BET = 50;
-const MAX_BET = 5000;
+const MAX_BET = 10000;
 
 const casinoImages = [
     'https://res.cloudinary.com/amadodedios/image/upload/v1751431245/casino-1_1_xi6eiv.webp',
