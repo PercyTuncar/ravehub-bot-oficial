@@ -85,7 +85,7 @@ async function play(sock, chatId, jid, user, betAmount) {
     } else {
         user.economy.wallet -= betAmount; // Deduct bet on loss
         netWinnings = -betAmount;
-        resultText = `😔 *¡No hay coincidencias, ${userMention}!* 😔\n\n*Perdiste:* ${currency} ${betAmount.toLocaleString()}\n_¡Inténtalo de nuevo!_\n\n*💳 Saldo restante:* ${currency} ${user.economy.wallet.toLocaleString()}`;
+        resultText = `😔 *¡No hay coincidencias, ${userMention}!* 😔\n\n*Perdiste:* ${currency} ${betAmount.toLocaleString()}\n_¡Inténtalo de nuevo!_\n\n`;
     }
 
     await sock.sendMessage(chatId, { text: resultText, mentions: [jid] });
