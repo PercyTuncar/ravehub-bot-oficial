@@ -81,24 +81,21 @@ async function play(sock, chatId, jid, user, betAmount) {
         if (winSymbol.emoji === '🎰' && winCount === 3) {
             resultText = `🚨 *¡¡¡ JACKPOT !!!* 🚨
 
-*¡TRIPLE JACKPOT PARA ${userMention}!*
-*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})
-
-*💳 Nuevo saldo:* ${currency} ${newBalance.toLocaleString()}`;
+*¡Felicidades, ${userMention}!*
+*Resultado:* ¡TRIPLE ${winSymbol.emoji}!
+*Premio:* ${currency} ${winnings.toLocaleString()} (x${multiplier})`;
         } else if (winCount === 3) {
-            resultText = `🎉 *¡TRIPLE ${winSymbol.name.toUpperCase()}!* 🎉
+            resultText = `🎉 *¡GANASTE!* 🎉
 
-*¡Felicidades ${userMention}!*
-*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})
-
-*💳 Nuevo saldo:* ${currency} ${newBalance.toLocaleString()}`;
+*¡Felicidades, ${userMention}!*
+*Resultado:* ¡TRIPLE ${winSymbol.name.toUpperCase()}!
+*Premio:* ${currency} ${winnings.toLocaleString()} (x${multiplier})`;
         } else {
-            resultText = `✨ *¡DOBLE ${winSymbol.name.toUpperCase()}!* ✨
+            resultText = `✨ *¡GANASTE!* ✨
 
-*¡Buena jugada, ${userMention}!*
-*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})
-
-*💳 Nuevo saldo:* ${currency} ${newBalance.toLocaleString()}`;
+*¡Felicidades, ${userMention}!*
+*Resultado:* ¡DOBLE ${winSymbol.name.toUpperCase()}!
+*Premio:* ${currency} ${winnings.toLocaleString()} (x${multiplier})`;
         }
     } else {
         // Bet was already deducted by the command, so we do nothing to the wallet here.
