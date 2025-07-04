@@ -17,10 +17,12 @@ function getRandomSymbol() {
 
 async function play(sock, chatId, jid, user, betAmount) {
     const currency = await getCurrency(chatId);
+    const userMention = `@${jid.split('@')[0]}`;
 
     await sock.sendMessage(chatId, {
         image: { url: SLOT_IMAGE_URL },
-        caption: `🎰 ¡Tragamonedas activada!\n💰 Apuesta: ${currency} ${betAmount}\n🔄 Girando...`,
+        caption: `🎰 *¡Tragamonedas activada!* 🎰\n\n*Jugador:* ${userMention}\n*Apuesta:* ${currency} ${betAmount.toLocaleString()}\n\n*🔄 Girando...*`,
+        mentions: [jid]
     });
 
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -29,11 +31,14 @@ async function play(sock, chatId, jid, user, betAmount) {
 
     // Animation
     await sock.sendMessage(chatId, { text: `| ${reels[0].emoji} | ❓ | ❓ |` });
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 900));
     await sock.sendMessage(chatId, { text: `| ${reels[0].emoji} | ${reels[1].emoji} | ❓ |` });
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 900));
 
-    const finalReels = `| ${reels[0].emoji} | ${reels[1].emoji} | ${reels[2].emoji} |`;
+    // Final reel reveal
+    const finalReelsText = `| ${reels[0].emoji} | ${reels[1].emoji} | ${reels[2].emoji} |`;
+    await sock.sendMessage(chatId, { text: finalReelsText });
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
     // Determine result
     let resultText = '';
@@ -44,46 +49,53 @@ async function play(sock, chatId, jid, user, betAmount) {
     let winSymbol = null;
     let winCount = 0;
 
+    // Simplified win detection
     if (s1.emoji === s2.emoji && s2.emoji === s3.emoji) {
         winSymbol = s1;
         winCount = 3;
-    } else if (s1.emoji === s2.emoji) {
-        winSymbol = s1;
-        winCount = 2;
-    } else if (s2.emoji === s3.emoji) {
-        winSymbol = s2;
-        winCount = 2;
-    } else if (s1.emoji === s3.emoji) {
-        winSymbol = s1;
-        winCount = 2;
+    } else {
+        const symbols = [s1, s2, s3];
+        const counts = symbols.reduce((acc, s) => {
+            acc[s.emoji] = (acc[s.emoji] || 0) + 1;
+            return acc;
+        }, {});
+        for (const emoji in counts) {
+            if (counts[emoji] === 2) {
+                winSymbol = SYMBOLS.find(s => s.emoji === emoji);
+                winCount = 2;
+                break;
+            }
+        }
     }
 
     if (winSymbol && winSymbol.payouts[winCount]) {
         win = true;
         const multiplier = winSymbol.payouts[winCount];
         const winnings = betAmount * multiplier;
-        netWinnings += winnings;
-        user.economy.wallet += winnings;
+        user.economy.wallet += winnings; // Refund original bet + add winnings
+        netWinnings = winnings - betAmount;
 
         if (winSymbol.emoji === '🎰' && winCount === 3) {
-            resultText = `🚨 ¡¡¡ JACKPOT !!! 🚨\n${finalReels}\n💥 ¡TRIPLE JACKPOT! 💥\n💰 Ganaste: ${currency} ${winnings.toLocaleString()}\n🎊 ¡FELICIDADES! 🎊\n💳 Nuevo saldo: ${currency} ${user.economy.wallet.toLocaleString()}`;
+            resultText = `🚨 *¡¡¡ JACKPOT !!!* 🚨\n\n*¡TRIPLE JACKPOT PARA ${userMention}!*\n*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})\n\n*💳 Nuevo saldo:* ${currency} ${user.economy.wallet.toLocaleString()}`;
         } else if (winCount === 3) {
-            resultText = `🎉 ¡TRIPLE ${winSymbol.name.toUpperCase()}! 🎉\n${finalReels}\n💰 Ganaste: ${currency} ${winnings.toLocaleString()} (x${multiplier})\n🔥 ¡Increíble suerte!\n💳 Nuevo saldo: ${currency} ${user.economy.wallet.toLocaleString()}`;
+            resultText = `🎉 *¡TRIPLE ${winSymbol.name.toUpperCase()}!* 🎉\n\n*¡Felicidades ${userMention}!*\n*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})\n\n*💳 Nuevo saldo:* ${currency} ${user.economy.wallet.toLocaleString()}`;
         } else {
-            resultText = `✨ ¡DOBLE ${winSymbol.name.toUpperCase()}! ✨\n${finalReels}\n💰 Ganaste: ${currency} ${winnings.toLocaleString()} (x${multiplier})\n😊 ¡Buena jugada!\n💳 Nuevo saldo: ${currency} ${user.economy.wallet.toLocaleString()}`;
+            resultText = `✨ *¡DOBLE ${winSymbol.name.toUpperCase()}!* ✨\n\n*¡Buena jugada, ${userMention}!*\n*Ganaste:* ${currency} ${winnings.toLocaleString()} (x${multiplier})\n\n*💳 Nuevo saldo:* ${currency} ${user.economy.wallet.toLocaleString()}`;
         }
     } else {
-        resultText = `😔 ¡No hay coincidencias! 😔\n${finalReels}\n💸 Perdiste: ${currency} ${betAmount.toLocaleString()}\n🎯 ¡Inténtalo de nuevo!\n💳 Saldo restante: ${currency} ${user.economy.wallet.toLocaleString()}`;
+        user.economy.wallet -= betAmount; // Deduct bet on loss
+        netWinnings = -betAmount;
+        resultText = `😔 *¡No hay coincidencias, ${userMention}!* 😔\n\n*Perdiste:* ${currency} ${betAmount.toLocaleString()}\n_¡Inténtalo de nuevo!_\n\n*💳 Saldo restante:* ${currency} ${user.economy.wallet.toLocaleString()}`;
     }
 
-    await sock.sendMessage(chatId, { text: resultText });
+    await sock.sendMessage(chatId, { text: resultText, mentions: [jid] });
 
     await user.save();
 
     try {
         const gameLog = new GameLog({
             gameName: 'slot',
-            groupId: user.groupId,
+            groupId: chatId, // Use chatId for group context
             jid: user.jid,
             result: win ? 'win' : 'loss',
             betAmount: betAmount,
@@ -95,7 +107,7 @@ async function play(sock, chatId, jid, user, betAmount) {
         console.error('Error al guardar el log del juego:', error);
     }
 
-    updateGameStats(user.jid, user.groupId, 'slot', { [win ? 'wins' : 'losses']: 1, moneyChange: netWinnings });
+    updateGameStats(user.jid, chatId, 'slot', { [win ? 'wins' : 'losses']: 1, moneyChange: netWinnings });
 }
 
 async function getInfo(sock, chatId) {
