@@ -59,11 +59,18 @@ async function startInteractiveGame(sock, chatId, jid, user, betAmount) {
 }
 
 async function handleInteractiveChoice(sock, chatId, jid, userState, betAmount, side) {
+    // Primero, detenemos el temporizador para que el juego no expire.
+    const timer = activeTimers.get(jid);
+    if (timer) {
+        clearTimeout(timer);
+        activeTimers.delete(jid);
+    }
+
     const user = await findOrCreateUser(jid, chatId); // Obtener el estado más reciente del usuario
 
     // Verificar si aún tiene fondos (podría haberlos gastado en otro lugar)
     if (user.economy.wallet < betAmount) {
-        endGameSession(jid);
+        endGameSession(jid); // Limpiar la sesión de la DB
         return sock.sendMessage(chatId, { text: `¡Oh, no! Parece que ya no tienes fondos suficientes para esta apuesta.` });
     }
 
@@ -103,8 +110,8 @@ async function handleInteractiveChoice(sock, chatId, jid, userState, betAmount, 
 
     await user.save();
 
-    // Finalizar la sesión del juego ahora que ha concluido
-    endGameSession(jid);
+    // Finalizar la sesión del juego (eliminar de la DB)
+    await endGameSession(jid);
 
     await sock.sendMessage(chatId, { text: result.text, mentions: [jid] });
 }
