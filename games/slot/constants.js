@@ -13,7 +13,7 @@ const SYMBOLS = [
 const MIN_BET = 10;
 const MAX_BET = 5000;
 
-const SLOT_IMAGE_URL = 'https://utpasodelnorte.mx/wp-content/uploads/2023/08/que-son-las-maquinas-tragamonedas.jpg';
+const SLOT_IMAGE_URL = 'https://i.pinimg.com/originals/5d/0d/0e/5d0d0eca22380868c206f71bbf9733e5.gif';
 
 module.exports = {
     SYMBOLS,

@@ -26,8 +26,8 @@ module.exports = {
             const lastTime = userCooldowns.get(jid);
             const now = Date.now();
             const diff = now - lastTime;
-            if (diff < 40000) { // 40 seconds
-                const timeLeft = Math.ceil((40000 - diff) / 1000);
+            if (diff < 10000) { // 10 seconds
+                const timeLeft = Math.ceil((10000 - diff) / 1000);
                 return sock.sendMessage(chatId, { text: `⏳ Espera ${timeLeft} segundos antes de volver a jugar.` });
             }
         }
