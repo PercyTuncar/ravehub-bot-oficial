@@ -22,7 +22,7 @@ async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        logger: pino({ level: 'error' }), // Cambiado a 'error' para reducir logs
+        logger: pino({ level: 'info' }), // Cambiado a 'info' para ver más logs
         browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false, // El QR se maneja manualmente.
     });

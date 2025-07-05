@@ -65,7 +65,7 @@ async function handleMessage(message, commands) {
 
     const args = messageContent.slice(process.env.PREFIX.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
-    const command = commands.get(commandName) || commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
+    const command = commands.get(commandName);
 
     if (!command) return;
 
