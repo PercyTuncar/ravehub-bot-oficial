@@ -1,5 +1,6 @@
 const { getSocket } = require('../../bot');
 const { getMentions } = require('../../utils/messageUtils');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'compatibilidad',
@@ -8,7 +9,7 @@ module.exports = {
     async execute(message, args) {
         const sock = getSocket();
         const from = message.key.remoteJid;
-        const mentions = getMentions(message);
+        const mentions = await getMentions(message);
         const requesterJid = message.key.participant || message.key.remoteJid;
 
         let userA_jid, userB_jid;

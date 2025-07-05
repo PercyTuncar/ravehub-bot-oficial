@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const { getSocket } = require('../../bot');
 const { getMentions } = require('../../utils/messageUtils');
+const { findOrCreateUser } = require('../../utils/userUtils');
 const moment = require('moment');
 
 module.exports = {
@@ -11,11 +12,13 @@ module.exports = {
         const sock = getSocket();
         const from = message.key.remoteJid;
         
-        const mentions = getMentions(message);
+        const mentions = await getMentions(message);
         const targetJid = mentions.length > 0 ? mentions[0] : (message.key.participant || message.key.remoteJid);
 
         try {
-            const user = await User.findOne({ jid: targetJid }).populate('loveInfo.loveHistory.partnerId');
+            const groupMetadata = await sock.groupMetadata(from);
+            const targetInfo = groupMetadata.participants.find(p => p.id === targetJid);
+            const user = await findOrCreateUser(targetJid, from, targetInfo.name || targetJid.split('@')[0]);
 
             if (!user) {
                 return sock.sendMessage(from, { text: 'No se encontró el perfil de este usuario.' }, { quoted: message });

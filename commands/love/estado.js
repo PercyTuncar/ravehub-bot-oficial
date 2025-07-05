@@ -1,5 +1,6 @@
 const User = require('../../models/User');
 const { getSocket } = require('../../bot');
+const { findOrCreateUser } = require('../../utils/userUtils');
 const moment = require('moment');
 
 module.exports = {
@@ -12,7 +13,9 @@ module.exports = {
         const userJid = message.key.participant || message.key.remoteJid;
 
         try {
-            const user = await User.findOne({ jid: userJid });
+            const groupMetadata = await sock.groupMetadata(from);
+            const userInfo = groupMetadata.participants.find(p => p.id === userJid);
+            const user = await findOrCreateUser(userJid, from, userInfo.name || userJid.split('@')[0]);
 
             if (!user) {
                 return sock.sendMessage(from, { text: 'No se encontró tu perfil.' }, { quoted: message });

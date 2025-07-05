@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const { getSocket } = require('../../bot');
 const { getMentions } = require('../../utils/messageUtils');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 const ongoingProposals = new Map();
 
@@ -13,7 +14,7 @@ module.exports = {
         const from = message.key.remoteJid;
         const proposerJid = message.key.participant || message.key.remoteJid;
 
-        const mentions = getMentions(message);
+        const mentions = await getMentions(message);
         if (mentions.length === 0) {
             return sock.sendMessage(from, { text: 'Debes mencionar a alguien para proponerle una relación.' }, { quoted: message });
         }
@@ -25,12 +26,12 @@ module.exports = {
         }
         
         try {
-            const proposer = await User.findOne({ jid: proposerJid });
-            const proposed = await User.findOne({ jid: proposedJid });
+            const groupMetadata = await sock.groupMetadata(from);
+            const proposerInfo = groupMetadata.participants.find(p => p.id === proposerJid);
+            const proposedInfo = groupMetadata.participants.find(p => p.id === proposedJid);
 
-            if (!proposer || !proposed) {
-                return sock.sendMessage(from, { text: 'No se encontraron los perfiles de ambos usuarios.' }, { quoted: message });
-            }
+            const proposer = await findOrCreateUser(proposerJid, from, proposerInfo.name || proposerJid.split('@')[0]);
+            const proposed = await findOrCreateUser(proposedJid, from, proposedInfo.name || proposedJid.split('@')[0]);
 
             if (proposer.loveInfo.relationshipStatus !== 'Soltero/a' || proposed.loveInfo.relationshipStatus !== 'Soltero/a') {
                 return sock.sendMessage(from, { text: 'Ambos deben estar solteros para iniciar una relación.' }, { quoted: message });
