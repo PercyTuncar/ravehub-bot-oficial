@@ -78,10 +78,13 @@ async function handleMessage(message, commands) {
     }
     userCooldowns.set(userJid, Date.now());
 
+    console.log(`[+] Ejecutando comando '${commandName}' por ${userJid}`);
+
     try {
         await command.execute(message, args, commands);
+        console.log(`[✔] Comando '${commandName}' ejecutado exitosamente.`);
     } catch (error) {
-        console.error(`Error ejecutando el comando ${commandName}:`, error);
+        console.error(`[X] Falló la ejecución del comando '${commandName}':`, error);
         sock.sendMessage(chatId, { text: '⚙️ Ocurrió un error al intentar ejecutar ese comando.' });
     }
 }
