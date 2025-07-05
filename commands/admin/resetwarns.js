@@ -1,49 +1,59 @@
 const User = require('../../models/User');
+const GroupSettings = require('../../models/GroupSettings');
+const { getSocket } = require('../../handlers/eventHandler'); // Importar getSocket
 
 module.exports = {
     name: 'resetwarns',
     description: 'Resetea las advertencias de un usuario.',
     aliases: ['clearwarns', 'unwarn'],
     async execute(message, args, client) {
-        const authorId = message.author || message.from;
-        const groupId = message.to;
-
-        // Obtener los metadatos del grupo para verificar si el autor es administrador
-        const groupMetadata = await client.groupMetadata(groupId);
-        const participants = groupMetadata.participants;
-        const authorIsAdmin = participants.find(p => p.id.user === authorId.split('@')[0] && p.admin);
-
-        if (!authorIsAdmin) {
-            return message.reply('Este comando solo puede ser usado por administradores del grupo.');
-        }
-
-        const mentionedUsers = message.mentionedIds;
-        if (!mentionedUsers || mentionedUsers.length === 0) {
-            return message.reply('Debes mencionar a un usuario para resetear sus advertencias. Ejemplo: .resetwarns @usuario');
-        }
-
-        const targetId = mentionedUsers[0];
+        const sock = getSocket(); // Obtener el socket correctamente
+        const groupId = message.key.remoteJid;
+        const authorId = message.key.participant;
 
         try {
-            let user = await User.findOne({ userId: targetId });
+            // 1. Verificar si el autor es administrador
+            const groupMetadata = await sock.groupMetadata(groupId);
+            const participants = groupMetadata.participants;
+            const authorParticipant = participants.find(p => p.id === authorId);
 
-            if (!user) {
-                return message.reply('El usuario mencionado no está registrado en la base de datos.');
+            if (!authorParticipant || !authorParticipant.admin) {
+                return sock.sendMessage(groupId, { text: 'Este comando solo puede ser usado por administradores del grupo.' });
             }
 
-            if (user.warnings === 0) {
-                return message.reply('El usuario no tiene ninguna advertencia.');
+            // 2. Obtener el usuario mencionado
+            const mentionedJid = message.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (!mentionedJid) {
+                return sock.sendMessage(groupId, { text: 'Debes mencionar a un usuario para resetear sus advertencias. Ejemplo: .resetwarns @usuario' });
             }
 
-            user.warnings = 0;
-            await user.save();
+            // 3. Encontrar la configuración del grupo
+            const groupSettings = await GroupSettings.findOne({ groupId });
+            if (!groupSettings || !groupSettings.warnings || !groupSettings.warnings.has(mentionedJid)) {
+                return sock.sendMessage(groupId, { text: 'El usuario mencionado no tiene ninguna advertencia.' });
+            }
 
-            const contact = await client.getContactById(targetId);
-            message.reply(`Se han reseteado las advertencias de @${contact.pushname}.`);
+            const currentWarnings = groupSettings.warnings.get(mentionedJid);
+            if (currentWarnings === 0) {
+                return sock.sendMessage(groupId, { text: 'El usuario ya tiene 0 advertencias.' });
+            }
+
+            // 4. Resetear las advertencias y guardar
+            groupSettings.warnings.set(mentionedJid, 0);
+            await groupSettings.save();
+
+            // 5. Enviar mensaje de confirmación
+            const targetUser = await sock.getContactById(mentionedJid);
+            const targetName = targetUser.pushname || targetUser.name || mentionedJid.split('@')[0];
+            
+            await sock.sendMessage(groupId, { 
+                text: `Se han reseteado las advertencias de @${targetName}.`,
+                mentions: [mentionedJid]
+            });
 
         } catch (error) {
-            console.error('Error al resetear las advertencias:', error);
-            message.reply('Ocurrió un error al intentar resetear las advertencias.');
+            console.error('Error en resetwarns:', error);
+            sock.sendMessage(groupId, { text: 'Ocurrió un error al intentar resetear las advertencias.' });
         }
     }
 };
