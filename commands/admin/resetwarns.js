@@ -1,5 +1,5 @@
 const User = require('../../models/User');
-const groupUtils = require('../../utils/groupUtils');
+const { isAdmin } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'resetwarns',
@@ -8,7 +8,7 @@ module.exports = {
     async execute(message, args, client) {
         const authorId = message.author || message.from;
         const groupId = message.to;
-        const isAuthorAdmin = await groupUtils.isAdmin(authorId, groupId, client);
+        const isAuthorAdmin = await isAdmin(authorId, groupId, client);
 
         if (!isAuthorAdmin) {
             return message.reply('Este comando solo puede ser usado por administradores del grupo.');
