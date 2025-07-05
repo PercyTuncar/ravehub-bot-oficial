@@ -1,13 +1,12 @@
 const User = require('../../models/User');
-const GroupSettings = require('../../models/GroupSettings');
-const { getSocket } = require('../../handlers/eventHandler'); // Importar getSocket
+const { getSocket } = require('../../bot'); // RUTA CORREGIDA
 
 module.exports = {
     name: 'resetwarns',
     description: 'Resetea las advertencias de un usuario.',
     aliases: ['clearwarns', 'unwarn'],
     async execute(message, args, client) {
-        const sock = getSocket(); // Obtener el socket correctamente
+        const sock = getSocket();
         const groupId = message.key.remoteJid;
         const authorId = message.key.participant;
 
@@ -27,25 +26,24 @@ module.exports = {
                 return sock.sendMessage(groupId, { text: 'Debes mencionar a un usuario para resetear sus advertencias. Ejemplo: .resetwarns @usuario' });
             }
 
-            // 3. Encontrar la configuración del grupo
-            const groupSettings = await GroupSettings.findOne({ groupId });
-            if (!groupSettings || !groupSettings.warnings || !groupSettings.warnings.has(mentionedJid)) {
-                return sock.sendMessage(groupId, { text: 'El usuario mencionado no tiene ninguna advertencia.' });
+            // 3. Encontrar al usuario en el modelo User y resetear sus advertencias
+            const user = await User.findOne({ userId: mentionedJid, groupId: groupId });
+
+            if (!user) {
+                return sock.sendMessage(groupId, { text: 'El usuario mencionado no está registrado en la base de datos.' });
             }
 
-            const currentWarnings = groupSettings.warnings.get(mentionedJid);
-            if (currentWarnings === 0) {
-                return sock.sendMessage(groupId, { text: 'El usuario ya tiene 0 advertencias.' });
+            if (user.warnings === 0) {
+                return sock.sendMessage(groupId, { text: 'El usuario no tiene ninguna advertencia.' });
             }
 
-            // 4. Resetear las advertencias y guardar
-            groupSettings.warnings.set(mentionedJid, 0);
-            await groupSettings.save();
+            user.warnings = 0;
+            await user.save();
 
-            // 5. Enviar mensaje de confirmación
-            const targetUser = await sock.getContactById(mentionedJid);
-            const targetName = targetUser.pushname || targetUser.name || mentionedJid.split('@')[0];
-            
+            // 4. Enviar mensaje de confirmación
+            const contact = await sock.getContactById(mentionedJid);
+            const targetName = contact.pushname || contact.name || mentionedJid.split('@')[0];
+
             await sock.sendMessage(groupId, { 
                 text: `Se han reseteado las advertencias de @${targetName}.`,
                 mentions: [mentionedJid]
