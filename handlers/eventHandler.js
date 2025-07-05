@@ -1,4 +1,3 @@
-const commandHandler = require('./commandHandler');
 const { handleGameResponse } = require('./gameHandler');
 const { getGameSession } = require('../utils/gameUtils');
 const { handleLoanResponse, getLoanSession } = require('./loanSessionHandler');
@@ -8,7 +7,7 @@ const { getSocket } = require('../bot');
 const userCooldowns = new Map();
 
 // Función unificada para manejar todos los mensajes entrantes
-async function handleMessage(message) {
+async function handleMessage(message, commands) {
     const sock = getSocket();
     const chatId = message.key.remoteJid;
     const userJid = message.key.participant || message.key.remoteJid;
@@ -64,7 +63,6 @@ async function handleMessage(message) {
         return;
     }
 
-    const commands = commandHandler();
     const args = messageContent.slice(process.env.PREFIX.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
     const command = commands.get(commandName) || commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
@@ -88,12 +86,12 @@ async function handleMessage(message) {
     }
 }
 
-module.exports = async (m) => {
+module.exports = async (m, commands) => {
     if (m.messages && m.messages.length > 0) {
         const message = m.messages[0];
         if (!message.message) return;
 
         // Llamar a la función unificada para manejar el mensaje
-        await handleMessage(message);
+        await handleMessage(message, commands);
     }
 };

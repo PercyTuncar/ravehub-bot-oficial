@@ -35,7 +35,7 @@ async function connectToWhatsApp() {
     // Desacoplar el procesamiento de mensajes para no bloquear el event loop
     sock.ev.on('messages.upsert', (msg) => {
         setImmediate(() => {
-            eventHandler(msg).catch(console.error);
+            eventHandler(msg, commands).catch(console.error);
         });
     });
 
