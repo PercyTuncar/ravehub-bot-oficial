@@ -48,21 +48,23 @@ async function connectToWhatsApp() {
 
         if (connection === 'close') {
             const reason = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
-            
-            // La lógica de reconexión ahora es más simple, ya que el store oficial es más robusto.
+            const shouldReconnect = reason !== DisconnectReason.loggedOut && reason !== DisconnectReason.connectionReplaced;
+
+            console.log(`Conexión cerrada. Razón: ${reason}, reconectando: ${shouldReconnect}`);
+
             if (reason === DisconnectReason.loggedOut) {
                 console.log('Dispositivo desvinculado. Limpiando la carpeta de sesión y reiniciando.');
-                // Eliminar la carpeta de sesión para forzar un inicio limpio
                 const sessionsDir = path.join(__dirname, 'sessions');
                 if (fs.existsSync(sessionsDir)) {
                     fs.rmSync(sessionsDir, { recursive: true, force: true });
                 }
-                connectToWhatsApp();
-            } else if (reason !== DisconnectReason.connectionReplaced) {
-                console.log(`Conexión perdida. Razón: ${DisconnectReason[reason] || reason}. Reconectando...`);
-                connectToWhatsApp();
+                // Retrasar antes de reiniciar para evitar bucles rápidos
+                setTimeout(connectToWhatsApp, 5000); 
+            } else if (shouldReconnect) {
+                // Añadir un retardo antes de intentar reconectar
+                setTimeout(connectToWhatsApp, 5000); // Espera 5 segundos
             } else {
-                 console.log(`Conexión reemplazada. No se reconectará.`);
+                console.log('No se requiere reconexión automática.');
             }
         } else if (connection === 'open') {
             console.log('Conexión abierta y establecida.');
