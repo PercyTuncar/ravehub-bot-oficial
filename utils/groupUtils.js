@@ -46,7 +46,7 @@ async function getGroupSettings(groupId) {
 async function getCurrency(groupId) {
     try {
         const settings = await getGroupSettings(groupId);
-        return settings ? settings.currency : 'S/'; // Default currency
+        return settings ? settings.currencySymbol : 'S/'; // Default currency
     } catch (error) {
         console.error("Error fetching group currency:", error);
         return 'S/';
