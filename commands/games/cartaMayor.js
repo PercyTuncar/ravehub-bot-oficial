@@ -6,10 +6,10 @@ const cartaMayor = require('../../games/cartaMayor');
 const { MIN_BET, MAX_BET } = require('../../games/cartaMayor/constants');
 
 module.exports = {
-    name: 'apostar',
+    name: 'cartamayor',
     description: 'Jugar a la carta mayor.',
-    aliases: ['bet', 'carta-mayor'],
-    usage: '.apostar <cantidad> [lado]',
+    aliases: ['bet', 'carta-mayor', 'apostar'],
+    usage: '.cartamayor <cantidad> [lado]',
     category: 'game',
     async execute(message, args) {
         const sock = getSocket();
@@ -25,7 +25,7 @@ module.exports = {
 
         const betAmountStr = args[0];
         if (!betAmountStr || isNaN(betAmountStr)) {
-            return sock.sendMessage(chatId, { text: `❌ Debes especificar una cantidad numérica para apostar. Ejemplo: *.apostar 250*` });
+            return sock.sendMessage(chatId, { text: `❌ Debes especificar una cantidad numérica para apostar. Ejemplo: *.cartamayor 250*` });
         }
 
         const betAmount = parseInt(betAmountStr, 10);

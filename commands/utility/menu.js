@@ -67,11 +67,11 @@ module.exports = {
             admin: '👑',
             economy: '💰',
             utility: '🛠️',
-            games: '🎮',
+            game: '🎮',
             love: '💞'
         };
 
-        const categoryOrder = ['games', 'economy', 'love', 'utility', 'admin'];
+        const categoryOrder = ['game', 'economy', 'love', 'utility', 'admin'];
 
         for (const category of categoryOrder) {
             if (!commandsByCategory[category]) continue;
