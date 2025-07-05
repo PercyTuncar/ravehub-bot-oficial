@@ -39,6 +39,18 @@ const userSchema = new mongoose.Schema({
   warnings: { type: Number, default: 0 },
   lastWorked: { type: Date, default: null },
   isBanned: { type: Boolean, default: false },
+  loveInfo: {
+    partnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    partnerJid: { type: String, default: null },
+    relationshipStatus: { type: String, enum: ['Soltero/a', 'En una relación'], default: 'Soltero/a' },
+    loveHistory: [
+      {
+        partnerName: String,
+        startDate: Date,
+        endDate: { type: Date, default: null }
+      }
+    ]
+  },
   createdAt: { type: Date, default: Date.now },
 }, {
   timestamps: true,

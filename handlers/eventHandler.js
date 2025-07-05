@@ -1,6 +1,7 @@
 const { handleGameResponse } = require('./gameHandler');
 const { getGameSession } = require('../utils/gameUtils');
 const { handleLoanResponse, getLoanSession } = require('./loanSessionHandler');
+const { handleLoveResponses } = require('./loveHandler');
 const { getGroupSettings } = require('../utils/groupUtils');
 const { findOrCreateUser } = require('../utils/userUtils');
 const { getSocket } = require('../bot');
@@ -55,6 +56,10 @@ async function handleMessage(message, commands) {
     // --- Game Handler Integration ---
     if (await getGameSession(userJid)) {
         if (await handleGameResponse(message)) return;
+    }
+
+    if (await handleLoveResponses(message)) {
+        return;
     }
 
     // --- Lógica de Comandos ---
