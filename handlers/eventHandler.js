@@ -1,110 +1,99 @@
 const commandHandler = require('./commandHandler');
 const { handleGameResponse } = require('./gameHandler');
 const { getGameSession } = require('../utils/gameUtils');
-const { handleLoanResponse, getLoanSession } = require('./loanSessionHandler'); // Updated import
-const GroupSettings = require('../models/GroupSettings');
+const { handleLoanResponse, getLoanSession } = require('./loanSessionHandler');
+const { getGroupSettings } = require('../utils/groupUtils');
+const { findOrCreateUser } = require('../utils/userUtils');
 const { getSocket } = require('../bot');
 const userCooldowns = new Map();
 
-module.exports = async (m) => {
+// Función unificada para manejar todos los mensajes entrantes
+async function handleMessage(message) {
     const sock = getSocket();
-    const commands = commandHandler();
+    const chatId = message.key.remoteJid;
+    const userJid = message.key.participant || message.key.remoteJid;
 
-    console.log('Evento messages.upsert recibido:', JSON.stringify(m, null, 2));
-    const message = m.messages[0];
-    if (!message.message) return;
+    // --- Lógica Anti-Link (Versión corregida y única) ---
+    const groupSettings = await getGroupSettings(chatId);
+    if (groupSettings && groupSettings.antiLinkEnabled && chatId.endsWith('@g.us')) {
+        const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+        const linkRegex = /(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})(\/[^\s]*)?/gi;
 
-    const jid = message.key.participant || message.key.remoteJid;
+        if (linkRegex.test(messageText)) {
+            const groupMetadata = await sock.groupMetadata(chatId);
+            const sender = groupMetadata.participants.find(p => p.id === userJid);
 
-    // --- Loan Session Handler ---
-    if (getLoanSession(jid)) {
-        const loanHandled = await handleLoanResponse(message);
-        if (loanHandled) {
-            return; // Stop processing if the message was part of a loan session
-        }
-    }
+            // No aplicar anti-link a los administradores
+            if (sender && sender.admin !== 'admin' && sender.admin !== 'superadmin') {
+                const user = await findOrCreateUser(userJid, chatId);
+                
+                await sock.sendMessage(chatId, { delete: message.key });
 
-    // --- Game Handler Integration ---
-    const session = await getGameSession(jid);
-    if (session) {
-        const gameHandled = await handleGameResponse(message);
-        if (gameHandled) {
-            return; // ¡CORRECCIÓN CRÍTICA! Detener el procesamiento si el juego manejó el mensaje.
-        }
-    }
+                user.warnings = (user.warnings || 0) + 1;
+                await user.save();
 
-    const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';
-    console.log('Contenido del mensaje extraído:', messageContent);
+                const warnings = user.warnings;
+                const warnLimit = process.env.WARN_LIMIT || 3;
 
-    // Anti-links
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    if (urlRegex.test(messageContent)) {
-        const chatId = message.key.remoteJid;
-        if (chatId.endsWith('@g.us')) {
-            const groupSettings = await GroupSettings.findOne({ groupId: chatId });
-            if (groupSettings && groupSettings.antiLinkEnabled) {
-                const groupMetadata = await sock.groupMetadata(chatId);
-                const sender = groupMetadata.participants.find(p => p.id === message.key.participant);
-                if (sender.admin !== 'admin' && sender.admin !== 'superadmin') {
-                    await sock.sendMessage(chatId, { delete: message.key });
-                    let warnings = groupSettings.warnings.get(message.key.participant) || 0;
-                    warnings++;
-                    groupSettings.warnings.set(message.key.participant, warnings);
-                    await groupSettings.save();
-
-                    sock.sendMessage(chatId, { text: `@${message.key.participant.split('@')[0]} ha recibido una advertencia por enviar un enlace. Advertencias: ${warnings}/${process.env.WARN_LIMIT}` });
-
-                    if (warnings >= process.env.WARN_LIMIT) {
-                        await sock.groupParticipantsUpdate(chatId, [message.key.participant], 'remove');
-                        sock.sendMessage(chatId, { text: `🚫 @${message.key.participant.split('@')[0]} ha sido eliminado por alcanzar el límite de advertencias.` });
-                    } else {
-                        const text = `ANTI-LINK ACTIVADO
-
-*Usuario:* @${message.key.participant.split('@')[0]}
-*Motivo:* Envío de enlace no permitido.
-
-*Advertencias:* ${warnings}/${process.env.WARN_LIMIT}
-
-Por favor, evita enviar enlaces en este grupo.`
-                        sock.sendMessage(chatId, { text: text, mentions: [message.key.participant] });
-                    }
+                if (warnings >= warnLimit) {
+                    const kickText = `🚫 @${userJid.split('@')[0]} ha sido eliminado por alcanzar el límite de ${warnLimit} advertencias por envío de enlaces.`
+                    await sock.sendMessage(chatId, { text: kickText, mentions: [userJid] });
+                    await sock.groupParticipantsUpdate(chatId, [userJid], 'remove');
+                } else {
+                    const warnText = `🚨 *¡ADVERTENCIA!* 🚨\n\n*Usuario:* @${userJid.split('@')[0]}\n*Motivo:* Envío de enlaces no permitido.\n\n*Advertencias:* ${warnings}/${warnLimit}\n\n_Por favor, respeta las reglas del grupo._`;
+                    await sock.sendMessage(chatId, { text: warnText, mentions: [userJid] });
                 }
+                return; // Detener el procesamiento aquí, ya que fue manejado como un enlace
             }
         }
     }
 
-    // Command handler
+    // --- Loan Session Handler ---
+    if (getLoanSession(userJid)) {
+        if (await handleLoanResponse(message)) return;
+    }
+
+    // --- Game Handler Integration ---
+    if (await getGameSession(userJid)) {
+        if (await handleGameResponse(message)) return;
+    }
+
+    // --- Lógica de Comandos ---
+    const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';
     if (!messageContent.startsWith(process.env.PREFIX)) {
-        console.log('El mensaje no es un comando.');
         return;
     }
 
-    console.log('Procesando como un comando...');
+    const commands = commandHandler();
     const args = messageContent.slice(process.env.PREFIX.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
+    const command = commands.get(commandName) || commands.find(cmd => cmd.aliases && cmd.aliases.includes(commandName));
 
-    const command = commands.get(commandName);
-    if (!command) {
-        console.log(`Comando no encontrado: ${commandName}`);
-        return;
-    }
+    if (!command) return;
 
-    console.log(`Ejecutando comando: ${commandName}`);
-    const userId = message.key.participant || message.key.remoteJid;
-    if (userCooldowns.has(userId)) {
-        const lastCommandTime = userCooldowns.get(userId);
-        const now = Date.now();
-        if (now - lastCommandTime < 3000) { // 3 second cooldown
-            return sock.sendMessage(message.key.remoteJid, { text: 'Por favor, espera antes de usar otro comando.' });
+    // Cooldown
+    if (userCooldowns.has(userJid)) {
+        const lastCommandTime = userCooldowns.get(userJid);
+        if (Date.now() - lastCommandTime < 3000) { // 3 segundos
+            return sock.sendMessage(chatId, { text: 'Por favor, espera antes de usar otro comando.' });
         }
     }
-
-    userCooldowns.set(userId, Date.now());
+    userCooldowns.set(userJid, Date.now());
 
     try {
         await command.execute(message, args, commands);
     } catch (error) {
-        console.error('Error al ejecutar el comando:', error);
-        sock.sendMessage(message.key.remoteJid, { text: 'Ocurrió un error al ejecutar el comando.' });
+        console.error(`Error ejecutando el comando ${commandName}:`, error);
+        sock.sendMessage(chatId, { text: '⚙️ Ocurrió un error al intentar ejecutar ese comando.' });
+    }
+}
+
+module.exports = async (m) => {
+    if (m.messages && m.messages.length > 0) {
+        const message = m.messages[0];
+        if (!message.message) return;
+
+        // Llamar a la función unificada para manejar el mensaje
+        await handleMessage(message);
     }
 };
