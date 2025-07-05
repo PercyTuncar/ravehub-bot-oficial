@@ -89,6 +89,12 @@ async function handleMessage(message, commands) {
 module.exports = async (m, commands) => {
     if (m.messages && m.messages.length > 0) {
         const message = m.messages[0];
+
+        // Log para depuración detallada del mensaje
+        console.log('---------- MENSAJE RECIBIDO ----------');
+        console.log(JSON.stringify(message, null, 2));
+        console.log('-------------------------------------');
+
         if (!message.message) return;
 
         // Llamar a la función unificada para manejar el mensaje
