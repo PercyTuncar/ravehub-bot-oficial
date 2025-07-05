@@ -1,4 +1,4 @@
-const { findOrCreateGroup, getGroupSettings } = require('../../utils/groupUtils');
+const { findOrCreateGroup, getGroupSettings, clearGroupSettingsCache } = require('../../utils/groupUtils');
 const { getSocket } = require('../../bot');
 
 module.exports = {
@@ -30,6 +30,9 @@ module.exports = {
             const group = await findOrCreateGroup(chatId);
             group.antiLinkEnabled = (option === 'on');
             await group.save();
+
+            // Limpiar el caché para este grupo
+            clearGroupSettingsCache(chatId);
 
             const status = option === 'on' ? '✅ Activado' : '❌ Desactivado';
             await sock.sendMessage(chatId, { text: `La función anti-link ha sido configurada en: ${status}` });

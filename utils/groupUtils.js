@@ -53,4 +53,12 @@ async function getCurrency(groupId) {
     }
 }
 
-module.exports = { findOrCreateGroup, getGroupSettings, getCurrency };
+/**
+ * Clears the cached settings for a specific group.
+ * @param {string} groupId The JID of the group.
+ */
+function clearGroupSettingsCache(groupId) {
+    groupSettingsCache.delete(groupId);
+}
+
+module.exports = { findOrCreateGroup, getGroupSettings, getCurrency, clearGroupSettingsCache };
