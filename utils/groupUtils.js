@@ -61,4 +61,9 @@ function clearGroupSettingsCache(groupId) {
     groupSettingsCache.delete(groupId);
 }
 
-module.exports = { findOrCreateGroup, getGroupSettings, getCurrency, clearGroupSettingsCache };
+module.exports = {
+    findOrCreateGroup,
+    getGroupSettings,
+    getCurrency,
+    clearGroupSettingsCache,
+};
