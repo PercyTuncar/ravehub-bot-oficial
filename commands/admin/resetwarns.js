@@ -1,5 +1,4 @@
 const User = require('../../models/User');
-const { isAdmin } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'resetwarns',
@@ -8,9 +7,13 @@ module.exports = {
     async execute(message, args, client) {
         const authorId = message.author || message.from;
         const groupId = message.to;
-        const isAuthorAdmin = await isAdmin(authorId, groupId, client);
 
-        if (!isAuthorAdmin) {
+        // Obtener los metadatos del grupo para verificar si el autor es administrador
+        const groupMetadata = await client.groupMetadata(groupId);
+        const participants = groupMetadata.participants;
+        const authorIsAdmin = participants.find(p => p.id.user === authorId.split('@')[0] && p.admin);
+
+        if (!authorIsAdmin) {
             return message.reply('Este comando solo puede ser usado por administradores del grupo.');
         }
 
