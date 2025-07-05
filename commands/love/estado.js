@@ -1,11 +1,11 @@
 const User = require('../../models/User');
 const { getSocket } = require('../../bot');
-const { findOrCreateUser } = require('../../utils/userUtils');
 const moment = require('moment');
 
 module.exports = {
     name: 'estado',
     description: 'Muestra tu estado sentimental.',
+    category: 'love',
     aliases: ['status'],
     async execute(message, args) {
         const sock = getSocket();

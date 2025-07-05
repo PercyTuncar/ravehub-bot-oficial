@@ -7,6 +7,7 @@ const moment = require('moment');
 module.exports = {
     name: 'historial',
     description: 'Muestra el historial de relaciones de un usuario.',
+    category: 'love',
     aliases: ['lovehistory'],
     async execute(message, args) {
         const sock = getSocket();

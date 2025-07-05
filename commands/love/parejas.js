@@ -5,6 +5,7 @@ const moment = require('moment');
 module.exports = {
     name: 'parejas',
     description: 'Lista todas las parejas activas del grupo.',
+    category: 'love',
     aliases: ['couples'],
     async execute(message, args) {
         const sock = getSocket();

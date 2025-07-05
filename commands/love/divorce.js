@@ -4,6 +4,7 @@ const { getSocket } = require('../../bot');
 module.exports = {
     name: 'divorcio',
     description: 'Termina una relación activa.',
+    category: 'love',
     aliases: ['divorce'],
     async execute(message, args) {
         const sock = getSocket();

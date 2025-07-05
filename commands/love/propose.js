@@ -8,6 +8,7 @@ const ongoingProposals = new Map();
 module.exports = {
     name: 'proponer',
     description: 'Propone una relación a otro usuario.',
+    category: 'love',
     aliases: ['propose'],
     async execute(message, args) {
         const sock = getSocket();

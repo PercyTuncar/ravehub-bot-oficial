@@ -5,6 +5,7 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 module.exports = {
     name: 'compatibilidad',
     description: 'Calcula la compatibilidad entre dos usuarios.',
+    category: 'love',
     aliases: ['compatibility'],
     async execute(message, args) {
         const sock = getSocket();

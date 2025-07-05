@@ -1,12 +1,13 @@
 const User = require('../../models/User');
 const { getSocket } = require('../../bot');
-const { findOrCreateUser } = require('../../utils/userUtils');
+const { getMentions } = require('../../utils/messageUtils'); // Asumiendo que tienes una utilidad para obtener menciones
 
 const ongoingMatches = new Map();
 
 module.exports = {
     name: 'match',
     description: 'Inicia un match aleatorio en el grupo.',
+    category: 'love',
     aliases: [],
     async execute(message, args) {
         const sock = getSocket();
