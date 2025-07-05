@@ -28,7 +28,7 @@ module.exports = {
 
         try {
             const group = await findOrCreateGroup(chatId);
-            group.settings.antiLinkEnabled = (option === 'on');
+            group.antiLinkEnabled = (option === 'on');
             await group.save();
 
             const status = option === 'on' ? '✅ Activado' : '❌ Desactivado';
