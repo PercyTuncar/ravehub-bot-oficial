@@ -5,6 +5,8 @@ const { handleLoveResponses } = require('./loveHandler');
 const { getGroupSettings } = require('../utils/groupUtils');
 const { findOrCreateUser } = require('../utils/userUtils');
 const { getSocket } = require('../bot');
+const logger = require('../config/logger'); // Importar el logger
+const { getContentType, getMessageText } = require('../utils/messageUtils'); // Importar utilidades de mensaje
 const userCooldowns = new Map();
 const GroupSettings = require('../models/GroupSettings');
 
@@ -13,11 +15,22 @@ async function handleMessage(message, commands) {
     const sock = getSocket();
     const chatId = message.key.remoteJid;
     const userJid = message.key.participant || message.key.remoteJid;
+    const isGroup = chatId.endsWith('@g.us');
+    const messageType = getContentType(message.message);
+    const messageText = getMessageText(message.message);
+
+    // Log detallado de cada mensaje recibido
+    logger.info({
+        chatId,
+        userJid,
+        isGroup,
+        messageType,
+        messageText: messageText ? (messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText) : 'No text'
+    }, 'Mensaje recibido');
 
     // --- Lógica Anti-Link (Versión corregida y única) ---
     const groupSettings = await getGroupSettings(chatId);
-    if (groupSettings && groupSettings.antiLinkEnabled && chatId.endsWith('@g.us')) {
-        const messageText = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+    if (groupSettings && groupSettings.antiLinkEnabled && isGroup) {
         const linkRegex = /(https?:\/\/)?(www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})(\/[^\s]*)?/gi;
 
         if (linkRegex.test(messageText)) {
@@ -64,14 +77,13 @@ async function handleMessage(message, commands) {
     }
 
     // --- Lógica de Comandos ---
-    const messageContent = message.message.conversation || message.message.extendedTextMessage?.text || message.message.imageMessage?.caption || message.message.videoMessage?.caption || '';
-    if (!messageContent.startsWith(process.env.PREFIX)) {
-        return;
+    if (!messageText || !messageText.startsWith(process.env.PREFIX)) {
+        return; // No es un comando, no hacer nada más.
     }
 
-    const args = messageContent.slice(process.env.PREFIX.length).trim().split(/ +/);
+    const args = messageText.slice(process.env.PREFIX.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
-    const command = commands.get(commandName);
+    const command = commands.get(commandName) || Array.from(commands.values()).find(cmd => cmd.alias && cmd.alias.includes(commandName));
 
     if (!command) return;
 
@@ -84,13 +96,13 @@ async function handleMessage(message, commands) {
     }
     userCooldowns.set(userJid, Date.now());
 
-    console.log(`[+] Ejecutando comando '${commandName}' por ${userJid}`);
+    logger.info({ command: commandName, user: userJid }, `Ejecutando comando`);
 
     try {
         await command.execute(message, args, commands);
-        console.log(`[✔] Comando '${commandName}' ejecutado exitosamente.`);
+        logger.info({ command: commandName, user: userJid }, `Comando ejecutado exitosamente`);
     } catch (error) {
-        console.error(`[X] Falló la ejecución del comando '${commandName}':`, error);
+        logger.error({ err: error, command: commandName, user: userJid }, `Falló la ejecución del comando`);
         sock.sendMessage(chatId, { text: '⚙️ Ocurrió un error al intentar ejecutar ese comando.' });
     }
 }
