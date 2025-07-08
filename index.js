@@ -1,7 +1,7 @@
 const { default: makeWASocket, DisconnectReason, Browsers, useMultiFileAuthState } = require('@whiskeysockets/baileys');
 const { Boom } = require('@hapi/boom');
 const qrcode = require('qrcode-terminal');
-const pino = require('pino');
+const logger = require('./config/logger'); // Usar el logger centralizado
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./config/database');
@@ -22,17 +22,7 @@ async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        logger: pino({
-            level: 'info',
-            transport: {
-                target: 'pino-pretty',
-                options: {
-                    colorize: true,
-                    ignore: 'pid,hostname',
-                    translateTime: 'SYS:dd-mm-yyyy HH:MM:ss'
-                }
-            }
-        }),
+        logger, // Usar el logger centralizado
         browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false, // El QR se maneja manualmente.
     });
@@ -49,7 +39,7 @@ async function connectToWhatsApp() {
             // Asegurarse de que el mensaje tiene contenido antes de procesarlo
             if (message.message) {
                 setImmediate(() => {
-                    handleMessage(message, commands).catch(console.error);
+                    handleMessage(message, commands).catch(err => logger.error(err, 'Error al manejar el mensaje'));
                 });
             }
         }
@@ -63,7 +53,7 @@ async function connectToWhatsApp() {
                 const newParticipantId = participants[0];
                 await handleWelcomeMessage(sock, groupMetadata, newParticipantId);
             } catch (error) {
-                console.error('Error en el evento group-participants.update:', error);
+                logger.error(error, 'Error en el evento group-participants.update');
             }
         }
     });
@@ -71,7 +61,7 @@ async function connectToWhatsApp() {
     sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
         if (qr) {
-            console.log('Nuevo QR Code generado. Por favor, escanéelo.');
+            logger.info('Nuevo QR Code generado. Por favor, escanéelo.');
             qrcode.generate(qr, { small: true });
         }
 
@@ -79,10 +69,10 @@ async function connectToWhatsApp() {
             const reason = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
             const shouldReconnect = reason !== DisconnectReason.loggedOut && reason !== DisconnectReason.connectionReplaced;
 
-            console.log(`Conexión cerrada. Razón: ${reason}, reconectando: ${shouldReconnect}`);
+            logger.info(`Conexión cerrada. Razón: ${reason}, reconectando: ${shouldReconnect}`);
 
             if (reason === DisconnectReason.loggedOut) {
-                console.log('Dispositivo desvinculado. Limpiando la carpeta de sesión y reiniciando.');
+                logger.warn('Dispositivo desvinculado. Limpiando la carpeta de sesión y reiniciando.');
                 const sessionsDir = path.join(__dirname, 'sessions');
                 if (fs.existsSync(sessionsDir)) {
                     fs.rmSync(sessionsDir, { recursive: true, force: true });
@@ -93,10 +83,10 @@ async function connectToWhatsApp() {
                 // Añadir un retardo antes de intentar reconectar
                 setTimeout(connectToWhatsApp, 5000); // Espera 5 segundos
             } else {
-                console.log('No se requiere reconexión automática.');
+                logger.info('No se requiere reconexión automática.');
             }
         } else if (connection === 'open') {
-            console.log('Conexión abierta y establecida.');
+            logger.info('Conexión abierta y establecida.');
             if (firstConnection) {
                 let menu = `╭───≽ *BOT CONECTADO* ≼───╮
 │
@@ -123,10 +113,10 @@ async function connectToWhatsApp() {
                     if (process.env.OWNER_NUMBER) {
                         await sock.sendMessage(`${process.env.OWNER_NUMBER}@s.whatsapp.net`, { text: menu });
                     } else {
-                        console.warn('OWNER_NUMBER no está definido en el archivo .env, no se enviará el mensaje de inicio.');
+                        logger.warn('OWNER_NUMBER no está definido en el archivo .env, no se enviará el mensaje de inicio.');
                     }
                 } catch (error) {
-                    console.error('Error al enviar el mensaje de inicio:', error);
+                    logger.error(error, 'Error al enviar el mensaje de inicio');
                 }
                 
                 firstConnection = false;
@@ -142,12 +132,12 @@ connectDB();
 connectToWhatsApp();
 
 process.on('uncaughtException', (err) => {
-    console.error('Uncaught Exception:', err);
+    logger.fatal(err, 'Uncaught Exception');
     process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    logger.fatal({ promise, reason }, 'Unhandled Rejection');
     process.exit(1);
 });
 
