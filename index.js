@@ -22,7 +22,7 @@ async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        logger, // Usar el logger centralizado
+        logger: logger.child({ level: 'warn' }), // Nivel 'warn' para Baileys para reducir el ruido
         browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false, // El QR se maneja manualmente.
     });
@@ -71,14 +71,18 @@ async function connectToWhatsApp() {
 
             logger.info(`Conexión cerrada. Razón: ${reason}, reconectando: ${shouldReconnect}`);
 
-            if (reason === DisconnectReason.loggedOut) {
-                logger.warn('Dispositivo desvinculado. Limpiando la carpeta de sesión y reiniciando.');
+            if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut) {
+                const message = reason === DisconnectReason.badSession 
+                    ? 'Sesión corrupta. Limpiando y reconectando...' 
+                    : 'Dispositivo desvinculado. Limpiando y reiniciando.';
+                logger.warn(message);
+                
                 const sessionsDir = path.join(__dirname, 'sessions');
                 if (fs.existsSync(sessionsDir)) {
                     fs.rmSync(sessionsDir, { recursive: true, force: true });
                 }
                 // Retrasar antes de reiniciar para evitar bucles rápidos
-                setTimeout(connectToWhatsApp, 5000); 
+                setTimeout(connectToWhatsApp, 5000);
             } else if (shouldReconnect) {
                 // Añadir un retardo antes de intentar reconectar
                 setTimeout(connectToWhatsApp, 5000); // Espera 5 segundos
