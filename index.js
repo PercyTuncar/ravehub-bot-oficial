@@ -22,7 +22,17 @@ async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        logger: pino({ level: 'trace' }), // Cambiado a 'trace' para máxima verbosidad
+        logger: pino({
+            level: 'info', // Cambiado de 'trace' a 'info' para reducir el ruido
+            transport: {
+                target: 'pino-pretty',
+                options: {
+                    colorize: true,
+                    ignore: 'pid,hostname',
+                    translateTime: 'SYS:dd-mm-yyyy HH:MM:ss'
+                }
+            }
+        }),
         browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false, // El QR se maneja manualmente.
     });
@@ -37,6 +47,19 @@ async function connectToWhatsApp() {
         setImmediate(() => {
             eventHandler(msg, commands).catch(console.error);
         });
+    });
+
+    sock.ev.on('group-participants.update', async (update) => {
+        const { id, participants, action } = update;
+        if (action === 'add') {
+            try {
+                const groupMetadata = await sock.groupMetadata(id);
+                const newParticipantId = participants[0];
+                await handleWelcomeMessage(sock, groupMetadata, newParticipantId);
+            } catch (error) {
+                console.error('Error en el evento group-participants.update:', error);
+            }
+        }
     });
 
     sock.ev.on('connection.update', async (update) => {
