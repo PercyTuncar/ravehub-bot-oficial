@@ -6,6 +6,7 @@ const { getGroupSettings } = require('../utils/groupUtils');
 const { findOrCreateUser } = require('../utils/userUtils');
 const { getSocket } = require('../bot');
 const userCooldowns = new Map();
+const GroupSettings = require('../models/GroupSettings');
 
 // Función unificada para manejar todos los mensajes entrantes
 async function handleMessage(message, commands) {
@@ -94,18 +95,58 @@ async function handleMessage(message, commands) {
     }
 }
 
+async function handleWelcomeMessage(sock, groupMetadata, newParticipantId) {
+    try {
+        const groupSettings = await GroupSettings.findOne({ groupId: groupMetadata.id });
+        if (groupSettings && groupSettings.welcomeMessage) {
+            const memberCount = groupMetadata.participants.length;
+            let welcomeText = groupSettings.welcomeMessage
+                .replace(/@user/g, `@${newParticipantId.split('@')[0]}`)
+                .replace(/@group/g, groupMetadata.subject)
+                .replace(/@count/g, memberCount);
+
+            const messageData = {
+                text: welcomeText,
+                mentions: [newParticipantId]
+            };
+
+            if (groupSettings.welcomeImage) {
+                messageData.image = { url: groupSettings.welcomeImage };
+                messageData.caption = welcomeText;
+                delete messageData.text;
+            }
+
+            await sock.sendMessage(groupMetadata.id, messageData);
+        }
+    } catch (error) {
+        console.error('Error al enviar el mensaje de bienvenida:', error);
+    }
+}
+
 module.exports = async (m, commands) => {
     if (m.messages && m.messages.length > 0) {
         const message = m.messages[0];
 
-        // Log para depuración detallada del mensaje
-        console.log('---------- MENSAJE RECIBIDO ----------');
-        console.log(JSON.stringify(message, null, 2));
-        console.log('-------------------------------------');
+        // Manejar eventos de participación en grupo (bienvenida/despedida)
+        if (message.messageStubType) {
+            const sock = getSocket();
+            const remoteJid = message.key.remoteJid;
+            if (remoteJid.endsWith('@g.us')) {
+                const groupMetadata = await sock.groupMetadata(remoteJid).catch(e => console.log(e));
+                if (groupMetadata) {
+                    for (const participant of message.messageStubParameters) {
+                        const participantId = participant.replace(/@s.whatsapp.net/g, '@c.us');
+                        if (message.messageStubType === 'GROUP_PARTICIPANT_ADD') {
+                            await handleWelcomeMessage(sock, groupMetadata, participantId);
+                        }
+                    }
+                }
+            }
+        }
 
-        if (!message.message) return;
-
-        // Llamar a la función unificada para manejar el mensaje
-        await handleMessage(message, commands);
+        // Procesar mensajes normales y comandos
+        if (message.message) {
+            await handleMessage(message, commands).catch(console.error);
+        }
     }
 };
