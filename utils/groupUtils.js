@@ -1,4 +1,5 @@
 const GroupSettings = require('../models/GroupSettings');
+const { getSocket } = require('../bot');
 
 const groupSettingsCache = new Map();
 
@@ -61,9 +62,28 @@ function clearGroupSettingsCache(groupId) {
     groupSettingsCache.delete(groupId);
 }
 
+/**
+ * Checks if a user is an admin in a group.
+ * @param {string} groupId The JID of the group.
+ * @param {string} userId The JID of the user.
+ * @returns {Promise<boolean>}
+ */
+async function isAdmin(groupId, userId) {
+    const sock = getSocket();
+    try {
+        const metadata = await sock.groupMetadata(groupId);
+        const participant = metadata.participants.find(p => p.id === userId);
+        return !!participant && (participant.admin === 'admin' || participant.admin === 'superadmin');
+    } catch (error) {
+        console.error(`Error checking admin status for ${userId} in ${groupId}:`, error);
+        return false;
+    }
+}
+
 module.exports = {
     findOrCreateGroup,
     getGroupSettings,
     getCurrency,
     clearGroupSettingsCache,
+    isAdmin,
 };
