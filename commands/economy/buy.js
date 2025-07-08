@@ -97,7 +97,7 @@ module.exports = {
                     'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/DSC02967_tolmkw.jpg'
                 ];
                 const randomImage = roseImages[Math.floor(Math.random() * roseImages.length)];
-                const successMessage = `🌹 *¡Un detalle especial para alguien especial!* 🌹\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado un *Ramo de rosas*.\n\n${paymentMessage}\n\n*Balance actual:*\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`;
+                const successMessage = `🌹 *¡Un detalle especial para alguien especial!* 🌹\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado un *Ramo de rosas*.\n\n${paymentMessage}`;
 
                 await sock.sendMessage(chatId, {
                     image: { url: randomImage },
@@ -106,7 +106,7 @@ module.exports = {
                 });
 
             } else if (itemNameLower === 'cerveza heladita') {
-                const successMessage = `🍻 *¡Salud por esa compra!* 🍻\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado una *Cerveza Heladita*.\n\n${paymentMessage}\n\n*Balance actual:*\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`;
+                const successMessage = `🍻 *¡Salud por esa compra!* 🍻\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado una *Cerveza Heladita*.\n\n${paymentMessage}`;
 
                 await sock.sendMessage(chatId, {
                     image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751939301/images_byic4s.jpg' },
@@ -117,7 +117,7 @@ module.exports = {
             } else {
                 // Mensaje de compra genérico para otros items
                 await sock.sendMessage(chatId, {
-                    text: `🛍️ *¡Compra exitosa!* 🛍️\n\n${paymentMessage}\n\n*Balance actual:*\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`,
+                    text: `🛍️ *¡Compra exitosa!* 🛍️\n\n${paymentMessage}`,
                     mentions
                 });
             }
