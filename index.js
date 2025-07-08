@@ -5,7 +5,7 @@ const pino = require('pino');
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./config/database');
-const eventHandler = require('./handlers/eventHandler');
+const { handleMessage, handleWelcomeMessage } = require('./handlers/eventHandler');
 const loadCommands = require('./handlers/commandHandler');
 const { setSocket } = require('./bot');
 require('dotenv').config();
@@ -23,7 +23,7 @@ async function connectToWhatsApp() {
     sock = makeWASocket({
         auth: state,
         logger: pino({
-            level: 'info', // Cambiado de 'trace' a 'info' para reducir el ruido
+            level: 'info',
             transport: {
                 target: 'pino-pretty',
                 options: {
@@ -45,7 +45,7 @@ async function connectToWhatsApp() {
     // Desacoplar el procesamiento de mensajes para no bloquear el event loop
     sock.ev.on('messages.upsert', (msg) => {
         setImmediate(() => {
-            eventHandler(msg, commands).catch(console.error);
+            handleMessage(msg, commands).catch(console.error);
         });
     });
 

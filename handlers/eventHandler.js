@@ -123,30 +123,8 @@ async function handleWelcomeMessage(sock, groupMetadata, newParticipantId) {
     }
 }
 
-module.exports = async (m, commands) => {
-    if (m.messages && m.messages.length > 0) {
-        const message = m.messages[0];
-
-        // Manejar eventos de participación en grupo (bienvenida/despedida)
-        if (message.messageStubType) {
-            const sock = getSocket();
-            const remoteJid = message.key.remoteJid;
-            if (remoteJid.endsWith('@g.us')) {
-                const groupMetadata = await sock.groupMetadata(remoteJid).catch(e => console.log(e));
-                if (groupMetadata) {
-                    for (const participant of message.messageStubParameters) {
-                        const participantId = participant.replace(/@s.whatsapp.net/g, '@c.us');
-                        if (message.messageStubType === 'GROUP_PARTICIPANT_ADD') {
-                            await handleWelcomeMessage(sock, groupMetadata, participantId);
-                        }
-                    }
-                }
-            }
-        }
-
-        // Procesar mensajes normales y comandos
-        if (message.message) {
-            await handleMessage(message, commands).catch(console.error);
-        }
-    }
+// Se elimina la exportación anterior y se reemplaza por un objeto
+module.exports = {
+    handleMessage, // La función principal que procesa comandos
+    handleWelcomeMessage // La función de bienvenida que ahora se exporta
 };
