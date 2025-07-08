@@ -44,9 +44,15 @@ async function connectToWhatsApp() {
 
     // Desacoplar el procesamiento de mensajes para no bloquear el event loop
     sock.ev.on('messages.upsert', (msg) => {
-        setImmediate(() => {
-            handleMessage(msg, commands).catch(console.error);
-        });
+        if (msg.messages && msg.messages.length > 0) {
+            const message = msg.messages[0];
+            // Asegurarse de que el mensaje tiene contenido antes de procesarlo
+            if (message.message) {
+                setImmediate(() => {
+                    handleMessage(message, commands).catch(console.error);
+                });
+            }
+        }
     });
 
     sock.ev.on('group-participants.update', async (update) => {

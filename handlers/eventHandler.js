@@ -100,7 +100,10 @@ async function handleWelcomeMessage(sock, groupMetadata, newParticipantId) {
         const groupSettings = await GroupSettings.findOne({ groupId: groupMetadata.id });
         if (groupSettings && groupSettings.welcomeMessage) {
             const memberCount = groupMetadata.participants.length;
-            let welcomeText = groupSettings.welcomeMessage
+            const urlRegex = /(https?:\/\/[^\s]+)/;
+            const cleanMessage = groupSettings.welcomeMessage.replace(urlRegex, '').trim();
+
+            let welcomeText = cleanMessage
                 .replace(/@user/g, `@${newParticipantId.split('@')[0]}`)
                 .replace(/@group/g, groupMetadata.subject)
                 .replace(/@count/g, memberCount);
