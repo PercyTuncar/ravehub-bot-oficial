@@ -66,7 +66,7 @@ const products = [
     emoji: "🧸",
   },
   {
-    name: "Cerveza fría",
+    name: "Cerveza Heladita",
     description: "Ideal para refrescarse en el post-rave 🥵🍺",
     price: 100,
     emoji: "🍺",

@@ -110,8 +110,8 @@ module.exports = {
                 case 'peluche rave-bebé':
                     giftMessage = `🧸 ¡Para que no duermas solo(a), @${target.jid.split('@')[0]}! 🧸\n\n@${sender.jid.split('@')[0]} te ha regalado un *${giftedItemName}* ${itemEmoji}. ¡Tu nuevo compañero de abrazos post-fiesta!`;
                     break;
-                case 'cerveza fría':
-                    giftMessage = `🍻 ¡Saludcita, @${target.jid.split('@')[0]}! 🍻\n\n¡Para la sed! @${sender.jid.split('@')[0]} te invita *${quantity > 1 ? `${quantity} cervezas frías` : 'una cervecita fría'}* ${itemEmoji}. ¡Que sigan los brindis!`;
+                case 'cerveza heladita':
+                    giftMessage = `🍻 ¡Saludcita, @${target.jid.split('@')[0]}! 🍻\n\n¡Para la sed! @${sender.jid.split('@')[0]} te invita *${quantity > 1 ? `${quantity} cervezas heladitas` : 'una cervecita heladita'}* ${itemEmoji}. ¡Que sigan los brindis!`;
                     break;
                 case 'carta de amor rave':
                     giftMessage = `💌 ¡El amor está en el aire! 💌\n\n¡Atención @${target.jid.split('@')[0]}! Has recibido una *${giftedItemName}* ${itemEmoji} de parte de @${sender.jid.split('@')[0]}. ¿Será una declaración? ¡Qué nervios!`;

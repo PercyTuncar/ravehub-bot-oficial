@@ -105,6 +105,15 @@ module.exports = {
                     mentions: mentions
                 });
 
+            } else if (itemNameLower === 'cerveza heladita') {
+                const successMessage = `🍻 *¡Salud por esa compra!* 🍻\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado una *Cerveza Heladita*.\n\n${paymentMessage}\n\n*Balance actual:*\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`;
+
+                await sock.sendMessage(chatId, {
+                    image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751939301/images_byic4s.jpg' },
+                    caption: successMessage,
+                    mentions: mentions
+                });
+
             } else {
                 // Mensaje de compra genérico para otros items
                 await sock.sendMessage(chatId, {

@@ -66,7 +66,7 @@ const shopItems = [
     emoji: "🧸",
   },
   {
-    name: "Cerveza fría",
+    name: "Cerveza Heladita",
     description: "Ideal para refrescarse en el post-rave 🥵🍺",
     price: 100,
     emoji: "🍺",
@@ -207,7 +207,7 @@ module.exports = {
         "🎁 Regalos y Sorpresas": [
           "Ramo de rosas",
           "Peluche rave-bebé",
-          "Cerveza fría",
+          "Cerveza Heladita",
           "Carta de amor rave",
         ],
         "🎟️ Tickets de Eventos": [

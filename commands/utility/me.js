@@ -90,19 +90,19 @@ ${user.debts && user.debts.length > 0 ?
 ${user.inventory && user.inventory.length > 0 ?
     user.inventory.map((item) => {
         // Lógica especial para las cervezas
-        if (item.name.toLowerCase() === 'cerveza') {
+        if (item.name.toLowerCase() === 'cerveza heladita') {
             const beerCases = Math.floor(item.quantity / 12);
             const remainingBeers = item.quantity % 12;
             let beerText = [];
 
             if (beerCases > 0) {
                 const caseText = beerCases > 1 ? 'Cajas' : 'Caja';
-                beerText.push(`> 📦 *x${beerCases} ${caseText} de Cerveza*`);
+                beerText.push(`> 📦 *x${beerCases} ${caseText} de Cerveza Heladita*`);
             }
             if (remainingBeers > 0) {
                 // Si hay cajas, se muestra un '+', si no, una 'x'
                 const prefix = beerCases > 0 ? '+ ' : 'x';
-                const beerUnitText = remainingBeers > 1 ? 'Cervezas' : 'Cerveza';
+                const beerUnitText = remainingBeers > 1 ? 'Cervezas Heladitas' : 'Cerveza Heladita';
                 beerText.push(`> 🍻 *${prefix}${remainingBeers} ${beerUnitText}*`);
             }
             return beerText.join('\n');
