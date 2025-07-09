@@ -86,7 +86,10 @@ const products = [
     description: "Ideal para refrescarse 🥵🍺",
     price: 100,
     emoji: "🍺",
-    category: "Regalos y Sorpresas",
+    category: "Comida y Bebidas",
+    type: "drink",
+    aliases: ["cerveza", "chela", "pilsen", "cristal"],
+    effects: { hunger: 5, thirst: 25, stress: -10 },
   },
   {
     name: "Carta de amor rave",
@@ -94,6 +97,16 @@ const products = [
     price: 150,
     emoji: "💌",
     category: "Regalos y Sorpresas",
+  },
+  {
+    name: "1/4 de Pollo a la Brasa",
+    description: "Un clásico peruano para el bajón.",
+    price: 25,
+    emoji: "🍗",
+    category: "Comida y Bebidas",
+    type: "food",
+    aliases: ["pollo", "1/4 de pollo", "pollo a la brasa", "1/4 de pollo a la brasa"],
+    effects: { hunger: 35, thirst: 0, stress: -5 },
   },
 
   // 🎫 Tickets de eventos
@@ -268,38 +281,36 @@ const products = [
   },
 ];
 
-const seedDB = async () => {
-    try {
-        await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+const updateShop = async () => {
+  // Conexión a la base de datos
+  const dbURI = process.env.MONGODB_URI;
 
-        console.log('Conectado a MongoDB...');
+  try {
+    await mongoose.connect(dbURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log('Conectado a MongoDB...');
 
-        // Limpiar la colección de productos existentes
-        await ShopItem.deleteMany({});
-        console.log('Productos antiguos eliminados.');
-
-        // Mapear los nuevos productos al modelo, asumiendo stock infinito
-        const itemsToInsert = products.map(product => ({
-            ...product,
-            stock: -1, // Stock infinito
-            // No se especifica groupId, serán items globales
-        }));
-
-        // Insertar los nuevos productos
-        await ShopItem.insertMany(itemsToInsert);
-        console.log('¡La tienda ha sido actualizada con los nuevos productos!');
-
-    } catch (error) {
-        console.error('Error actualizando la tienda:', error);
-    } finally {
-        // Cerrar la conexión a la base de datos
-        await mongoose.connection.close();
-        console.log('Conexión a MongoDB cerrada.');
+    // Itera sobre la lista de productos y actualiza o crea
+    for (const productData of products) {
+      await ShopItem.findOneAndUpdate(
+        { name: productData.name }, // Busca por nombre para evitar duplicados
+        productData,
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
     }
+
+    console.log('La tienda ha sido actualizada con éxito.');
+
+  } catch (error) {
+    console.error('Error al actualizar la tienda:', error);
+  } finally {
+    // Cerrar la conexión a la base de datos
+    await mongoose.connection.close();
+    console.log('Conexión a MongoDB cerrada.');
+  }
 };
 
 // Ejecutar el script
-seedDB();
+updateShop();

@@ -112,7 +112,7 @@ module.exports = {
                 }
             }
 
-            const existingItem = user.inventory.find(invItem => invItem.itemId.toString() === itemToBuy._id.toString());
+            const existingItem = user.inventory.find(invItem => invItem.itemId && invItem.itemId.toString() === itemToBuy._id.toString());
 
             if (existingItem) {
                 existingItem.quantity += quantity;
