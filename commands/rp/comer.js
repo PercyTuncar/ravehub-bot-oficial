@@ -32,7 +32,10 @@ module.exports = {
         }
 
         if (!itemToEat || itemToEat.quantity <= 0) {
-            return sock.sendMessage(chatId, { text: 'No tienes comida en tu inventario. Usa `.tienda` para comprar algo y `.work` si necesitas dinero.' });
+            return sock.sendMessage(chatId, { 
+                text: `@${senderId.split('@')[0]}, no tienes comida en tu inventario. Usa \`.shop\` para ver la tienda, \`.buy\` para comprar y \`.work\` si necesitas dinero.`,
+                mentions: [senderId]
+            });
         }
 
         const shopItem = itemToEat.itemId;

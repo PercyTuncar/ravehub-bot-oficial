@@ -29,7 +29,10 @@ module.exports = {
         const itemToDrink = user.inventory.find(item => item.name.toLowerCase() === itemName);
 
         if (!itemToDrink || itemToDrink.quantity <= 0) {
-            return sock.sendMessage(chatId, { text: `No tienes "${itemName}" en tu inventario.` });
+            return sock.sendMessage(chatId, { 
+                text: `@${senderId.split('@')[0]}, no tienes "${itemName}" en tu inventario.`,
+                mentions: [senderId]
+            });
         }
 
         const isDrinkable = ['cerveza heladita', 'pisco sour'].includes(itemName);
