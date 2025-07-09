@@ -1,14 +1,12 @@
 // Script para fusionar usuarios duplicados en MongoDB
 // Ejecuta este script con Node.js después de configurar tu conexión a MongoDB
 
+require('dotenv').config();
 const mongoose = require('mongoose');
 const User = require('./models/User');
 
-// Cambia la URI por la de tu base de datos
-const MONGODB_URI = 'mongodb://localhost:27017/TU_BASE_DE_DATOS';
-
 async function mergeDuplicates() {
-  await mongoose.connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true });
+  await mongoose.connect(process.env.MONGODB_URI);
   console.log('Conectado a MongoDB');
 
   // Encuentra duplicados por jid+groupId

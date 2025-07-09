@@ -6,10 +6,7 @@ const dbConfig = require('./config/database');
 
 async function mergeCervezas() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('Conectado a la base de datos.');
 
     const users = await User.find({

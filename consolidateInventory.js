@@ -4,10 +4,7 @@ const User = require('./models/User');
 
 async function consolidateInventory() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log('Conectado a la base de datos para consolidar inventarios.');
 
     const users = await User.find({});

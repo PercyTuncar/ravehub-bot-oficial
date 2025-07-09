@@ -5,10 +5,7 @@ const User = require('./models/User');
 
 const migrateDebts = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-        });
+        await mongoose.connect(process.env.MONGODB_URI);
         console.log('Conectado a MongoDB para la migración...');
 
         // 1. Actualizar todas las deudas existentes al 10% de interés
