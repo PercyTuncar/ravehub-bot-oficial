@@ -47,10 +47,12 @@ module.exports = {
 
         } else {
             // Si no se especificó un item, buscar el primer item de comida en el inventario
-            const allFoodShopItems = await ShopItem.find({ type: 'food' });
+            const allFoodShopItems = await ShopItem.find({ $or: [{ type: 'food' }, { type: 'drink' }] });
             const allFoodShopItemIds = allFoodShopItems.map(item => item._id.toString());
             
-            itemToEat = user.inventory.find(invItem => allFoodShopItemIds.includes(invItem.itemId.toString()));
+            // Se añade la comprobación "invItem.itemId &&" para ignorar items corruptos
+            itemToEat = user.inventory.find(invItem => invItem.itemId && allFoodShopItemIds.includes(invItem.itemId.toString()));
+            
             if (itemToEat) {
                 shopItem = allFoodShopItems.find(si => si._id.equals(itemToEat.itemId));
             }
@@ -63,11 +65,17 @@ module.exports = {
             });
         }
 
-        if (!shopItem || !shopItem.effects || shopItem.effects.hunger === 0) {
-            return sock.sendMessage(chatId, { text: `El item "${itemToEat.name}" no es comestible.` });
+        // Comprobar si el item tiene efectos definidos
+        if (!shopItem || !shopItem.effects || (shopItem.effects.hunger === 0 && shopItem.effects.thirst === 0 && shopItem.effects.stress === 0)) {
+            return sock.sendMessage(chatId, { text: `El item "${shopItem.name}" no es comestible ni bebible.` });
         }
 
-        user.status.hunger = Math.min(100, user.status.hunger + shopItem.effects.hunger);
+        // Aplicar efectos
+        const initialStatus = { ...user.status };
+        user.status.hunger = Math.min(100, user.status.hunger + (shopItem.effects.hunger || 0));
+        user.status.thirst = Math.min(100, user.status.thirst + (shopItem.effects.thirst || 0));
+        user.status.stress = Math.max(0, user.status.stress + (shopItem.effects.stress || 0)); // El estrés se reduce, por eso el + con valor negativo
+
         itemToEat.quantity -= 1;
 
         if (itemToEat.quantity <= 0) {
@@ -77,6 +85,18 @@ module.exports = {
         user.lastInteraction = Date.now();
         await user.save();
 
-        await sock.sendMessage(chatId, { text: `Has comido ${shopItem.name}. Tu hambre ahora es ${user.status.hunger}%.` });
+        // Mensaje de respuesta detallado
+        let effectsMessage = `Has comido ${shopItem.name}.`;
+        if (user.status.hunger > initialStatus.hunger) {
+            effectsMessage += `\nTu hambre ahora es ${user.status.hunger}%.`;
+        }
+        if (user.status.thirst > initialStatus.thirst) {
+            effectsMessage += `\nTu sed ahora es ${user.status.thirst}%.`;
+        }
+        if (user.status.stress < initialStatus.stress) {
+            effectsMessage += `\nTu estrés se ha reducido a ${user.status.stress}%.`;
+        }
+
+        await sock.sendMessage(chatId, { text: effectsMessage });
     },
 };
