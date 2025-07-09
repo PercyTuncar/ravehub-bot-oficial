@@ -17,21 +17,30 @@ const checkUserStatus = async (client) => {
 
         // Avisos automáticos
         if (user.status.hunger < 10 && !user.notifiedHunger) {
-            client.sendMessage(user.groupId, `⚠️ @${user.jid.split('@')[0]} Tienes mucha hambre, usa \`.comer\` para evitar perder salud.`);
+            client.sendMessage(user.groupId, { 
+                text: `⚠️ @${user.jid.split('@')[0]} Tienes mucha hambre, usa \`.comer\` para evitar perder salud.`,
+                mentions: [user.jid]
+            });
             user.notifiedHunger = true; // Para no spamear
         } else if (user.status.hunger >= 10) {
             user.notifiedHunger = false;
         }
 
         if (user.status.thirst < 10 && !user.notifiedThirst) {
-            client.sendMessage(user.groupId, `⚠️ @${user.jid.split('@')[0]} Estás muy deshidratado, usa \`.beber\` para mantenerte vivo.`);
+            client.sendMessage(user.groupId, {
+                text: `⚠️ @${user.jid.split('@')[0]} Estás muy deshidratado, usa \`.beber\` para mantenerte vivo.`,
+                mentions: [user.jid]
+            });
             user.notifiedThirst = true;
         } else if (user.status.thirst >= 10) {
             user.notifiedThirst = false;
         }
 
         if (user.status.stress > 80 && !user.notifiedStress) {
-            client.sendMessage(user.groupId, `⚠️ @${user.jid.split('@')[0]} Tu nivel de estrés es muy alto. Considera usar \`.relajarse\` o consumir algo de la tienda.`);
+            client.sendMessage(user.groupId, {
+                text: `⚠️ @${user.jid.split('@')[0]} Tu nivel de estrés es muy alto. Considera usar \`.relajarse\` o consumir algo de la tienda.`,
+                mentions: [user.jid]
+            });
             user.notifiedStress = true;
         } else if (user.status.stress <= 80) {
             user.notifiedStress = false;
@@ -47,14 +56,10 @@ const checkUserStatus = async (client) => {
             const moneyLost = user.economy.wallet * moneyLossPercentage;
             const itemsLostCount = Math.min(user.inventory.length, itemsToRemove);
 
-            client.sendMessage(user.groupId, `
-💀 @${user.jid.split('@')[0]} ¡Has muerto por colapso físico!
-Has perdido:
-- XP: –${xpLoss}
-- Dinero: –${moneyLost.toLocaleString()}
-- Inventario: ${itemsLostCount} ítems al azar
-Usa \`.renacer\` para volver al juego.
-            `);
+            client.sendMessage(user.groupId, {
+                text: `💀 @${user.jid.split('@')[0]} ¡Has muerto por colapso físico!\nHas perdido:\n- XP: –${xpLoss}\n- Dinero: –${moneyLost.toLocaleString()}\n- Inventario: ${itemsLostCount} ítems al azar\nUsa \`.renacer\` para volver al juego.`,
+                mentions: [user.jid]
+            });
         }
 
         await user.save();
