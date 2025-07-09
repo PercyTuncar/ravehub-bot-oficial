@@ -1,4 +1,5 @@
 const pino = require('pino');
+require('dotenv').config();
 
 // Configuración centralizada del logger para toda la aplicación.
 const logger = pino({

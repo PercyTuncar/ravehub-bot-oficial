@@ -6,6 +6,7 @@ const { getGroupSettings } = require('../utils/groupUtils');
 const { findOrCreateUser } = require('../utils/userUtils');
 const { getSocket } = require('../bot');
 const logger = require('../config/logger'); // Importar el logger
+require('dotenv').config(); // Ensure environment variables are loaded
 const userCooldowns = new Map();
 const GroupSettings = require('../models/GroupSettings');
 
@@ -23,13 +24,13 @@ async function handleMessage(message, commands) {
                         message.message?.videoMessage?.caption || 
                         '';
 
-    // Log para depuración directa en la consola
-    console.log(`\n--- NUEVO MENSAJE ---`);
-    console.log(`De: ${userJid}`);
-    console.log(`En: ${chatId}`);
-    console.log(`Texto: ${messageText}`);
-    console.log(`Objeto completo:`, JSON.stringify(message, null, 2));
-    console.log(`---------------------\n`);
+    // Log para depuración directa en la consola - ahora usando logger estructurado
+    logger.info({
+        userJid,
+        chatId,
+        messageText: messageText ? (messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText) : 'No text',
+        isGroup
+    }, 'Nuevo mensaje recibido');
 
     // Log detallado de cada mensaje recibido (SECCIÓN COMENTADA PARA EVITAR DUPLICADOS)
     /*
