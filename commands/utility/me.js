@@ -3,6 +3,7 @@ const { getLevelName, xpTable } = require('../../utils/levels');
 const { applyInterestToAllDebts, getPaymentReputation } = require('../../utils/debtUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const User = require('../../models/User');
+const ShopItem = require('../../models/ShopItem'); // Importar el modelo de la tienda
 const { getSocket } = require('../../bot');
 
 module.exports = {
@@ -25,6 +26,13 @@ module.exports = {
                 populate: { path: 'lender', select: 'name jid groupId' } 
             });
 
+            // Obtener todos los items de la tienda para mapear emojis
+            const allShopItems = await ShopItem.find({});
+            const emojiMap = allShopItems.reduce((map, item) => {
+                map[item.name.toLowerCase()] = item.emoji;
+                return map;
+            }, {});
+
             // --- Lógica de Vivienda ---
             const casaSanIsidro = user.inventory.find(item => item.name.toLowerCase() === 'casa en san isidro');
             const casaSJL = user.inventory.find(item => item.name.toLowerCase() === 'casa en sjl');
@@ -41,17 +49,19 @@ module.exports = {
             if (user.inventory && user.inventory.length > 0) {
                 inventoryList = user.inventory
                     .map((item) => {
-                        const emoji = item.itemId?.emoji || "📦";
-                        // CORRECCIÓN: Cambiar el formato de (xN) a xN para mayor claridad
+                        const emoji = emojiMap[item.name.toLowerCase()] || item.itemId?.emoji || "📦";
                         const quantity = item.quantity > 1 ? `x${item.quantity}` : ''; 
                         return `${emoji} *${item.name}* ${quantity}`;
                     })
-                    .join("\n*│* │ \n*│* │ "); // Añade un pequeño espacio entre items
+                    .join("\n*│* │ \n*│* │ ");
             }
 
             const nextLevelXp = xpTable[user.level] || Infinity; // Evitar errores si el nivel es el máximo
             const xpProgress = `${user.xp}/${nextLevelXp}`;
             const reputation = getPaymentReputation(user);
+
+            // Solo muestra la reputación si el usuario es moroso
+            const reputationLine = reputation === '⚠️ Moroso' ? `> *Reputación:* \`${reputation}\`\n` : '';
 
             const mentions = [jid];
 
@@ -71,8 +81,7 @@ module.exports = {
 📊 *ESTADÍSTICAS*
 > *Nivel:* \`${getLevelName(user.level)}\`
 > *XP:* \`${xpProgress}\`
-> *Reputación:* \`${reputation}\`
-> *Deuda Judicial:* \`${currency} ${user.judicialDebt.toLocaleString()}\`
+${reputationLine}> *Deuda Judicial:* \`${currency} ${user.judicialDebt.toLocaleString()}\`
 -----------------------------------
 💰 *ECONOMÍA*
 > *Cartera:* \`${currency} ${user.economy.wallet.toLocaleString()}\`
@@ -89,28 +98,30 @@ ${user.debts && user.debts.length > 0 ?
 🎒 *INVENTARIO*
 ${user.inventory && user.inventory.length > 0 ?
     user.inventory.map((item) => {
-        // Lógica especial para las cervezas
+        // Lógica unificada para todos los items
+        const emoji = emojiMap[item.name.toLowerCase()] || item.itemId?.emoji || "📦";
+        const quantity = item.quantity > 1 ? `x${item.quantity}` : '';
+        
+        // Lógica especial para cervezas (agrupar en cajas)
         if (item.name.toLowerCase() === 'cerveza heladita') {
             const beerCases = Math.floor(item.quantity / 12);
             const remainingBeers = item.quantity % 12;
             let beerText = [];
 
             if (beerCases > 0) {
+                const caseEmoji = emojiMap['caja de cerveza'] || '📦'; // Asumiendo que tienes un item para la caja
                 const caseText = beerCases > 1 ? 'Cajas' : 'Caja';
-                beerText.push(`> 📦 *x${beerCases} ${caseText} de Cerveza Heladita*`);
+                beerText.push(`> ${caseEmoji} *x${beerCases} ${caseText} de Cerveza Heladita*`);
             }
             if (remainingBeers > 0) {
-                // Si hay cajas, se muestra un '+', si no, una 'x'
+                const beerEmoji = emojiMap['cerveza heladita'] || '🍻';
                 const prefix = beerCases > 0 ? '+ ' : 'x';
                 const beerUnitText = remainingBeers > 1 ? 'Cervezas Heladitas' : 'Cerveza Heladita';
-                beerText.push(`> 🍻 *${prefix}${remainingBeers} ${beerUnitText}*`);
+                beerText.push(`> ${beerEmoji} *${prefix}${remainingBeers} ${beerUnitText}*`);
             }
             return beerText.join('\n');
         }
-
-        // Lógica para otros items
-        const emoji = item.itemId?.emoji || "📦";
-        const quantity = item.quantity > 1 ? `x${item.quantity}` : '';
+        
         return `> ${emoji} *${item.name}* ${quantity}`;
     }).join('\n') :
     '> ✅ _Inventario vacío_'}

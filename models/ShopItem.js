@@ -5,6 +5,8 @@ const shopItemSchema = new mongoose.Schema({
   description: { type: String, default: '' },
   price: { type: Number, required: true },
   emoji: { type: String, default: '🛍️' },
+  category: { type: String, default: 'General' },
+  aliases: [{ type: String }],
 });
 
 const ShopItem = mongoose.model('ShopItem', shopItemSchema);

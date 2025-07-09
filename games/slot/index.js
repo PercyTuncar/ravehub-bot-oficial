@@ -19,33 +19,69 @@ async function play(sock, chatId, jid, user, betAmount) {
     const currency = await getCurrency(chatId);
     const userMention = `@${jid.split('@')[0]}`;
 
+    // 1. Mensaje de bienvenida (se mantiene igual)
     await sock.sendMessage(chatId, {
-        image: { url: SLOT_IMAGE_URL },
+        video: { url: SLOT_IMAGE_URL },
+        gifPlayback: true,
         caption: `🎰 *¡Tragamonedas activada!* 🎰\n\n*Jugador:* ${userMention}\n*Apuesta:* ${currency} ${betAmount.toLocaleString()}\n\n*🔄 Girando...*`,
         mentions: [jid]
     });
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await sleep(250); // Pequeña pausa después de la bienvenida
 
-    const reels = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
+    const finalReels = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
+    let displayReels = [
+        { emoji: '❓' }, { emoji: '❓' }, { emoji: '❓' }
+    ];
 
-    // Animation
-    await sock.sendMessage(chatId, { text: `| ${reels[0].emoji} | ❓ | ❓ |` });
-    await new Promise(resolve => setTimeout(resolve, 900));
-    await sock.sendMessage(chatId, { text: `| ${reels[0].emoji} | ${reels[1].emoji} | ❓ |` });
-    await new Promise(resolve => setTimeout(resolve, 900));
+    // 2. Mensaje de animación que será editado
+    const animationMsg = await sock.sendMessage(chatId, { text: `| ${displayReels[0].emoji} | ${displayReels[1].emoji} | ${displayReels[2].emoji} |` });
+    const msgKey = animationMsg.key;
 
-    // Final reel reveal
-    const finalReelsText = `| ${reels[0].emoji} | ${reels[1].emoji} | ${reels[2].emoji} |`;
-    await sock.sendMessage(chatId, { text: finalReelsText });
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    // 3. Animación de los rodillos (nueva lógica)
+    const spinDelays = [150, 250, 400]; // Tiempos de espera para más emoción
 
-    // Determine result
+    // Gira el primer rodillo
+    for (let i = 0; i < 3; i++) {
+        displayReels[0] = getRandomSymbol();
+        const text = `| ${displayReels[0].emoji} | ❓ | ❓ |`;
+        await sock.sendMessage(chatId, { text, edit: msgKey });
+        await sleep(spinDelays[0]);
+    }
+    displayReels[0] = finalReels[0];
+    await sock.sendMessage(chatId, { text: `| ${displayReels[0].emoji} | ❓ | ❓ |`, edit: msgKey });
+    await sleep(250);
+
+    // Gira el segundo rodillo
+    for (let i = 0; i < 2; i++) {
+        displayReels[1] = getRandomSymbol();
+        const text = `| ${displayReels[0].emoji} | ${displayReels[1].emoji} | ❓ |`;
+        await sock.sendMessage(chatId, { text, edit: msgKey });
+        await sleep(spinDelays[1]);
+    }
+    displayReels[1] = finalReels[1];
+    await sock.sendMessage(chatId, { text: `| ${displayReels[0].emoji} | ${displayReels[1].emoji} | ❓ |`, edit: msgKey });
+    await sleep(250);
+
+    // Gira el tercer rodillo
+    displayReels[2] = getRandomSymbol();
+    await sock.sendMessage(chatId, { text: `| ${displayReels[0].emoji} | ${displayReels[1].emoji} | ${displayReels[2].emoji} |`, edit: msgKey });
+    await sleep(spinDelays[2]);
+
+    // Muestra el resultado final
+    displayReels[2] = finalReels[2];
+    const finalText = `| ${displayReels[0].emoji} | ${displayReels[1].emoji} | ${displayReels[2].emoji} |`;
+    await sock.sendMessage(chatId, { text: finalText, edit: msgKey });
+
+
+    await sleep(500); // Pausa antes de mostrar el resultado final
+
+    // 4. Determinar el resultado (lógica existente)
     let resultText = '';
     let win = false;
     let netWinnings = -betAmount; // Start with the loss
 
-    const [s1, s2, s3] = reels;
+    const [s1, s2, s3] = finalReels; // <-- LÍNEA CORREGIDA
     let winSymbol = null;
     let winCount = 0;
 
@@ -126,6 +162,10 @@ _¡Inténtalo de nuevo!_`;
     }
 
     updateGameStats(user.jid, chatId, 'slot', { [win ? 'wins' : 'losses']: 1, moneyChange: netWinnings });
+}
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 async function getInfo(sock, chatId) {

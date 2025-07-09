@@ -6,7 +6,6 @@ const { getGroupSettings } = require('../utils/groupUtils');
 const { findOrCreateUser } = require('../utils/userUtils');
 const { getSocket } = require('../bot');
 const logger = require('../config/logger'); // Importar el logger
-const { getContentType, getMessageText } = require('../utils/messageUtils'); // Importar utilidades de mensaje
 const userCooldowns = new Map();
 const GroupSettings = require('../models/GroupSettings');
 
@@ -16,17 +15,31 @@ async function handleMessage(message, commands) {
     const chatId = message.key.remoteJid;
     const userJid = message.key.participant || message.key.remoteJid;
     const isGroup = chatId.endsWith('@g.us');
-    const messageType = getContentType(message.message);
-    const messageText = getMessageText(message.message);
 
-    // Log detallado de cada mensaje recibido
+    // Forma directa de obtener el texto del mensaje sin messageUtils
+    const messageText = message.message?.conversation || 
+                        message.message?.extendedTextMessage?.text || 
+                        message.message?.imageMessage?.caption || 
+                        message.message?.videoMessage?.caption || 
+                        '';
+
+    // Log para depuración directa en la consola
+    console.log(`\n--- NUEVO MENSAJE ---`);
+    console.log(`De: ${userJid}`);
+    console.log(`En: ${chatId}`);
+    console.log(`Texto: ${messageText}`);
+    console.log(`Objeto completo:`, JSON.stringify(message, null, 2));
+    console.log(`---------------------\n`);
+
+    // Log detallado de cada mensaje recibido (SECCIÓN COMENTADA PARA EVITAR DUPLICADOS)
+    /*
     logger.info({
         chatId,
         userJid,
         isGroup,
-        messageType,
         messageText: messageText ? (messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText) : 'No text'
     }, 'Mensaje recibido');
+    */
 
     // --- Lógica Anti-Link (Versión corregida y única) ---
     const groupSettings = await getGroupSettings(chatId);

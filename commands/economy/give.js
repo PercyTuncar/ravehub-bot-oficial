@@ -35,33 +35,37 @@ module.exports = {
             const sender = await findOrCreateUser(senderJid, groupId);
             const target = await findOrCreateUser(mentionedJid, groupId);
 
-            const itemInInventory = sender.inventory.find(item => item.name.toLowerCase() === itemName);
+            const itemToGive = await ShopItem.findOne({
+                $or: [
+                    { name: new RegExp(`^${itemName}$`, 'i') },
+                    { aliases: new RegExp(`^${itemName}$`, 'i') }
+                ]
+            });
 
-            if (!itemInInventory || itemInInventory.quantity < quantity) {
-                return sock.sendMessage(groupId, { text: `No tienes suficientes "${itemName}" en tu inventario. Tienes ${itemInInventory ? itemInInventory.quantity : 0}.` });
+            if (!itemToGive) {
+                return sock.sendMessage(groupId, { text: `El item "${itemName}" no existe.` });
             }
 
-            // Obtener la información completa del item desde la base de datos para acceder a su categoría y emoji
-            const shopItem = await ShopItem.findById(itemInInventory.itemId);
-            if (!shopItem) {
-                // Esto no debería pasar si el inventario está sincronizado, pero es una buena validación
-                return sock.sendMessage(groupId, { text: 'No se pudo encontrar la información de este item. Contacta al administrador.' });
+            const itemInInventory = sender.inventory.find(item => item.itemId.equals(itemToGive._id));
+
+            if (!itemInInventory || itemInInventory.quantity < quantity) {
+                return sock.sendMessage(groupId, { text: `No tienes suficientes "${itemToGive.name}" en tu inventario. Tienes ${itemInInventory ? itemInInventory.quantity : 0}.` });
             }
 
             // Quitar item del inventario del emisor
             itemInInventory.quantity -= quantity;
             if (itemInInventory.quantity === 0) {
-                sender.inventory = sender.inventory.filter(item => item.name.toLowerCase() !== itemName);
+                sender.inventory = sender.inventory.filter(item => !item.itemId.equals(itemToGive._id));
             }
 
             // Añadir item al inventario del receptor
-            const targetItem = target.inventory.find(item => item.itemId.equals(itemInInventory.itemId));
+            const targetItem = target.inventory.find(item => item.itemId.equals(itemToGive._id));
             if (targetItem) {
                 targetItem.quantity += quantity;
             } else {
                 target.inventory.push({
-                    itemId: itemInInventory.itemId,
-                    name: itemInInventory.name,
+                    itemId: itemToGive._id,
+                    name: itemToGive.name,
                     quantity: quantity,
                 });
             }
@@ -70,8 +74,8 @@ module.exports = {
             await target.save();
 
             // --- Mensaje de Regalo Mejorado por Categoría ---
-            const giftedItemName = shopItem.name;
-            const itemEmoji = shopItem.emoji || '🎁';
+            const giftedItemName = itemToGive.name;
+            const itemEmoji = itemToGive.emoji || '🎁';
             const itemNameLower = giftedItemName.toLowerCase();
 
             let giftMessage = '';

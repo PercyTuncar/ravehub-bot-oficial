@@ -8,7 +8,7 @@ module.exports = {
     name: 'buy',
     description: 'Comprar un ítem.',
     aliases: ['comprar'],
-    usage: '.buy <item_id>',
+    usage: '.buy <cantidad> <nombre del item>',
     category: 'economy',
     async execute(message, args) {
         const sock = getSocket();
@@ -17,70 +17,110 @@ module.exports = {
         const currency = await getCurrency(chatId);
 
         if (args.length === 0) {
-            return sock.sendMessage(chatId, { text: 'Debes especificar el item que quieres comprar. Uso: .buy <nombre del item>' });
+            return sock.sendMessage(chatId, { text: 'Debes especificar el item que quieres comprar. Uso: .buy <cantidad> <nombre del item>' });
         }
 
-        const itemName = args.join(' ').toLowerCase();
+        // --- Lógica para parsear cantidad y nombre ---
+        let quantity = 1;
+        let itemNameInput = args.join(' ').toLowerCase();
+        const quantityArg = args.find(arg => !isNaN(parseInt(arg)));
+
+        if (quantityArg) {
+            quantity = parseInt(quantityArg);
+            itemNameInput = args.filter(arg => arg !== quantityArg).join(' ').toLowerCase();
+        }
+
+        let finalItemName = itemNameInput;
+        let purchaseUnit = 'unidad(es)';
+        const beerName = 'cerveza heladita';
+
+        // Lógica para "media caja", "caja" o "cajas"
+        if (itemNameInput.includes(beerName)) {
+            if (itemNameInput.includes('media caja')) {
+                quantity = 6;
+                finalItemName = beerName;
+                purchaseUnit = 'media caja';
+            } else if (itemNameInput.includes('caja')) {
+                const cajas = quantity; // La cantidad parseada ahora son las cajas
+                quantity = cajas * 12; // Convertir cajas a unidades
+                finalItemName = beerName;
+                purchaseUnit = cajas > 1 ? 'cajas' : 'caja';
+            }
+        }
+
+        if (quantity <= 0 || !Number.isInteger(quantity)) {
+            return sock.sendMessage(chatId, { text: 'La cantidad debe ser un número entero y positivo.' });
+        }
 
         try {
-            // Refactorización: Usar la función centralizada para obtener el usuario.
             let user = await findOrCreateUser(senderJid, chatId, message.pushName);
 
-            const itemToBuy = await ShopItem.findOne({ name: new RegExp(`^${itemName}$`, 'i') });
+            // Lógica de búsqueda mejorada para singular/plural
+            const cleanedItemName = finalItemName.replace(/caja(s)?\sde\s/,'').trim();
+            const searchPattern = cleanedItemName.split(' ').map(word => {
+                if (word.endsWith('s')) {
+                    return `${word.slice(0, -1)}(s)?`;
+                }
+                return word;
+            }).join(' ');
+
+            const itemToBuy = await ShopItem.findOne({
+                $or: [
+                    { name: new RegExp(`^${searchPattern}$`, 'i') },
+                    { aliases: new RegExp(`^${searchPattern}$`, 'i') }
+                ]
+            });
 
             if (!itemToBuy) {
-                return sock.sendMessage(chatId, { text: `El item "${itemName}" no existe en la tienda.` });
+                return sock.sendMessage(chatId, { text: `El item "${itemNameInput}" no existe en la tienda.` });
             }
 
-            const price = itemToBuy.price;
+            const totalPrice = itemToBuy.price * quantity;
             let paymentMessage = '';
 
             // Lógica de compra revisada
             if (user.judicialDebt > 0) {
-                // Usuario con deuda: solo puede usar la cartera
-                if (user.economy.wallet < price) {
-                    return sock.sendMessage(chatId, { text: `ℹ️ Tienes una deuda judicial pendiente y solo puedes comprar con dinero en efectivo (cartera).\n\nNo tienes suficiente para comprar *${itemToBuy.name}*. Necesitas ${currency} ${price} y tienes ${currency} ${user.economy.wallet.toFixed(2)} en la cartera.` });
+                if (user.economy.wallet < totalPrice) {
+                    return sock.sendMessage(chatId, { text: `ℹ️ Tienes una deuda judicial y no tienes suficiente dinero en efectivo para esta compra.\n\nNecesitas ${currency} ${totalPrice.toLocaleString()} y tienes ${currency} ${user.economy.wallet.toLocaleString()} en la cartera.` });
                 }
-                
-                user.economy.wallet -= price;
-                paymentMessage = `Has pagado en efectivo *${currency} ${price}* por tu *${itemToBuy.name}*.`;
+                user.economy.wallet -= totalPrice;
+                paymentMessage = `Has pagado en efectivo *${currency} ${totalPrice.toLocaleString()}*.`;
 
             } else {
-                // Usuario sin deuda: puede usar cartera y banco
-                if (user.economy.wallet + user.economy.bank < price) {
-                    return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar *${itemToBuy.name}*. Necesitas ${currency} ${price}.` });
+                if (user.economy.wallet + user.economy.bank < totalPrice) {
+                    return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar *${quantity} ${itemToBuy.name}*. Necesitas ${currency} ${totalPrice.toLocaleString()}.` });
                 }
 
-                if (user.economy.wallet >= price) {
-                    user.economy.wallet -= price;
-                    paymentMessage = `Has pagado en efectivo *${currency} ${price}* por tu *${itemToBuy.name}*.`;
+                if (user.economy.wallet >= totalPrice) {
+                    user.economy.wallet -= totalPrice;
+                    paymentMessage = `Has pagado en efectivo *${currency} ${totalPrice.toLocaleString()}*.`;
                 } else {
                     const paymentMethods = ['yapeaste', 'plineaste', 'transferiste'];
                     const randomMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
                     
-                    const fromBank = price - user.economy.wallet;
+                    const fromBank = totalPrice - user.economy.wallet;
                     const fromWallet = user.economy.wallet;
                     
                     user.economy.wallet = 0;
                     user.economy.bank -= fromBank;
 
                     if (fromWallet > 0) {
-                        paymentMessage = `Pagaste *${currency} ${fromWallet.toFixed(2)}* en efectivo y ${randomMethod} *${currency} ${fromBank.toFixed(2)}* desde tu banco para comprar tu *${itemToBuy.name}*.`;
+                        paymentMessage = `Pagaste *${currency} ${fromWallet.toLocaleString()}* en efectivo y ${randomMethod} *${currency} ${fromBank.toLocaleString()}* desde tu banco.`;
                     } else {
-                        paymentMessage = `Has ${randomMethod} *${currency} ${price}* desde tu banco para comprar tu *${itemToBuy.name}*.`;
+                        paymentMessage = `Has ${randomMethod} *${currency} ${totalPrice.toLocaleString()}* desde tu banco.`;
                     }
                 }
             }
 
-            const existingItem = user.inventory.find(invItem => invItem.itemId.equals(itemToBuy._id));
+            const existingItem = user.inventory.find(invItem => invItem.name.toLowerCase() === itemToBuy.name.toLowerCase());
 
             if (existingItem) {
-                existingItem.quantity += 1;
+                existingItem.quantity += quantity;
             } else {
                 user.inventory.push({
                     itemId: itemToBuy._id,
                     name: itemToBuy.name,
-                    quantity: 1,
+                    quantity: quantity,
                 });
             }
 
@@ -89,6 +129,22 @@ module.exports = {
             // --- Mensaje de Compra Personalizado ---
             const itemNameLower = itemToBuy.name.toLowerCase();
             const mentions = [senderJid];
+            let purchaseDescription = '';
+
+            // Cambios para media caja de cerveza heladita
+            if (purchaseUnit === 'media caja' && itemNameLower === 'cerveza heladita') {
+                purchaseDescription = `*media caja de Cervezas Heladitas*`;
+            } else if (purchaseUnit.includes('caja') && itemNameLower === 'cerveza heladita') {
+                const cajas = quantity / 12;
+                purchaseDescription = `*${cajas} ${purchaseUnit} de Cervezas Heladitas*`;
+            } else if (purchaseUnit === 'media caja') {
+                purchaseDescription = `*media caja de ${itemToBuy.name}s*`;
+            } else if (purchaseUnit.includes('caja')) {
+                const cajas = quantity / 12;
+                purchaseDescription = `*${cajas} ${purchaseUnit} de ${itemToBuy.name}s*`;
+            } else {
+                purchaseDescription = `*${quantity} ${itemToBuy.name}${quantity > 1 ? 's' : ''}*`;
+            }
 
             if (itemNameLower === 'ramo de rosas') {
                 const roseImages = [
@@ -106,7 +162,7 @@ module.exports = {
                 });
 
             } else if (itemNameLower === 'cerveza heladita') {
-                const successMessage = `🍻 *¡Salud por esa compra!* 🍻\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado una *Cerveza Heladita*.\n\n${paymentMessage}`;
+                const successMessage = `🍻 *¡Salud por esa compra!* 🍻\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado ${purchaseDescription}.\n\n${paymentMessage}`;
 
                 await sock.sendMessage(chatId, {
                     image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751939301/images_byic4s.jpg' },
@@ -117,7 +173,7 @@ module.exports = {
             } else {
                 // Mensaje de compra genérico para otros items
                 await sock.sendMessage(chatId, {
-                    text: `🛍️ *¡Compra exitosa!* 🛍️\n\n${paymentMessage}`,
+                    text: `🛍️ *¡Compra exitosa!* 🛍️\n\nHas comprado ${purchaseDescription}.\n\n${paymentMessage}`,
                     mentions
                 });
             }

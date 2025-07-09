@@ -13,7 +13,7 @@ const SYMBOLS = [
 const MIN_BET = 10;
 const MAX_BET = 5000;
 
-const SLOT_IMAGE_URL = 'https://img.freepik.com/foto-gratis/maquina-tragamonedas-juego-casino_53876-123085.jpg';
+const SLOT_IMAGE_URL = 'https://www.gifss.com/economia/juego/images/tragaperras-05.gif';
 
 module.exports = {
     SYMBOLS,

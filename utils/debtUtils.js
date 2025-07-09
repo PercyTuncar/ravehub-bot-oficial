@@ -6,10 +6,11 @@ const { getSocket } = require('../bot');
  * Calcula y aplica el interés acumulado a todas las deudas activas.
  */
 async function applyInterestToAllDebts() {
-    const debts = await Debt.find();
+    const debts = await Debt.find().populate('borrower');
     const now = new Date();
 
     for (const debt of debts) {
+        // Calcula el interés
         const hoursDiff = Math.floor((now - new Date(debt.lastInterestApplied)) / (1000 * 60 * 60));
         const daysPassed = Math.floor(hoursDiff / 24);
 
@@ -17,8 +18,21 @@ async function applyInterestToAllDebts() {
             const interestAmount = debt.amount * Math.pow(1 + debt.interest, daysPassed) - debt.amount;
             debt.amount += interestAmount;
             debt.lastInterestApplied = now;
-            await debt.save();
         }
+
+        // Verifica si el usuario se ha vuelto moroso
+        const delinquencyDays = 3;
+        const debtAgeInDays = Math.floor((now - new Date(debt.createdAt)) / (1000 * 60 * 60 * 24));
+
+        if (debtAgeInDays > delinquencyDays && !debt.isDelinquent) {
+            debt.isDelinquent = true;
+            if (debt.borrower) {
+                debt.borrower.paymentHistory.paidLate = (debt.borrower.paymentHistory.paidLate || 0) + 1;
+                await debt.borrower.save();
+            }
+        }
+        
+        await debt.save();
     }
 }
 
@@ -29,8 +43,12 @@ async function applyInterestToAllDebts() {
  */
 function getPaymentReputation(user) {
     const { paidOnTime, paidLate } = user.paymentHistory;
-    if (paidOnTime > paidLate && paidOnTime > 5) return '🎖️ Buen Pagador';
-    if (paidLate > paidOnTime && paidLate > 2) return '⚠️ Moroso';
+    const totalDebts = paidOnTime + paidLate;
+
+    if (totalDebts === 0) return '😐 Neutral';
+    if (paidLate > 0) return '⚠️ Moroso';
+    if (paidOnTime > 0 && paidLate === 0) return '🎖️ Buen Pagador';
+    
     return '😐 Neutral';
 }
 

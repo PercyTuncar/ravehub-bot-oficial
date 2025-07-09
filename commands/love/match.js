@@ -1,4 +1,5 @@
 const User = require('../../models/User');
+const { findOrCreateUser } = require('../../utils/userUtils'); // <-- LÍNEA AÑADIDA
 const { getSocket } = require('../../bot');
 const { getMentions } = require('../../utils/messageUtils'); // Asumiendo que tienes una utilidad para obtener menciones
 

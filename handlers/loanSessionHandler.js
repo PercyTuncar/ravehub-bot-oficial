@@ -95,7 +95,7 @@ async function handleLoanResponse(message) {
                 borrower: borrower._id,
                 lender: lender._id,
                 amount: amount,
-                interest: 0.01, // 1% diario por defecto
+                interest: 0.10, // 10% diario
                 createdAt: new Date(),
                 lastInterestApplied: new Date()
             });
@@ -103,9 +103,7 @@ async function handleLoanResponse(message) {
 
             // Vincular deuda al usuario
             borrower.debts.push(newDebt._id);
-            // Marcar como moroso en Infocorp (reputación)
-            borrower.paymentHistory.paidLate = (borrower.paymentHistory.paidLate || 0) + 1;
-
+            
             await lender.save();
             await borrower.save();
 
