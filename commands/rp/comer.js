@@ -11,7 +11,7 @@ module.exports = {
         const senderId = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         
-        const user = await User.findOne({ jid: senderId, groupId: chatId }).populate('inventory.itemId');
+        const user = await User.findOne({ jid: senderId, groupId: chatId });
 
         if (!user) {
             return sock.sendMessage(chatId, { text: 'No tienes un perfil. Usa `.iniciar` para crear uno.' });
@@ -21,18 +21,39 @@ module.exports = {
         }
 
         let itemToEat;
-        const foodInInventory = user.inventory.filter(item => item.itemId && item.itemId.type === 'food');
+        let shopItem;
 
         if (args.length > 0) {
             const itemName = args.join(' ').toLowerCase();
-            itemToEat = foodInInventory.find(item => {
-                if (!item.itemId) return false; // Seguridad por si la populación falla
-                const lowerCaseAliases = item.itemId.aliases.map(a => a.toLowerCase());
-                return item.name.toLowerCase() === itemName || lowerCaseAliases.includes(itemName);
+            
+            // Buscar el item en la tienda por nombre o alias
+            const shopItemToFind = await ShopItem.findOne({
+                $or: [
+                    { name: new RegExp(`^${itemName}$`, 'i') },
+                    { aliases: new RegExp(`^${itemName}$`, 'i') }
+                ]
             });
+
+            if (!shopItemToFind || shopItemToFind.type !== 'food') {
+                 return sock.sendMessage(chatId, { 
+                    text: `El item "${itemName}" no es comida o no existe.`,
+                    mentions: [senderId]
+                });
+            }
+
+            // Buscar el item en el inventario del usuario usando el ID del item de la tienda
+            itemToEat = user.inventory.find(invItem => invItem.itemId.equals(shopItemToFind._id));
+            shopItem = shopItemToFind;
+
         } else {
-            // Come el primer item de comida que encuentre
-            itemToEat = foodInInventory[0];
+            // Si no se especificó un item, buscar el primer item de comida en el inventario
+            const allFoodShopItems = await ShopItem.find({ type: 'food' });
+            const allFoodShopItemIds = allFoodShopItems.map(item => item._id.toString());
+            
+            itemToEat = user.inventory.find(invItem => allFoodShopItemIds.includes(invItem.itemId.toString()));
+            if (itemToEat) {
+                shopItem = allFoodShopItems.find(si => si._id.equals(itemToEat.itemId));
+            }
         }
 
         if (!itemToEat || itemToEat.quantity <= 0) {
@@ -42,7 +63,6 @@ module.exports = {
             });
         }
 
-        const shopItem = itemToEat.itemId;
         if (!shopItem || !shopItem.effects || shopItem.effects.hunger === 0) {
             return sock.sendMessage(chatId, { text: `El item "${itemToEat.name}" no es comestible.` });
         }
@@ -51,7 +71,7 @@ module.exports = {
         itemToEat.quantity -= 1;
 
         if (itemToEat.quantity <= 0) {
-            user.inventory = user.inventory.filter(invItem => invItem._id.toString() !== itemToEat._id.toString());
+            user.inventory = user.inventory.filter(invItem => !invItem._id.equals(itemToEat._id));
         }
         
         user.lastInteraction = Date.now();
