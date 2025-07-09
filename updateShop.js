@@ -207,7 +207,9 @@ const products = [
     price: 140,
     emoji: "🍚",
     category: "Comida y Bebidas",
-    aliases: ["chaufa"],
+    type: "food",
+    aliases: ["chaufa", "arroz chaufa"],
+    effects: { hunger: 20, thirst: 0, stress: -2 },
   },
   {
     name: "Ají de Gallina",
@@ -215,7 +217,9 @@ const products = [
     price: 150,
     emoji: "🍛",
     category: "Comida y Bebidas",
+    type: "food",
     aliases: ["aji de gallina"],
+    effects: { hunger: 22, thirst: 0, stress: -3 },
   },
   {
     name: "Caldo de Gallina",
@@ -223,7 +227,9 @@ const products = [
     price: 150,
     emoji: "🍜",
     category: "Comida y Bebidas",
+    type: "food",
     aliases: ["caldo"],
+    effects: { hunger: 25, thirst: 10, stress: -5 },
   },
   {
     name: "Ceviche",
@@ -231,7 +237,9 @@ const products = [
     price: 160,
     emoji: "🐟",
     category: "Comida y Bebidas",
+    type: "food",
     aliases: ["ceviche"],
+    effects: { hunger: 18, thirst: 5, stress: -1 },
   },
   {
     name: "Lomo Saltado",
@@ -239,23 +247,9 @@ const products = [
     price: 160,
     emoji: "🥩",
     category: "Comida y Bebidas",
-    aliases: ["lomo"],
-  },
-  {
-    name: "1/4 de Pollo a la Brasa",
-    description: "Jugoso y con todas sus cremas.",
-    price: 160,
-    emoji: "🍗",
-    category: "Comida y Bebidas",
-    aliases: ["pollo", "pollito", "1/4 pollo a la brasa", "pollo a la brasa"],
-  },
-  {
-    name: "Inca Kola",
-    description: "La bebida de sabor nacional.",
-    price: 120,
-    emoji: "🟡",
-    category: "Comida y Bebidas",
-    aliases: ["inca"],
+    type: "food",
+    aliases: ["lomo", "lomo saltado"],
+    effects: { hunger: 28, thirst: 0, stress: -4 },
   },
   {
     name: "Chicha Morada",
@@ -263,7 +257,9 @@ const products = [
     price: 120,
     emoji: "🥤",
     category: "Comida y Bebidas",
+    type: "drink",
     aliases: ["chicha"],
+    effects: { hunger: 1, thirst: 18, stress: -2 },
   },
   {
     name: "Emoliente",
@@ -271,7 +267,9 @@ const products = [
     price: 120,
     emoji: "🍵",
     category: "Comida y Bebidas",
+    type: "drink",
     aliases: ["emoliente"],
+    effects: { hunger: 2, thirst: 15, stress: -5 },
   },
   {
     name: "Chicha de Jora",
@@ -279,7 +277,9 @@ const products = [
     price: 120,
     emoji: "🍺",
     category: "Comida y Bebidas",
+    type: "drink",
     aliases: ["jora"],
+    effects: { hunger: 3, thirst: 20, stress: -8 },
   },
   {
     name: "Pisco Sour",
@@ -287,7 +287,9 @@ const products = [
     price: 200,
     emoji: "🍸",
     category: "Comida y Bebidas",
-    aliases: ["pisco"],
+    type: "drink",
+    aliases: ["pisco", "pisco sour"],
+    effects: { hunger: 2, thirst: 15, stress: -15 },
   },
 ];
 
