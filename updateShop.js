@@ -92,6 +92,16 @@ const products = [
     effects: { hunger: 5, thirst: 25, stress: -10 },
   },
   {
+    name: "Inca Kola",
+    description: "La bebida de sabor nacional.",
+    price: 5,
+    emoji: "🥤",
+    category: "Comida y Bebidas",
+    type: "drink",
+    aliases: ["inca", "inka cola", "inca cola"],
+    effects: { hunger: 2, thirst: 15, stress: -2 },
+  },
+  {
     name: "Carta de amor rave",
     description: "Una declaración de amor 💖",
     price: 150,
