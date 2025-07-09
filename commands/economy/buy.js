@@ -25,19 +25,12 @@ module.exports = {
         let itemNameInput = args.join(' ').toLowerCase();
         const quantityArg = args.find(arg => !isNaN(parseInt(arg)));
 
-        if (itemNameInput.startsWith('1/4')) {
-            quantity = 1;
-            itemNameInput = itemNameInput.replace('1/4', '').trim();
-        } else if (quantityArg) {
+        if (quantityArg) {
             quantity = parseInt(quantityArg);
             itemNameInput = args.filter(arg => arg !== quantityArg).join(' ').toLowerCase();
         }
 
         let finalItemName = itemNameInput;
-        if (itemNameInput.includes('pollo')) {
-            finalItemName = '1/4 de pollo a la brasa';
-        }
-        
         let purchaseUnit = 'unidad(es)';
         const beerName = 'cerveza heladita';
 

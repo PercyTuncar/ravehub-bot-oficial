@@ -219,12 +219,12 @@ const products = [
     aliases: ["lomo"],
   },
   {
-    name: "1/4 Pollo a la Brasa",
+    name: "1/4 de Pollo a la Brasa",
     description: "Jugoso y con todas sus cremas.",
     price: 160,
     emoji: "🍗",
     category: "Comida y Bebidas",
-    aliases: ["pollo", "pollito"],
+    aliases: ["pollo", "pollito", "1/4 pollo a la brasa", "pollo a la brasa"],
   },
   {
     name: "Inca Kola",

@@ -24,11 +24,11 @@ module.exports = {
         const foodInInventory = user.inventory.filter(item => item.itemId && item.itemId.type === 'food');
 
         if (args.length > 0) {
-            let itemName = args.join(' ').toLowerCase();
-            if (itemName.includes('pollo')) {
-                itemName = '1/4 de pollo a la brasa';
-            }
-            itemToEat = foodInInventory.find(item => item.name.toLowerCase() === itemName);
+            const itemName = args.join(' ').toLowerCase();
+            itemToEat = foodInInventory.find(item => 
+                item.name.toLowerCase() === itemName || 
+                (item.itemId.aliases && item.itemId.aliases.includes(itemName))
+            );
         } else {
             // Come el primer item de comida que encuentre
             itemToEat = foodInInventory[0];
