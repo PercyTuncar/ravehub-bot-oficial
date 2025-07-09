@@ -28,6 +28,25 @@ module.exports = {
         );
       }
 
+      // --- Nueva funcionalidad: Bloqueo por estrés ---
+      if (user.status.stress >= 100) {
+        const stressMessage = `
+😵 *¡DEMASIADO ESTRÉS!* 😵
+══════════════════
+
+@${senderJid.split("@")[0]}, tu nivel de estrés ha llegado al límite. No puedes trabajar así.
+
+Necesitas relajarte un poco. Te recomendamos tomar algo para bajar ese estrés.
+
+*Sugerencias:*
+- Pisco Sour
+- Cerveza Heladita
+
+Puedes ver la tienda con \`.shop\` y comprar con \`.buy\`.
+        `;
+        return sock.sendMessage(chatId, { text: stressMessage, mentions: [senderJid] });
+      }
+
       if (user.cooldowns.work && user.cooldowns.work > new Date()) {
         const timeLeft =
           (user.cooldowns.work.getTime() - new Date().getTime()) / 1000;
@@ -84,9 +103,29 @@ module.exports = {
 > 🤫 *Detalle:* _${job.description}_
 💰 *Salario:* \`${currency} ${earnings.toLocaleString()}\`
 🌟 *XP:* \`+${xpGained}\`
-😵 *Estrés:* \`+${stressGained}%\``;
+😵 *Estrés:* \`+${stressGained}%\` (Total: ${user.status.stress}%)`;
 
       await sock.sendMessage(chatId, { text: workResponse, mentions: [senderJid] });
+
+      // --- Nueva funcionalidad: Mensaje de advertencia al llegar al 100% de estrés ---
+      if (user.status.stress >= 100) {
+        const stressWarning = `
+⚠️ *¡ALERTA DE ESTRÉS!* ⚠️
+══════════════════
+
+@${senderJid.split("@")[0]}, has alcanzado el 100% de estrés. ¡Es hora de un descanso!
+
+No podrás volver a trabajar hasta que tu nivel de estrés baje.
+
+*Recomendaciones para relajarte:*
+- Pisco Sour
+- Cerveza Heladita
+
+Usa \`.shop\` para ver la tienda y \`.buy\` para comprar algo que te ayude a relajarte.
+        `;
+        // Enviamos el mensaje de advertencia después de la respuesta del trabajo
+        await sock.sendMessage(chatId, { text: stressWarning, mentions: [senderJid] });
+      }
 
     } catch (error) {
       console.error("Error en el comando work:", error);

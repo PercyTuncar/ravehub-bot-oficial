@@ -1,6 +1,7 @@
 const User = require('../../models/User');
 const ShopItem = require('../../models/ShopItem');
 const { getSocket } = require('../../bot');
+const { updateHealth } = require('../../utils/userUtils'); // Importar updateHealth
 
 module.exports = {
     name: 'comer',
@@ -82,6 +83,7 @@ module.exports = {
             user.inventory = user.inventory.filter(invItem => !invItem._id.equals(itemToEat._id));
         }
         
+        updateHealth(user); // Actualizar la salud del usuario
         user.lastInteraction = Date.now();
         await user.save();
 
@@ -96,6 +98,7 @@ module.exports = {
         if (user.status.stress < initialStatus.stress) {
             effectsMessage += `\nTu estrés se ha reducido a ${user.status.stress}%.`;
         }
+        effectsMessage += `\n\nTu salud ahora es del *${user.status.health}%*.`;
 
         await sock.sendMessage(chatId, { text: effectsMessage });
     },
