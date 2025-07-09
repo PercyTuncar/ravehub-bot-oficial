@@ -1,5 +1,5 @@
 const User = require('../../models/User');
-const { updateHealth } = require('../../utils/userUtils');
+const ShopItem = require('../../models/ShopItem'); // Importar el modelo de la tienda
 const { getSocket } = require('../../bot');
 
 module.exports = {
@@ -13,7 +13,7 @@ module.exports = {
         const chatId = message.key.remoteJid;
 
         if (args.length === 0) {
-            return sock.sendMessage(chatId, { text: 'Debes especificar qué quieres beber. Ejemplo: `.beber cerveza heladita`' });
+            return sock.sendMessage(chatId, { text: 'Debes especificar qué quieres beber. Ejemplo: `.beber cerveza`' });
         }
         
         const user = await User.findOne({ jid: senderId, groupId: chatId });
@@ -26,39 +26,60 @@ module.exports = {
         }
 
         const itemName = args.join(' ').toLowerCase();
-        const itemToDrink = user.inventory.find(item => item.name.toLowerCase() === itemName);
 
-        if (!itemToDrink || itemToDrink.quantity <= 0) {
+        // 1. Buscar el item en la tienda por nombre o alias
+        const shopItem = await ShopItem.findOne({
+            $or: [
+                { name: new RegExp(`^${itemName}$`, 'i') },
+                { aliases: new RegExp(`^${itemName}$`, 'i') }
+            ]
+        });
+
+        // 2. Validar si el item existe y es una bebida
+        if (!shopItem || shopItem.type !== 'drink') {
             return sock.sendMessage(chatId, { 
-                text: `@${senderId.split('@')[0]}, no tienes "${itemName}" en tu inventario.`,
+                text: `El item "${itemName}" no es una bebida o no existe.`,
                 mentions: [senderId]
             });
         }
 
-        const isDrinkable = ['cerveza heladita', 'pisco sour'].includes(itemName);
+        // 3. Buscar el item en el inventario del usuario usando el ID
+        const itemToDrink = user.inventory.find(item => item.itemId && item.itemId.equals(shopItem._id));
 
-        if (!isDrinkable) {
-            return sock.sendMessage(chatId, { text: `"${itemToDrink.name}" no es algo que puedas beber para calmar la sed o el estrés.` });
+        if (!itemToDrink || itemToDrink.quantity <= 0) {
+            return sock.sendMessage(chatId, { 
+                text: `@${senderId.split('@')[0]}, no tienes "${shopItem.name}" en tu inventario.`,
+                mentions: [senderId]
+            });
         }
 
-        const stressReduction = Math.floor(Math.random() * (20 - 10 + 1)) + 10;
-        const thirstRestored = Math.floor(Math.random() * (30 - 15 + 1)) + 15;
+        // 4. Aplicar efectos desde la base de datos
+        const initialStatus = { ...user.status };
+        user.status.thirst = Math.min(100, user.status.thirst + (shopItem.effects.thirst || 0));
+        user.status.stress = Math.max(0, user.status.stress + (shopItem.effects.stress || 0));
+        user.status.hunger = Math.min(100, user.status.hunger + (shopItem.effects.hunger || 0)); // Por si la bebida también da algo de energía
 
-        user.status.stress = Math.max(0, user.status.stress - stressReduction);
-        user.status.thirst = Math.min(100, user.status.thirst + thirstRestored);
-
+        // 5. Actualizar inventario
         itemToDrink.quantity -= 1;
         if (itemToDrink.quantity <= 0) {
-            user.inventory = user.inventory.filter(invItem => invItem._id.toString() !== itemToDrink._id.toString());
+            user.inventory = user.inventory.filter(invItem => !invItem._id.equals(itemToDrink._id));
         }
-
-        updateHealth(user);
-        user.lastInteraction = Date.now();
         
+        user.lastInteraction = Date.now();
         await user.save();
 
-        let messageText = `¡Salud! 🍻 Te tomaste una ${itemToDrink.name}.\n\n*Efectos:*\n> 😵 Estrés: \`-${stressReduction}%\` (Ahora: ${user.status.stress}%)\n> 💧 Sed: \`+${thirstRestored}%\` (Ahora: ${user.status.thirst}%)\n\nComo resultado, tu salud ahora es del *${user.status.health}%*.`;
+        // 6. Mensaje de confirmación detallado
+        let effectsMessage = `¡Salud! 🍻 Te tomaste una ${shopItem.name}.`;
+        if (user.status.thirst > initialStatus.thirst) {
+            effectsMessage += `\nTu sed ahora es ${user.status.thirst}%.`;
+        }
+        if (user.status.stress < initialStatus.stress) {
+            effectsMessage += `\nTu estrés se ha reducido a ${user.status.stress}%.`;
+        }
+        if (user.status.hunger > initialStatus.hunger) {
+            effectsMessage += `\nTu hambre ahora es ${user.status.hunger}%.`;
+        }
 
-        await sock.sendMessage(chatId, { text: messageText });
+        await sock.sendMessage(chatId, { text: effectsMessage });
     },
 };
