@@ -100,6 +100,24 @@ async function handleMessage(message, commands) {
 
     if (!command) return;
 
+    // --- Protección de comandos RP ---
+    if (command.category === 'rp' && isGroup) {
+        const Group = require('../models/Group');
+        try {
+            const groupDoc = await Group.findOne({ groupId: chatId });
+            if (!groupDoc || !groupDoc.isRpActive) {
+                return sock.sendMessage(chatId, { 
+                    text: '🎭 El sistema de RP no está activo en este grupo.\nContacta al administrador del bot para activarlo.' 
+                });
+            }
+        } catch (error) {
+            console.error('Error verificando estado RP del grupo:', error);
+            return sock.sendMessage(chatId, { 
+                text: '❌ Error al verificar el estado del sistema de RP.' 
+            });
+        }
+    }
+
     // Cooldown
     if (userCooldowns.has(userJid)) {
         const lastCommandTime = userCooldowns.get(userJid);
