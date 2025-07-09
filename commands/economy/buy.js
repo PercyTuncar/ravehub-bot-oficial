@@ -34,6 +34,10 @@ module.exports = {
         }
 
         let finalItemName = itemNameInput;
+        if (itemNameInput.includes('pollo')) {
+            finalItemName = '1/4 de pollo a la brasa';
+        }
+        
         let purchaseUnit = 'unidad(es)';
         const beerName = 'cerveza heladita';
 
@@ -49,10 +53,6 @@ module.exports = {
                 finalItemName = beerName;
                 purchaseUnit = cajas > 1 ? 'cajas' : 'caja';
             }
-        }
-
-        if (itemNameInput.includes('pollo')) {
-            finalItemName = '1/4 de pollo a la brasa';
         }
 
         if (quantity <= 0 || !Number.isInteger(quantity)) {
