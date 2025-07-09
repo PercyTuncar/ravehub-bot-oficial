@@ -25,7 +25,10 @@ module.exports = {
         let itemNameInput = args.join(' ').toLowerCase();
         const quantityArg = args.find(arg => !isNaN(parseInt(arg)));
 
-        if (quantityArg) {
+        if (itemNameInput.startsWith('1/4')) {
+            quantity = 1;
+            itemNameInput = itemNameInput.replace('1/4', '').trim();
+        } else if (quantityArg) {
             quantity = parseInt(quantityArg);
             itemNameInput = args.filter(arg => arg !== quantityArg).join(' ').toLowerCase();
         }
@@ -46,6 +49,10 @@ module.exports = {
                 finalItemName = beerName;
                 purchaseUnit = cajas > 1 ? 'cajas' : 'caja';
             }
+        }
+
+        if (itemNameInput.includes('pollo')) {
+            finalItemName = '1/4 de pollo a la brasa';
         }
 
         if (quantity <= 0 || !Number.isInteger(quantity)) {

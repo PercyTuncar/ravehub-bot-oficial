@@ -24,7 +24,10 @@ module.exports = {
         const foodInInventory = user.inventory.filter(item => item.itemId && item.itemId.type === 'food');
 
         if (args.length > 0) {
-            const itemName = args.join(' ').toLowerCase();
+            let itemName = args.join(' ').toLowerCase();
+            if (itemName.includes('pollo')) {
+                itemName = '1/4 de pollo a la brasa';
+            }
             itemToEat = foodInInventory.find(item => item.name.toLowerCase() === itemName);
         } else {
             // Come el primer item de comida que encuentre
