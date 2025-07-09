@@ -51,6 +51,14 @@ const userSchema = new mongoose.Schema({
       }
     ]
   },
+  status: {
+    hunger: { type: Number, default: 100 },
+    thirst: { type: Number, default: 100 },
+    stress: { type: Number, default: 0 },
+    health: { type: Number, default: 100 },
+    isDead: { type: Boolean, default: false },
+  },
+  lastInteraction: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now },
 }, {
   timestamps: true,

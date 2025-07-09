@@ -25,18 +25,3 @@ module.exports = () => {
 
     return commands;
 };
-
-const commandHandler = async (m, client) => {
-  try {
-    // Ignorar mensajes de bots y mensajes no deseados
-    if (m.key.fromMe || m.key.remoteJid === 'status@broadcast') {
-      return;
-    }
-
-    const messageContent = m.message?.conversation || m.message?.extendedTextMessage?.text || '';
-
-    // Resto de tu lógica para manejar comandos
-  } catch (error) {
-    console.error('Error manejando el comando:', error);
-  }
-};

@@ -98,4 +98,34 @@ const updateGameStats = async (jid, groupId, gameName, statsUpdate) => {
     }
 };
 
-module.exports = { findOrCreateUser, updateGameStats };
+/**
+ * Calcula y actualiza la salud de un usuario basándose en su hambre, sed y estrés.
+ * Esta función MODIFICA el objeto de usuario pero NO lo guarda en la base de datos.
+ * El guardado debe ser manejado por la función que la llama para asegurar consistencia.
+ * @param {User} user - El documento del usuario de Mongoose a modificar.
+ */
+const updateHealth = (user) => {
+    if (!user || !user.status) {
+        console.error('[Health] Se intentó actualizar la salud de un usuario inválido.');
+        return;
+    }
+
+    const { hunger, thirst, stress } = user.status;
+
+    // Aplicar la fórmula: Salud = (Hambre + Sed + (100 - Estrés)) / 3
+    const newHealth = Math.round((hunger + thirst + (100 - stress)) / 3);
+
+    // Asegurarse de que la salud no sea menor que 0 ni mayor que 100
+    user.status.health = Math.max(0, Math.min(100, newHealth));
+
+    // Comprobar si el usuario ha muerto. Si la salud es 0 o menos, y no estaba muerto, se marca como muerto.
+    if (user.status.health <= 0 && !user.status.isDead) {
+        user.status.isDead = true;
+        console.log(`[Health] El usuario ${user.name} (${user.jid}) ha muerto debido a su estado crítico.`);
+    }
+    // Nota: La resurrección (pasar de isDead: true a false) debe ser un evento manejado por un comando específico (ej. .revivir)
+    // y no ocurre automáticamente solo porque los stats cambien.
+};
+
+
+module.exports = { findOrCreateUser, updateGameStats, updateHealth };

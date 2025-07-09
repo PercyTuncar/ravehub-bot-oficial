@@ -8,6 +8,7 @@ const connectDB = require('./config/database');
 const { handleMessage, handleWelcomeMessage } = require('./handlers/eventHandler');
 const loadCommands = require('./handlers/commandHandler');
 const { setSocket } = require('./bot');
+const { startChecking } = require('./handlers/statusHandler');
 require('dotenv').config();
 
 let sock;
@@ -91,6 +92,7 @@ async function connectToWhatsApp() {
             }
         } else if (connection === 'open') {
             logger.info('Conexión abierta y establecida.');
+            startChecking(sock); // Iniciar el chequeo de estado del jugador
             if (firstConnection) {
                 let menu = `╭───≽ *BOT CONECTADO* ≼───╮
 │

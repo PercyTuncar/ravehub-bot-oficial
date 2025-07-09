@@ -6,6 +6,16 @@ const User = require('../../models/User');
 const ShopItem = require('../../models/ShopItem'); // Importar el modelo de la tienda
 const { getSocket } = require('../../bot');
 
+const getProgressBar = (value, max, length) => {
+    if (typeof value !== 'number' || typeof max !== 'number' || value < 0 || max <= 0) {
+        return '░'.repeat(length);
+    }
+    const percentage = value / max;
+    const progress = Math.round(length * percentage);
+    const empty = length - progress;
+    return '▓'.repeat(progress) + '░'.repeat(empty);
+};
+
 module.exports = {
     name: 'me',
     description: 'Ver tu perfil y stats.',
@@ -25,6 +35,13 @@ module.exports = {
                 path: 'debts', 
                 populate: { path: 'lender', select: 'name jid groupId' } 
             });
+
+            if (user.status && user.status.isDead) {
+                return sock.sendMessage(chatId, {
+                    text: `💀 @${jid.split("@")[0]}, estás muerto. Usa \`.renacer\` para volver al juego.`,
+                    mentions: [jid],
+                });
+            }
 
             // Obtener todos los items de la tienda para mapear emojis
             const allShopItems = await ShopItem.find({});
@@ -65,6 +82,17 @@ module.exports = {
 
             const mentions = [jid];
 
+            // --- Barras de estado ---
+            const health = user.status?.health ?? 100;
+            const hunger = user.status?.hunger ?? 100;
+            const thirst = user.status?.thirst ?? 100;
+            const stress = user.status?.stress ?? 0;
+
+            const healthBar = getProgressBar(health, 100, 10);
+            const hungerBar = getProgressBar(hunger, 100, 10);
+            const thirstBar = getProgressBar(thirst, 100, 10);
+            const stressBar = getProgressBar(stress, 100, 10);
+
             // --- Obtener la foto de perfil ---
             let profilePicUrl;
             try {
@@ -83,6 +111,12 @@ module.exports = {
 > *XP:* \`${xpProgress}\`
 ${reputationLine}> *Deuda Judicial:* \`${currency} ${user.judicialDebt.toLocaleString()}\`
 -----------------------------------
+🩺 *ESTADO DE VIDA*
+> ❤️ Salud: ${healthBar} \`${health}%\`
+> 🍗 Hambre: ${hungerBar} \`${hunger}%\`
+> 🥤 Sed: ${thirstBar} \`${thirst}%\`
+> 😵 Estrés: ${stressBar} \`${stress}%\`
+-----------------------------------
 💰 *ECONOMÍA*
 > *Cartera:* \`${currency} ${user.economy.wallet.toLocaleString()}\`
 > *Banco:* \`${currency} ${user.economy.bank.toLocaleString()}\`
@@ -96,36 +130,8 @@ ${user.debts && user.debts.length > 0 ?
     '> ✅ _Sin deudas pendientes_'}
 -----------------------------------
 🎒 *INVENTARIO*
-${user.inventory && user.inventory.length > 0 ?
-    user.inventory.map((item) => {
-        // Lógica unificada para todos los items
-        const emoji = emojiMap[item.name.toLowerCase()] || item.itemId?.emoji || "📦";
-        const quantity = item.quantity > 1 ? `x${item.quantity}` : '';
-        
-        // Lógica especial para cervezas (agrupar en cajas)
-        if (item.name.toLowerCase() === 'cerveza heladita') {
-            const beerCases = Math.floor(item.quantity / 12);
-            const remainingBeers = item.quantity % 12;
-            let beerText = [];
-
-            if (beerCases > 0) {
-                const caseEmoji = emojiMap['caja de cerveza'] || '📦'; // Asumiendo que tienes un item para la caja
-                const caseText = beerCases > 1 ? 'Cajas' : 'Caja';
-                beerText.push(`> ${caseEmoji} *x${beerCases} ${caseText} de Cerveza Heladita*`);
-            }
-            if (remainingBeers > 0) {
-                const beerEmoji = emojiMap['cerveza heladita'] || '🍻';
-                const prefix = beerCases > 0 ? '+ ' : 'x';
-                const beerUnitText = remainingBeers > 1 ? 'Cervezas Heladitas' : 'Cerveza Heladita';
-                beerText.push(`> ${beerEmoji} *${prefix}${remainingBeers} ${beerUnitText}*`);
-            }
-            return beerText.join('\n');
-        }
-        
-        return `> ${emoji} *${item.name}* ${quantity}`;
-    }).join('\n') :
-    '> ✅ _Inventario vacío_'}
------------------------------------`;
+*│* │ ${inventoryList}
+*│* ╰──────────────────≽`;
 
             await sock.sendMessage(
                 chatId,
