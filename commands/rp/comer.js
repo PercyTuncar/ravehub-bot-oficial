@@ -25,10 +25,11 @@ module.exports = {
 
         if (args.length > 0) {
             const itemName = args.join(' ').toLowerCase();
-            itemToEat = foodInInventory.find(item => 
-                item.name.toLowerCase() === itemName || 
-                (item.itemId.aliases && item.itemId.aliases.includes(itemName))
-            );
+            itemToEat = foodInInventory.find(item => {
+                if (!item.itemId) return false; // Seguridad por si la populación falla
+                const lowerCaseAliases = item.itemId.aliases.map(a => a.toLowerCase());
+                return item.name.toLowerCase() === itemName || lowerCaseAliases.includes(itemName);
+            });
         } else {
             // Come el primer item de comida que encuentre
             itemToEat = foodInInventory[0];

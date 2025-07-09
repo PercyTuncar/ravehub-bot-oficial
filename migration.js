@@ -1,35 +1,62 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
-const Debt = require('./models/Debt');
 const User = require('./models/User');
+const ShopItem = require('./models/ShopItem');
 
-const migrateDebts = async () => {
+const MONGODB_URI = process.env.MONGODB_URI;
+
+const consolidateInventory = async () => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI, {
+        await mongoose.connect(MONGODB_URI, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
-        console.log('Conectado a MongoDB para la migración...');
+        console.log('Conectado a MongoDB...');
 
-        // 1. Actualizar todas las deudas existentes al 10% de interés
-        const debtUpdateResult = await Debt.updateMany({}, { $set: { interest: 0.10 } });
-        console.log(`${debtUpdateResult.modifiedCount} deudas actualizadas a la nueva tasa de interés del 10%.`);
+        const correctItemName = '1/4 de Pollo a la Brasa';
+        const oldItemNames = ['1/4 Pollo a la Brasa', '1/4 de Pollo a la Brasa'];
 
-        // 2. Reiniciar el historial de morosidad de todos los usuarios
-        const userUpdateResult = await User.updateMany(
-            { 'paymentHistory.paidLate': { $gt: 0 } },
-            { $set: { 'paymentHistory.paidLate': 0 } }
-        );
-        console.log(`${userUpdateResult.modifiedCount} usuarios con historial de morosidad han sido reiniciados.`);
+        const correctShopItem = await ShopItem.findOne({ name: correctItemName });
+        if (!correctShopItem) {
+            throw new Error(`No se encontró el item de tienda "${correctItemName}".`);
+        }
 
-        // 3. Reiniciar el estado 'isDelinquent' en todas las deudas
-        const delinquentDebtUpdateResult = await Debt.updateMany(
-            { isDelinquent: true },
-            { $set: { isDelinquent: false } }
-        );
-        console.log(`${delinquentDebtUpdateResult.modifiedCount} deudas morosas han sido reiniciadas.`);
+        const users = await User.find({});
+        console.log(`Procesando ${users.length} usuarios...`);
 
-        console.log('¡Migración completada! El sistema ahora re-evaluará a todos los deudores con las nuevas reglas.');
+        for (const user of users) {
+            const polloItems = user.inventory.filter(item => oldItemNames.includes(item.name));
+
+            if (polloItems.length > 1) {
+                console.log(`Consolidando inventario para el usuario: ${user.jid}`);
+                
+                const totalQuantity = polloItems.reduce((sum, item) => sum + item.quantity, 0);
+                console.log(`- Cantidad total de pollos encontrada: ${totalQuantity}`);
+
+                // Filtrar para remover todos los items de pollo
+                const otherItems = user.inventory.filter(item => !oldItemNames.includes(item.name));
+
+                // Añadir el item consolidado
+                otherItems.push({
+                    itemId: correctShopItem._id,
+                    name: correctShopItem.name,
+                    quantity: totalQuantity,
+                });
+
+                user.inventory = otherItems;
+                await user.save();
+                console.log(`- Inventario consolidado para ${user.jid}`);
+            } else if (polloItems.length === 1 && polloItems[0].name !== correctItemName) {
+                // Corregir el nombre del item si solo hay uno pero es el incorrecto
+                console.log(`Corrigiendo nombre de item para el usuario: ${user.jid}`);
+                polloItems[0].name = correctItemName;
+                polloItems[0].itemId = correctShopItem._id;
+                await user.save();
+                console.log(`- Nombre de item corregido para ${user.jid}`);
+            }
+        }
+
+        console.log('¡Migración de inventario completada!');
 
     } catch (error) {
         console.error('Error durante la migración:', error);
@@ -39,4 +66,4 @@ const migrateDebts = async () => {
     }
 };
 
-migrateDebts();
+consolidateInventory();
