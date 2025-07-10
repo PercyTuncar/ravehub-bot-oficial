@@ -43,7 +43,19 @@ async function connectToWhatsApp() {
             // Asegurarse de que el mensaje tiene contenido antes de procesarlo
             if (message.message) {
                 setImmediate(() => {
-                    handleMessage(message, commands).catch(err => logger.error(err, 'Error al manejar el mensaje'));
+                    handleMessage(message, commands).catch(err => {
+                        logger.error(err, 'Error al manejar el mensaje');
+                        // Si el error es de desencriptación, podría ser una sesión corrupta.
+                        if (err.message && err.message.includes('Bad MAC')) {
+                            logger.warn('Error de "Bad MAC" detectado. Forzando limpieza de sesión y reinicio.');
+                            const sessionsDir = path.join(__dirname, 'sessions');
+                            if (fs.existsSync(sessionsDir)) {
+                                fs.rmSync(sessionsDir, { recursive: true, force: true });
+                            }
+                            // Forzar el cierre de la conexión para que el manejador 'connection.update' inicie la reconexión.
+                            sock.end(new Error('Forzando reconexión por Bad MAC'));
+                        }
+                    });
                 });
             }
         }
@@ -75,7 +87,7 @@ async function connectToWhatsApp() {
 
             logger.info(`Conexión cerrada. Razón: ${reason}, reconectando: ${shouldReconnect}`);
 
-            if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut) {
+            if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut || lastDisconnect.error?.message?.includes('Forzando reconexión')) {
                 const message = reason === DisconnectReason.badSession 
                     ? 'Sesión corrupta. Limpiando y reconectando...' 
                     : 'Dispositivo desvinculado. Limpiando y reiniciando.';
