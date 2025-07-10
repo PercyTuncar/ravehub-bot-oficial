@@ -4,7 +4,8 @@
   "description": "Bot de WhatsApp modular y escalable",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "start:clear-session": "node index.js --clear-session"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.18",

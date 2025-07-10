@@ -12,6 +12,15 @@ const { startChecking } = require('./handlers/statusHandler');
 const { addMessageToQueue } = require('./utils/messageQueue');
 require('dotenv').config();
 
+// Limpiar la sesión si se pasa el argumento --clear-session
+if (process.argv.includes('--clear-session')) {
+    const sessionsDir = path.join(__dirname, 'sessions');
+    if (fs.existsSync(sessionsDir)) {
+        logger.info('Limpiando la sesión por argumento --clear-session.');
+        fs.rmSync(sessionsDir, { recursive: true, force: true });
+    }
+}
+
 let sock;
 let firstConnection = true;
 
