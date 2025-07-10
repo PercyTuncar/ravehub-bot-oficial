@@ -2,7 +2,7 @@ const { logger } = require('../config/logger');
 
 const messageQueue = [];
 let isProcessing = false;
-const MESSAGE_INTERVAL = 1000; // Interval in milliseconds (1 segundo)
+const MESSAGE_INTERVAL = 800; // Interval in milliseconds (1 segundo)
 
 const processQueue = async () => {
     if (messageQueue.length === 0) {
