@@ -72,6 +72,6 @@ module.exports = {
         // Ejecutar cada 30 minutos
         setInterval(() => checkUserStatus(client), 30 * 60 * 1000);
         // Ejecutar una vez al inicio
-        checkUserStatus(client);
+        // checkUserStatus(client); // Comentado para evitar la ejecución al inicio
     }
 };
