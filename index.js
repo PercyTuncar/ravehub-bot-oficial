@@ -9,6 +9,7 @@ const { handleMessage, handleWelcomeMessage } = require('./handlers/eventHandler
 const loadCommands = require('./handlers/commandHandler');
 const { setSocket } = require('./bot');
 const { startChecking } = require('./handlers/statusHandler');
+const { addMessageToQueue } = require('./utils/messageQueue');
 require('dotenv').config();
 
 let sock;
@@ -117,7 +118,7 @@ async function connectToWhatsApp() {
 
                 try {
                     if (process.env.OWNER_NUMBER) {
-                        await sock.sendMessage(`${process.env.OWNER_NUMBER}@s.whatsapp.net`, { text: menu });
+                        addMessageToQueue(sock, `${process.env.OWNER_NUMBER}@s.whatsapp.net`, { text: menu });
                     } else {
                         logger.warn('OWNER_NUMBER no está definido en el archivo .env, no se enviará el mensaje de inicio.');
                     }

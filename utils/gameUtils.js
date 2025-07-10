@@ -1,5 +1,6 @@
 const GameSession = require('../models/GameSession');
 const { getSocket } = require('../bot');
+const { addMessageToQueue } = require('./messageQueue');
 
 // Este Map guardará los temporizadores activos, asociando el JID del usuario con su temporizador.
 const activeTimers = new Map();
@@ -29,7 +30,7 @@ async function startGameSession(jid, groupId, gameName, sessionData) {
                 console.log(`[GameSession] Sesión de ${jid} expirada.`);
                 // Ya no necesitamos buscar al usuario ni modificar su cartera.
                 // Simplemente enviamos una notificación correcta.
-                await sock.sendMessage(groupId, {
+                addMessageToQueue(sock, groupId, {
                     text: `⌛ @${jid.split('@')[0]}, se agotó el tiempo para tu jugada. La partida ha sido cancelada (tu apuesta no fue descontada).`,
                     mentions: [jid]
                 });

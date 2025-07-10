@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { addMessageToQueue } = require('../utils/messageQueue');
 
 const checkUserStatus = async (client) => {
     const users = await User.find({ 'status.isDead': false });
@@ -17,7 +18,7 @@ const checkUserStatus = async (client) => {
 
         // Avisos automáticos
         if (user.status.hunger < 10 && !user.notifiedHunger) {
-            client.sendMessage(user.groupId, { 
+            addMessageToQueue(client, user.groupId, { 
                 text: `⚠️ @${user.jid.split('@')[0]} Tienes mucha hambre, usa \`.comer\` para evitar perder salud.`,
                 mentions: [user.jid]
             });
@@ -27,7 +28,7 @@ const checkUserStatus = async (client) => {
         }
 
         if (user.status.thirst < 10 && !user.notifiedThirst) {
-            client.sendMessage(user.groupId, {
+            addMessageToQueue(client, user.groupId, {
                 text: `⚠️ @${user.jid.split('@')[0]} Estás muy deshidratado, usa \`.beber\` para mantenerte vivo.`,
                 mentions: [user.jid]
             });
@@ -37,7 +38,7 @@ const checkUserStatus = async (client) => {
         }
 
         if (user.status.stress > 80 && !user.notifiedStress) {
-            client.sendMessage(user.groupId, {
+            addMessageToQueue(client, user.groupId, {
                 text: `⚠️ @${user.jid.split('@')[0]} Tu nivel de estrés es muy alto. Considera usar \`.relajarse\` o consumir algo de la tienda.`,
                 mentions: [user.jid]
             });
@@ -56,7 +57,7 @@ const checkUserStatus = async (client) => {
             const moneyLost = user.economy.wallet * moneyLossPercentage;
             const itemsLostCount = Math.min(user.inventory.length, itemsToRemove);
 
-            client.sendMessage(user.groupId, {
+            addMessageToQueue(client, user.groupId, {
                 text: `💀 @${user.jid.split('@')[0]} ¡Has muerto por colapso físico!\nHas perdido:\n- XP: –${xpLoss}\n- Dinero: –${moneyLost.toLocaleString()}\n- Inventario: ${itemsLostCount} ítems al azar\nUsa \`.renacer\` para volver al juego.`,
                 mentions: [user.jid]
             });

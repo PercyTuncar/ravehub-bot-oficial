@@ -2,6 +2,7 @@ const User = require('../models/User');
 const { getSocket } = require('../bot');
 const matchCommand = require('../commands/love/match');
 const proposeCommand = require('../commands/love/propose');
+const { addMessageToQueue } = require('../utils/messageQueue');
 
 async function handleLoveResponses(message) {
     const sock = getSocket();
@@ -45,7 +46,7 @@ async function handleLoveResponses(message) {
                 await userB.save();
 
                 const responseText = `💞 ¡Felicidades @${match.userA.jid.split('@')[0]} y @${match.userB.jid.split('@')[0]}!\n¡Han hecho MATCH y ahora son pareja oficial del grupo! ❤️`;
-                sock.sendMessage(from, { text: responseText, mentions: [match.userA.jid, match.userB.jid] });
+                addMessageToQueue(sock, from, { text: responseText, mentions: [match.userA.jid, match.userB.jid] });
                 matchCommand.ongoingMatches.delete(from);
             }
         } else { // rechazo
@@ -53,7 +54,7 @@ async function handleLoveResponses(message) {
             const rejectedBy = isUserA ? match.userA.name : match.userB.name;
             const rejectedJid = isUserA ? match.userA.jid : match.userB.jid;
             const responseText = `💔 @${rejectedJid.split('@')[0]} ha rechazado el match.\nEl destino dirá si alguna vez se vuelven a cruzar...`;
-            sock.sendMessage(from, { text: responseText, mentions: [rejectedJid] });
+            addMessageToQueue(sock, from, { text: responseText, mentions: [rejectedJid] });
             matchCommand.ongoingMatches.delete(from);
         }
         return true;
@@ -85,10 +86,10 @@ async function handleLoveResponses(message) {
             await proposed.save();
 
             const responseText = `💍 ¡Confirmado! @${proposer.jid.split('@')[0]} y @${proposed.jid.split('@')[0]} ahora están oficialmente en una relación. ❤️`;
-            sock.sendMessage(from, { text: responseText, mentions: [proposer.jid, proposed.jid] });
+            addMessageToQueue(sock, from, { text: responseText, mentions: [proposer.jid, proposed.jid] });
         } else {
             const responseText = `💔 @${proposal.proposed.jid.split('@')[0]} ha rechazado la propuesta de @${proposal.proposer.jid.split('@')[0]}. ¡Ánimo, ya vendrá otra oportunidad!`;
-            sock.sendMessage(from, { text: responseText, mentions: [proposal.proposer.jid, proposal.proposed.jid] });
+            addMessageToQueue(sock, from, { text: responseText, mentions: [proposal.proposer.jid, proposal.proposed.jid] });
         }
         proposeCommand.ongoingProposals.delete(proposalKey);
         return true;

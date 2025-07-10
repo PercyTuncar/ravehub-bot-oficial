@@ -3,6 +3,7 @@ const Debt = require('../models/Debt');
 const { findOrCreateUser } = require('../utils/userUtils');
 const { getCurrency } = require('../utils/groupUtils');
 const { getSocket } = require('../bot');
+const { addMessageToQueue } = require('../utils/messageQueue');
 
 const loanSessions = new Map();
 
@@ -74,7 +75,7 @@ async function handleLoanResponse(message) {
         if (totalFunds < amount) {
             await sock.sendMessage(chatId, {
                 text: `❗ @${lender.jid.split('@')[0]} tiene la voluntad de prestarte, ¡pero ahora está *misio*! 😅`,
-                mentions: [borrowerJid, lender.jid]
+                mentions: [borrowerJId, lender.jid]
             });
         } else {
             // Deduct from lender
@@ -107,11 +108,9 @@ async function handleLoanResponse(message) {
             await lender.save();
             await borrower.save();
 
-            await sock.sendMessage(chatId, {
-                text: `✅ ¡Préstamo aceptado! @${lender.jid.split('@')[0]} ha prestado ${currency}${amount} a @${borrower.jid.split('@')[0]}.
-
-@${borrower.jid.split('@')[0]} ahora figura en *Infocorp* hasta que pague su deuda.`,
-                mentions: [lender.jid, borrower.jid]
+            addMessageToQueue(sock, chatId, {
+                text: `Has prestado ${amount} monedas a @${to.split('@')[0]}.`,
+                mentions: [to]
             });
         }
     } else { // Rejected

@@ -1,6 +1,7 @@
 const Debt = require('../models/Debt');
 const User = require('../models/User');
 const { getSocket } = require('../bot');
+const { addMessageToQueue } = require('./messageQueue');
 
 /**
  * Calcula y aplica el interés acumulado a todas las deudas activas.
@@ -90,7 +91,7 @@ async function sendDebtReminder(chatId, user) {
 
     if (debtInfo) {
         // El mensaje de getDebtReminderMessage ya viene con saltos de línea iniciales, así que lo usamos directamente.
-        await sock.sendMessage(chatId, {
+        addMessageToQueue(sock, chatId, {
             text: debtInfo.text.trim(), // Quitamos espacios extra por si acaso
             mentions: debtInfo.mentions
         });

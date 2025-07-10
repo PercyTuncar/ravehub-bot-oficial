@@ -8,6 +8,7 @@ const { getSocket } = require('../bot');
 const logger = require('../config/logger'); // Importar el logger
 const userCooldowns = new Map();
 const GroupSettings = require('../models/GroupSettings');
+const { addMessageToQueue } = require('../utils/messageQueue');
 
 // Función unificada para manejar todos los mensajes entrantes
 async function handleMessage(message, commands) {
@@ -54,7 +55,7 @@ async function handleMessage(message, commands) {
             if (sender && sender.admin !== 'admin' && sender.admin !== 'superadmin') {
                 const user = await findOrCreateUser(userJid, chatId);
                 
-                await sock.sendMessage(chatId, { delete: message.key });
+                addMessageToQueue(sock, chatId, { delete: message.key });
 
                 user.warnings = (user.warnings || 0) + 1;
                 await user.save();
@@ -64,11 +65,11 @@ async function handleMessage(message, commands) {
 
                 if (warnings >= warnLimit) {
                     const kickText = `🚫 @${userJid.split('@')[0]} ha sido eliminado por alcanzar el límite de ${warnLimit} advertencias por envío de enlaces.`
-                    await sock.sendMessage(chatId, { text: kickText, mentions: [userJid] });
+                    addMessageToQueue(sock, chatId, { text: kickText, mentions: [userJid] });
                     await sock.groupParticipantsUpdate(chatId, [userJid], 'remove');
                 } else {
                     const warnText = `🚨 *¡ADVERTENCIA!* 🚨\n\n*Usuario:* @${userJid.split('@')[0]}\n*Motivo:* Envío de enlaces no permitido.\n\n*Advertencias:* ${warnings}/${warnLimit}\n\n_Por favor, respeta las reglas del grupo._`;
-                    await sock.sendMessage(chatId, { text: warnText, mentions: [userJid] });
+                    addMessageToQueue(sock, chatId, { text: warnText, mentions: [userJid] });
                 }
                 return; // Detener el procesamiento aquí, ya que fue manejado como un enlace
             }
@@ -104,7 +105,8 @@ async function handleMessage(message, commands) {
     if (userCooldowns.has(userJid)) {
         const lastCommandTime = userCooldowns.get(userJid);
         if (Date.now() - lastCommandTime < 3000) { // 3 segundos
-            return sock.sendMessage(chatId, { text: 'Por favor, espera antes de usar otro comando.' });
+            addMessageToQueue(sock, chatId, { text: 'Por favor, espera antes de usar otro comando.' });
+            return;
         }
     }
     userCooldowns.set(userJid, Date.now());
@@ -116,7 +118,7 @@ async function handleMessage(message, commands) {
         logger.info({ command: commandName, user: userJid }, `Comando ejecutado exitosamente`);
     } catch (error) {
         logger.error({ err: error, command: commandName, user: userJid }, `Falló la ejecución del comando`);
-        sock.sendMessage(chatId, { text: '⚙️ Ocurrió un error al intentar ejecutar ese comando.' });
+        addMessageToQueue(sock, chatId, { text: '⚙️ Ocurrió un error al intentar ejecutar ese comando.' });
     }
 }
 
@@ -144,7 +146,7 @@ async function handleWelcomeMessage(sock, groupMetadata, newParticipantId) {
                 delete messageData.text;
             }
 
-            await sock.sendMessage(groupMetadata.id, messageData);
+            addMessageToQueue(sock, groupMetadata.id, messageData);
         }
     } catch (error) {
         console.error('Error al enviar el mensaje de bienvenida:', error);
