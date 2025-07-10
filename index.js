@@ -24,9 +24,11 @@ async function connectToWhatsApp() {
 
     sock = makeWASocket({
         auth: state,
-        logger: logger.child({ level: 'warn' }), // Nivel 'warn' para Baileys para reducir el ruido
+        logger: logger.child({ level: 'silent' }), // Nivel 'silent' para Baileys para reducir el ruido
         browser: Browsers.macOS('Desktop'),
         printQRInTerminal: false, // El QR se maneja manualmente.
+        syncFullHistory: false, // No sincronizar historial completo
+        maxMsgHistory: 5, // Mantener un historial de mensajes más pequeño
     });
 
     setSocket(sock);
