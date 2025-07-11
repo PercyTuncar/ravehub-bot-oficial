@@ -116,7 +116,7 @@ async function connectToWhatsApp() {
             }
         } else if (connection === 'open') {
             logger.info('Conexión abierta y establecida.');
-            startChecking(sock); // Iniciar el chequeo de estado del jugador
+          //  startChecking(sock); // Iniciar el chequeo de estado del jugador
             if (firstConnection) {
                 let menu = `╭───≽ *BOT CONECTADO* ≼───╮
 │
