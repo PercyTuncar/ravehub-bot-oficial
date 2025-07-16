@@ -8,7 +8,7 @@ const connectDB = require('./config/database');
 const commandHandler = require('./handlers/commandHandler'); // Importar el command handler
 const { commandMap } = require('./handlers/commandHandler'); // Importar el mapa de comandos
 const { handleWelcomeMessage } = require('./handlers/eventHandler');
-const { setSocket } = require('./bot');
+const { setSocket, disconnect } = require('./bot');
 const { startChecking } = require('./handlers/statusHandler');
 const { addMessageToQueue } = require('./utils/messageQueue');
 require('dotenv').config();
@@ -160,5 +160,13 @@ process.on('unhandledRejection', (reason, promise) => {
     process.exit(1);
 });
 
+// Graceful Shutdown
+const cleanup = async () => {
+    logger.info('Iniciando cierre seguro del bot...');
+    await disconnect();
+    process.exit(0);
+};
 
+process.on('SIGINT', cleanup);
+process.on('SIGTERM', cleanup);
 // Haré una prueba de github para asegurarme que todo funciona correctamente
