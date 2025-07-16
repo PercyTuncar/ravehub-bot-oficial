@@ -71,7 +71,7 @@ module.exports = {
         await user.save();
 
         // 6. Mensaje de confirmación detallado
-        let effectsMessage = `¡Salud! 🍻 Te tomaste una ${shopItem.name}.`;
+        let effectsMessage = `¡Salud! 🍻 \n\n¡@${senderJid.split('@')[0]}! Te tomaste un ${shopItem.name}.`;
         if (user.status.thirst > initialStatus.thirst) {
             effectsMessage += `\nTu sed ahora es ${user.status.thirst}%.`;
         }
