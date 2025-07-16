@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema({
   cooldowns: {
     work: { type: Date, default: null },
     rob: { type: Date, default: null },
+    relax: { type: Date, default: null },
   },
   economy: {
     wallet: { type: Number, default: 0 },
