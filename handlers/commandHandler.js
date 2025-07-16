@@ -14,6 +14,8 @@ function loadCommands(dir) {
             loadCommands(fullPath);
         } else if (file.name.endsWith('.js')) {
             try {
+                // Forzar la re-lectura del archivo eliminando la caché de require
+                delete require.cache[require.resolve(fullPath)];
                 const command = require(fullPath);
                 if (command.name && command.execute) {
                     commandMap.set(command.name, command);
