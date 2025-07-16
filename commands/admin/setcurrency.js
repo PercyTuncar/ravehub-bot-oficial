@@ -30,7 +30,7 @@ module.exports = {
     aliases: ['setpais', 'setcountry'], // Mantener alias anteriores
     usage: '.setcurrency <país>',
     category: 'admin',
-    async execute(sock, message, args) {
+    async execute(message, args, sock) { // Corregir el orden de los parámetros
         const senderJid = message.key.fromMe ? sock.user.id.split(':')[0] + '@s.whatsapp.net' : (message.key.participant || message.key.remoteJid);
         const chatId = message.key.remoteJid;
 
