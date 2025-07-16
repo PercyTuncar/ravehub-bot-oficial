@@ -5,6 +5,7 @@ const logger = require('./config/logger'); // Usar el logger centralizado
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./config/database');
+const { commandMap: commands } = require('./handlers/commandHandler');
 const commandHandler = require('./handlers/commandHandler'); // Importar el command handler
 const { handleWelcomeMessage } = require('./handlers/eventHandler');
 const { setSocket } = require('./bot');
