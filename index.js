@@ -5,8 +5,8 @@ const logger = require('./config/logger'); // Usar el logger centralizado
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./config/database');
-const { commandMap: commands } = require('./handlers/commandHandler');
 const commandHandler = require('./handlers/commandHandler'); // Importar el command handler
+const { commandMap } = require('./handlers/commandHandler'); // Importar el mapa de comandos
 const { handleWelcomeMessage } = require('./handlers/eventHandler');
 const { setSocket } = require('./bot');
 const { startChecking } = require('./handlers/statusHandler');
@@ -109,7 +109,7 @@ async function connectToWhatsApp() {
 `;
                 const categories = {};
 
-                commands.forEach(command => {
+                commandMap.forEach(command => {
                     if (!categories[command.category]) {
                         categories[command.category] = [];
                     }

@@ -2,13 +2,38 @@ const fs = require('fs');
 const path = require('path');
 const challengeHandler = require('./challengeHandler');
 const User = require('../models/User');
+const { getPrefix } = require('../utils/groupUtils');
 
-module.exports = async (client, message) => {
+const commandMap = new Map();
+const commandCooldowns = new Map();
+
+function loadCommands(dir) {
+    const commandFiles = fs.readdirSync(dir, { withFileTypes: true });
+    for (const file of commandFiles) {
+        const fullPath = path.join(dir, file.name);
+        if (file.isDirectory()) {
+            loadCommands(fullPath);
+        } else if (file.name.endsWith('.js')) {
+            try {
+                const command = require(fullPath);
+                if (command.name && command.execute) {
+                    commandMap.set(command.name, command);
+                } 
+            } catch (error) {
+                console.error(`Error al cargar el comando ${fullPath}:`, error);
+            }
+        }
+    }
+}
+
+loadCommands(path.join(__dirname, '../commands'));
+
+const commandHandler = async (client, message) => {
     // Lógica para obtener el cuerpo del mensaje y el ID del chat desde la estructura de Baileys
-    const body = message.body;
+    const body = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
     const chatId = message.key.remoteJid;
     const userId = message.key.participant || message.key.remoteJid;
-    const prefix = '!';
+    const prefix = '.';
 
     // --- LÓGICA DEL DESAFÍO DE LA SILUETA ---
     const activeChallenge = challengeHandler.getChallenge(chatId);
@@ -50,7 +75,7 @@ module.exports = async (client, message) => {
 
     const args = body.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
-    const command = client.commands.get(commandName);
+    const command = commandMap.get(commandName);
 
     if (command) {
         try {
@@ -62,3 +87,6 @@ module.exports = async (client, message) => {
         }
     }
 };
+
+module.exports = commandHandler;
+module.exports.commandMap = commandMap;

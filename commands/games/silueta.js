@@ -3,7 +3,9 @@ const challengeHandler = require('../../handlers/challengeHandler');
 
 module.exports = {
     name: 'silueta',
-    description: 'Inicia un nuevo Desafío de la Silueta.',
+    description: 'Adivina el DJ a partir de su silueta.',
+    category: 'games',
+    cooldown: 60,
     async execute(message, args, client) { // Pasamos el cliente de baileys
         const chatId = message.key.remoteJid;
 
@@ -13,7 +15,7 @@ module.exports = {
 
         const djCount = await DjChallenge.countDocuments();
         if (djCount === 0) {
-            return client.sendMessage(chatId, { text: 'No hay DJs en la base de datos. ¡Un admin necesita añadir algunos con `!add-dj`!' });
+            return client.sendMessage(chatId, { text: 'No hay DJs en la base de datos. ¡Un admin necesita añadir algunos con `.add-dj`!' });
         }
         
         const rand = Math.floor(Math.random() * djCount);
@@ -27,7 +29,7 @@ module.exports = {
         if (!challenge) return;
         
         try {
-            const caption = `🔥 *¡Nuevo Desafío de la Silueta!* 🔥\n\nAdivina el DJ y gana el gran premio. ¡Cualquier mensaje que no sea un comando contará como tu respuesta!\n\n🏆 *Premio Actual:* ${challenge.prize} monedas\n❌ *Penalización por Error:* 50 monedas\n\n¿Necesitas ayuda? Compra una pista con \`!pista\`.`;
+            const caption = `🔥 *¡Nuevo Desafío de la Silueta!* 🔥\n\nAdivina el DJ y gana el gran premio. ¡Cualquier mensaje que no sea un comando contará como tu respuesta!\n\n🏆 *Premio Actual:* ${challenge.prize} monedas\n❌ *Penalización por Error:* 50 monedas\n\n¿Necesitas ayuda? Compra una pista con \`.pista\`.`;
             await client.sendMessage(chatId, { 
                 image: { url: challenge.dj.silhouetteImageUrl },
                 caption: caption 
