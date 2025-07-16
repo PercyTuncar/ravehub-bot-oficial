@@ -173,7 +173,7 @@ module.exports = {
             } else {
                 // Mensaje de compra genérico para otros items
                 await sock.sendMessage(chatId, {
-                    text: `🛍️ *¡Compra exitosa!* 🛍️\n\nHas comprado ${purchaseDescription}.\n\n${paymentMessage}`,
+                    text: `🛍️ *¡Compra exitosa!* 🛍️\n\n¡@${senderJid.split('@')[0]}! Has comprado ${purchaseDescription}.\n\n${paymentMessage}`,
                     mentions
                 });
             }
