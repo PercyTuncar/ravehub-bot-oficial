@@ -28,7 +28,11 @@ async function getGroupSettings(groupId) {
     }
 
     try {
-        const settings = await findOrCreateGroup(groupId);
+        let settings = await findOrCreateGroup(groupId);
+        // Asegurarse de que siempre haya una divisa por defecto si no existe
+        if (settings && !settings.currency) {
+            settings.currency = '$'; 
+        }
         if (settings) {
             groupSettingsCache.set(groupId, settings);
         }
@@ -47,10 +51,10 @@ async function getGroupSettings(groupId) {
 async function getCurrency(groupId) {
     try {
         const settings = await getGroupSettings(groupId);
-        return settings ? settings.currencySymbol : 'S/'; // Default currency
+        return settings ? settings.currency : '$'; // Usar el campo 'currency' y un default
     } catch (error) {
         console.error("Error fetching group currency:", error);
-        return 'S/';
+        return '$';
     }
 }
 

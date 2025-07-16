@@ -66,10 +66,10 @@ module.exports = {
         if (isCorrect) {
             const winnerId = message.key.participant || message.key.remoteJid;
             
-            // Incrementar la billetera del usuario
+            // Incrementar la billetera del usuario usando el campo correcto 'jid'
             await User.findOneAndUpdate(
-                { id: winnerId },
-                { $inc: { wallet: challenge.prize } },
+                { jid: winnerId, groupId: chatId }, // Usar jid y groupId para encontrar al usuario
+                { $inc: { 'economy.wallet': challenge.prize } }, // Incrementar la billetera dentro de economy
                 { upsert: true, new: true }
             );
 

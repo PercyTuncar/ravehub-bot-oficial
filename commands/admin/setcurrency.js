@@ -18,17 +18,17 @@ const countryCurrencies = {
     'nicaragua': { name: 'Córdoba', symbol: 'C$' },
     'panamá': { name: 'Balboa / Dólar estadounidense', symbol: 'B/.' },
     'paraguay': { name: 'Guaraní', symbol: '₲' },
-    'perú': { name: 'Sol peruano', symbol: 's/' },
+    'perú': { name: 'Sol peruano', symbol: 'S/' }, // Corregido a mayúscula
     'puerto rico': { name: 'Dólar estadounidense', symbol: '$' },
     'uruguay': { name: 'Peso uruguayo', symbol: '$U' },
     'venezuela': { name: 'Bolívar', symbol: 'Bs' },
 };
 
 module.exports = {
-    name: 'setpais',
+    name: 'setcurrency', // Cambiar nombre del comando para mayor claridad
     description: 'Establece la moneda para el grupo actual según el país.',
-    aliases: ['setcountry'],
-    usage: '.setpais <país>',
+    aliases: ['setpais', 'setcountry'], // Mantener alias anteriores
+    usage: '.setcurrency <país>',
     category: 'admin',
     async execute(sock, message, args) {
         const senderJid = message.key.fromMe ? sock.user.id.split(':')[0] + '@s.whatsapp.net' : (message.key.participant || message.key.remoteJid);
@@ -64,8 +64,8 @@ module.exports = {
             return sock.sendMessage(chatId, { text: `Debes proporcionar un país. Países disponibles: ${availableCountries}` });
         }
 
-        const currency = countryCurrencies[countryName];
-        if (!currency) {
+        const currencyInfo = countryCurrencies[countryName];
+        if (!currencyInfo) {
             const availableCountries = Object.keys(countryCurrencies).map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ');
             return sock.sendMessage(chatId, { text: `País no válido. Países disponibles: ${availableCountries}` });
         }
@@ -73,11 +73,11 @@ module.exports = {
         try {
             await GroupSettings.findOneAndUpdate(
                 { groupId: chatId },
-                { currencySymbol: currency.symbol },
+                { currency: currencyInfo.symbol }, // Usar el campo 'currency'
                 { upsert: true, new: true }
             );
 
-            await sock.sendMessage(chatId, { text: `✅ La moneda del grupo se ha establecido a ${currency.name} (${currency.symbol})` });
+            await sock.sendMessage(chatId, { text: `✅ La moneda del grupo se ha establecido a ${currencyInfo.name} (${currencyInfo.symbol})` });
         } catch (error) {
             console.error('Error al establecer la moneda:', error);
             await sock.sendMessage(chatId, { text: '❌ Ocurrió un error al configurar la moneda.' });
