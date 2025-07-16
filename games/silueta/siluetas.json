@@ -1,0 +1,98 @@
+[
+  {
+    "name": "afrojack",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660826/djs_siluetas/silueta_afrojack.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662099/djs_images/afrojack.jpg",
+    "aliases": ["nick van de wall", "afro", "dj afrojack"]
+  },
+  {
+    "name": "Alan Walker",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660827/djs_siluetas/silueta_alan_walker.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662100/djs_images/alan_walker.jpg",
+    "aliases": ["dj walkzz", "walker", "aw"]
+  },
+  {
+    "name": "alok",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660827/djs_siluetas/silueta_alok.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662101/djs_images/alok.jpg",
+    "aliases": ["alok petrillo", "dj alok"]
+  },
+  {
+    "name": "Armin van Buuren",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660828/djs_siluetas/silueta_armin_van_buuren.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662101/djs_images/armin_van_buuren.jpg",
+    "aliases": ["armin", "avb", "armin van buren"]
+  },
+  {
+    "name": "Charlotte de witte",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660828/djs_siluetas/silueta_charlotte_de_witte.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662102/djs_images/charlotte_de_witte.jpg",
+    "aliases": ["charlotte", "cdw", "charlote de witte"]
+  },
+  {
+    "name": "david guetta",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660829/djs_siluetas/silueta_david_guetta.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662103/djs_images/david_guetta.jpg",
+    "aliases": ["guetta", "david geta"]
+  },
+  {
+    "name": "dimitri vegas like mike",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660830/djs_siluetas/silueta_dimitri_vegas_like_mike.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662104/djs_images/dimitri_vegas_like_mike.jpg",
+    "aliases": ["dvlm", "dimitri vegas", "like mike"]
+  },
+  {
+    "name": "Don Diablo",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660830/djs_siluetas/silueta_don_diablo.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662105/djs_images/don_diablo.jpg",
+    "aliases": ["don", "diablo", "dondiablo"]
+  },
+  {
+    "name": "fisher",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660831/djs_siluetas/silueta_fisher.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662106/djs_images/fisher.jpg",
+    "aliases": ["paul fisher", "fish", "dj fisher"]
+  },
+  {
+    "name": "Hardwell",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662098/djs_siluetas/silueta_hardwell.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662107/djs_images/hardwell.jpg",
+    "aliases": ["robbert van de corput", "dj hardwell"]
+  },
+  {
+    "name": "KSHMR",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660832/djs_siluetas/silueta_kshmr.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662108/djs_images/kshmr.jpg",
+    "aliases": ["niles hollowell-dhar", "kashimir"]
+  },
+  {
+    "name": "martin garrix",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660832/djs_siluetas/silueta_martin_garrix.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662108/djs_images/martin_garrix.jpg",
+    "aliases": ["garrix", "martijn garritsen", "grx"]
+  },
+  {
+    "name": "Peggy Gou",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660833/djs_siluetas/silueta_peggy_gou.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662109/djs_images/peggy_gou.jpg",
+    "aliases": ["gou", "peggy", "dj peggy gou"]
+  },
+  {
+    "name": "Steve Aoki",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660834/djs_siluetas/silueta_steve_aoki.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662110/djs_images/steve_aoki.jpg",
+    "aliases": ["aoki", "dj aoki"]
+  },
+  {
+    "name": "Timmy Trumpet",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660834/djs_siluetas/silueta_timmy_trumpet.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662111/djs_images/timmy_trumpet.jpg",
+    "aliases": ["timmy", "trumpet", "dj timmy trumpet"]
+  },
+  {
+    "name": "Vintage Culture",
+    "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660835/djs_siluetas/silueta_vintage_culture.jpg",
+    "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662112/djs_images/vintage_culture.jpg",
+    "aliases": ["lukas ruiz", "vintage", "dj vintage culture"]
+  }
+]

@@ -36,38 +36,10 @@ const commandHandler = async (client, message) => {
     const prefix = '.';
 
     // --- LÓGICA DEL DESAFÍO DE LA SILUETA ---
-    const activeChallenge = challengeHandler.getChallenge(chatId);
-
-    if (activeChallenge && body && !body.startsWith(prefix)) {
-        if (activeChallenge.incorrectGuesses.has(userId)) {
-            return; 
-        }
-
-        const userAnswer = body.trim().toLowerCase();
-        const correctAnswers = [activeChallenge.dj.name.toLowerCase(), ...activeChallenge.dj.aliases];
-
-        if (correctAnswers.includes(userAnswer)) {
-            const winner = await User.findOneAndUpdate({ id: userId }, { $inc: { bank: activeChallenge.prize } }, { new: true, upsert: true });
-            const winnerName = message.pushName || userId.split('@')[0];
-
-            await client.sendMessage(chatId, { text: `🎉 ¡Correcto, @${winnerName}! La respuesta era *${activeChallenge.dj.name}*.\n\nHas ganado *${activeChallenge.prize} monedas* en tu banco.` });
-            
-            try {
-                await client.sendMessage(chatId, { image: { url: activeChallenge.dj.revealedImageUrl } });
-            } catch (error) {
-                console.error("Error al enviar la imagen revelada:", error);
-            }
-
-            challengeHandler.endChallenge(chatId);
-
-        } else {
-            const user = await User.findOneAndUpdate({ id: userId }, { $inc: { bank: -50 } }, { new: true, upsert: true });
-            if (user) {
-                 await client.sendMessage(chatId, { text: `Respuesta incorrecta. Pierdes 50 monedas de tu banco.` });
-            }
-            activeChallenge.incorrectGuesses.add(userId);
-        }
-        return;
+    // Si hay un desafío activo y el mensaje no es un comando, lo procesamos como una respuesta
+    if (challengeHandler.isChallengeActive(chatId) && body && !body.startsWith(prefix)) {
+        challengeHandler.handleAnswer({ body, key: message.key }, client);
+        return; // Detenemos la ejecución para no procesarlo como un comando normal
     }
     // --- FIN LÓGICA DESAFÍO ---
 

@@ -1,43 +1,42 @@
-const DjChallenge = require('../../models/DjChallenge');
 const challengeHandler = require('../../handlers/challengeHandler');
+const siluetas = require('../../games/silueta/siluetas.json'); // Cargar el JSON local
 
 module.exports = {
     name: 'silueta',
     description: 'Adivina el DJ a partir de su silueta.',
     category: 'games',
-    cooldown: 60,
-    async execute(message, args, client) { // Pasamos el cliente de baileys
+    cooldown: 10, // Reducir el cooldown para más dinamismo
+    async execute(message, args, client) {
         const chatId = message.key.remoteJid;
 
-        if (challengeHandler.getChallenge(chatId)) {
-            return client.sendMessage(chatId, { text: 'Ya hay un desafío en curso en este chat. ¡Intenta adivinar!' });
+        if (challengeHandler.isChallengeActive(chatId)) {
+            return client.sendMessage(chatId, { text: 'Ya hay un desafío de silueta en curso en este chat. ¡Intenta adivinar!' });
         }
 
-        const djCount = await DjChallenge.countDocuments();
-        if (djCount === 0) {
-            return client.sendMessage(chatId, { text: 'No hay DJs en la base de datos. ¡Un admin necesita añadir algunos con `.add-dj`!' });
+        if (!siluetas || siluetas.length === 0) {
+            return client.sendMessage(chatId, { text: 'No hay DJs cargados para el juego de la silueta. El administrador debe configurar el archivo `siluetas.json`.' });
         }
         
-        const rand = Math.floor(Math.random() * djCount);
-        const dj = await DjChallenge.findOne().skip(rand);
+        const rand = Math.floor(Math.random() * siluetas.length);
+        const dj = siluetas[rand];
 
-        if (!dj) {
-             return client.sendMessage(chatId, { text: 'No se pudo seleccionar un DJ al azar. Inténtalo de nuevo.' });
+        if (!dj || !dj.name || !dj.silhouetteUrl || !dj.imageUrl) {
+             return client.sendMessage(chatId, { text: 'El DJ seleccionado no tiene toda la información necesaria. Por favor, avisa a un administrador.' });
         }
 
-        const challenge = challengeHandler.startChallenge(client, chatId, dj);
-        if (!challenge) return;
+        // Iniciar el desafío a través del handler
+        const challenge = challengeHandler.startSilhouetteChallenge(client, chatId, dj);
         
         try {
-            const caption = `🔥 *¡Nuevo Desafío de la Silueta!* 🔥\n\nAdivina el DJ y gana el gran premio. ¡Cualquier mensaje que no sea un comando contará como tu respuesta!\n\n🏆 *Premio Actual:* ${challenge.prize} monedas\n❌ *Penalización por Error:* 50 monedas\n\n¿Necesitas ayuda? Compra una pista con \`.pista\`.`;
+            const caption = `🔥 *¡Nuevo Desafío de la Silueta!* 🔥\n\n¿Quién es este DJ? Adivina y gana el premio. ¡Cualquier mensaje que no sea un comando contará como tu respuesta!\n\n🏆 *Premio:* ${challenge.prize} monedas\n\nEscribe el nombre del DJ para adivinar.`;
             await client.sendMessage(chatId, { 
-                image: { url: challenge.dj.silhouetteImageUrl },
+                image: { url: dj.silhouetteUrl }, // Usar la URL de la silueta del JSON
                 caption: caption 
             });
         } catch (error) {
-            console.error("Error al obtener la imagen de la silueta:", error);
+            console.error("Error al enviar la imagen de la silueta:", error);
             await client.sendMessage(chatId, { text: "Hubo un problema al cargar la imagen del desafío. Por favor, intenta iniciar uno nuevo." });
-            challengeHandler.endChallenge(chatId);
+            challengeHandler.endChallenge(chatId); // Finalizar el desafío si falla el envío
         }
     }
 };

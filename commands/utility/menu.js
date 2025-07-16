@@ -86,10 +86,24 @@ module.exports = {
             menuText += `\n╭─「 *${emoji} ${categoryName}* 」\n`;
 
             const commandList = commandsByCategory[category];
-            commandList.forEach(command => {
-                // Añadimos la descripción del comando para más claridad
-                menuText += `│ • \`.${command.name}\`: _${command.description}_\n`;
-            });
+            if (category === 'game') {
+                const gameCommands = [
+                    { name: 'ruleta', description: 'Apuesta a un color y gana.' },
+                    { name: 'slot', description: 'Juega a la máquina tragamonedas.' },
+                    { name: 'pista', description: 'Adivina el DJ por una pista.' },
+                    { name: 'silueta', description: 'Adivina el DJ por su silueta.' },
+                    { name: 'cartamayor', description: 'Juega a la carta más alta.' }
+                ];
+                gameCommands.forEach(command => {
+                    menuText += `│ • \`.${command.name}\`: _${command.description}_\n`;
+                });
+
+            } else {
+                commandList.forEach(command => {
+                    // Añadimos la descripción del comando para más claridad
+                    menuText += `│ • \`.${command.name}\`: _${command.description}_\n`;
+                });
+            }
             menuText += `╰───────────\n`;
         }
 
