@@ -2,7 +2,8 @@ const fs = require('fs');
 const path = require('path');
 const challengeHandler = require('./challengeHandler');
 const User = require('../models/User');
-const { getPrefix } = require('../utils/groupUtils');
+// Corregir la importación de getGroupSettings
+const { getGroupSettings } = require('../utils/groupUtils');
 
 const commandMap = new Map();
 const commandCooldowns = new Map();
@@ -38,7 +39,9 @@ const commandHandler = async (client, message) => {
         return;
     }
 
-    const prefix = await getPrefix(chatId);
+    // Obtener el prefijo usando getGroupSettings
+    const groupSettings = await getGroupSettings(chatId);
+    const prefix = groupSettings ? groupSettings.prefix : '.'; // Usar '.' como prefijo por defecto
 
     // --- LÓGICA DEL DESAFÍO ---
     if (challengeHandler.isChallengeActive(chatId) && !body.startsWith(prefix)) {
