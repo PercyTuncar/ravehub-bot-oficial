@@ -2,8 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const challengeHandler = require('./challengeHandler');
 const User = require('../models/User');
-// Corregir la importación de getGroupSettings
-const { getGroupSettings } = require('../utils/groupUtils');
 
 const commandMap = new Map();
 const commandCooldowns = new Map();
@@ -34,18 +32,16 @@ const commandHandler = async (client, message) => {
     const chatId = message.key.remoteJid;
     const userId = message.key.participant || message.key.remoteJid;
     
-    console.log(`[DEBUG] Mensaje recibido en: ${chatId} | De: ${userId} | Contenido: "${body}"`);
+    // Volver a un prefijo fijo y constante
+    const prefix = '.'; 
+
+    console.log(`[DEBUG] Mensaje recibido en: ${chatId} | De: ${userId} | Contenido: "${body}" | Prefijo: "${prefix}"`);
 
     // Asegurarse de que el mensaje y el remitente existan
     if (!body || !userId) {
         console.log('[DEBUG] Mensaje ignorado: sin cuerpo o sin ID de usuario.');
         return;
     }
-
-    // Obtener el prefijo usando getGroupSettings
-    const groupSettings = await getGroupSettings(chatId);
-    const prefix = groupSettings ? groupSettings.prefix : '.';
-    console.log(`[DEBUG] Prefijo para el chat ${chatId}: "${prefix}"`);
 
     // --- LÓGICA DEL DESAFÍO ---
     if (challengeHandler.isChallengeActive(chatId)) {

@@ -15,7 +15,8 @@ module.exports = {
         }
 
         const groupSettings = await getGroupSettings(chatId);
-        const currency = groupSettings.currency;
+        // Usar un valor por defecto si la divisa no está definida, sin sobreescribir la DB
+        const currency = groupSettings?.currency || '$';
 
         if (!siluetas || siluetas.length === 0) {
             return client.sendMessage(chatId, { text: 'No hay DJs cargados para el juego de la silueta. El administrador debe configurar el archivo `siluetas.json`.' });
