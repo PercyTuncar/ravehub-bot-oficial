@@ -34,10 +34,13 @@ module.exports = {
         
         try {
             const caption = `🔥 *¡Nuevo Desafío de la Silueta!* 🔥\n\n¿Quién es este DJ? Adivina y gana el premio. ¡Cualquier mensaje que no sea un comando contará como tu respuesta!\n\n🏆 *Premio:* ${currency} ${challenge.prize}\n\nEscribe el nombre del DJ para adivinar.`;
-            await client.sendMessage(chatId, { 
+            const sentMessage = await client.sendMessage(chatId, { 
                 image: { url: dj.silhouetteUrl },
                 caption: caption 
             });
+            // Asociar la clave del mensaje con el desafío
+            challenge.messageKey = sentMessage.key;
+
         } catch (error) {
             console.error("Error al enviar la imagen de la silueta:", error);
             await client.sendMessage(chatId, { text: "Hubo un problema al cargar la imagen del desafío. Por favor, intenta iniciar uno nuevo." });

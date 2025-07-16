@@ -3,96 +3,176 @@
     "name": "afrojack",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660826/djs_siluetas/silueta_afrojack.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662099/djs_images/afrojack.jpg",
-    "aliases": ["nick van de wall", "afro", "dj afrojack"]
+    "aliases": ["nick van de wall", "afro", "dj afrojack"],
+    "clues": {
+      "hard": "🇳🇱 DJ holandés que se mantuvo en el puesto #7 en DJ Mag 2024 y es pionero del electro house.",
+      "medium": "💎 Su colaboración \"Take Over Control\" con Eva Simons fue un éxito mundial.",
+      "easy": "🏆 Su nombre real es Nick van de Wall y ha ganado múltiples premios Grammy."
+    }
   },
   {
     "name": "Alan Walker",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660827/djs_siluetas/silueta_alan_walker.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662100/djs_images/alan_walker.jpg",
-    "aliases": ["dj walkzz", "walker", "aw"]
+    "aliases": ["dj walkzz", "walker", "aw"],
+    "clues": {
+      "hard": "🇳🇴 DJ noruego conocido por usar una máscara y hoodie en sus presentaciones.",
+      "medium": "🎵 Su track \"Faded\" tiene más de 3 mil millones de reproducciones en YouTube.",
+      "easy": "🎭 Nunca muestra su rostro completo en público y su logo es una \"W\" estilizada."
+    }
   },
   {
     "name": "alok",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660827/djs_siluetas/silueta_alok.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662101/djs_images/alok.jpg",
-    "aliases": ["alok petrillo", "dj alok"]
+    "aliases": ["alok petrillo", "dj alok"],
+    "clues": {
+      "hard": "🇧🇷 DJ brasileño que se mantuvo en el puesto #4 de DJ Mag 2024 y es el representante más exitoso del bass brasileño.",
+      "medium": "🎵 Su track \"Hear Me Now\" lo estableció como una fuerza global en el EDM.",
+      "easy": "🎪 Viene de una familia musical - su padre es DJ Ekanta y su hermano gemelo es el DJ Bhaskar."
+    }
   },
   {
     "name": "Armin van Buuren",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660828/djs_siluetas/silueta_armin_van_buuren.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662101/djs_images/armin_van_buuren.jpg",
-    "aliases": ["armin", "avb", "armin van buren"]
+    "aliases": ["armin", "avb", "armin van buren"],
+    "clues": {
+      "hard": "🇳🇱 DJ holandés que bajó al puesto #6 en DJ Mag 2024 pero sigue siendo el #1 en trance.",
+      "medium": "📻 Su radio show \"A State Of Trance\" es el programa de trance más escuchado del mundo.",
+      "easy": "🎵 Su track clásico \"Communication\" cumplió 25 años en 2024 y sigue siendo un himno del trance."
+    }
   },
   {
     "name": "Charlotte de witte",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660828/djs_siluetas/silueta_charlotte_de_witte.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662102/djs_images/charlotte_de_witte.jpg",
-    "aliases": ["charlotte", "cdw", "charlote de witte"]
+    "aliases": ["charlotte", "cdw", "charlote de witte"],
+    "clues": {
+      "hard": "🇧🇪 DJ belga que es una de las principales figuras del techno oscuro mundial.",
+      "medium": "🎵 Su track \"Selected\" en Drumcode la estableció como reina del techno industrial.",
+      "easy": "⚫ Es conocida por sus sets completamente en negro y su estilo techno hipnótico y oscuro."
+    }
   },
   {
     "name": "david guetta",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660829/djs_siluetas/silueta_david_guetta.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662103/djs_images/david_guetta.jpg",
-    "aliases": ["guetta", "david geta"]
+    "aliases": ["guetta", "david geta"],
+    "clues": {
+      "hard": "🇫🇷 DJ francés que quedó en segundo lugar en DJ Mag Top 100 2024 y es pionero del EDM mainstream.",
+      "medium": "🎤 Famoso por colaboraciones con artistas pop como \"Titanium\" con Sia y \"When Love Takes Over\" con Kelly Rowland.",
+      "easy": "🏠 Su apellido significa \"vigilante\" en italiano y es conocido como el padrino del house comercial."
+    }
   },
   {
     "name": "dimitri vegas like mike",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660830/djs_siluetas/silueta_dimitri_vegas_like_mike.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662104/djs_images/dimitri_vegas_like_mike.jpg",
-    "aliases": ["dvlm", "dimitri vegas", "like mike"]
+    "aliases": ["dvlm", "dimitri vegas", "like mike"],
+    "clues": {
+      "hard": "🇧🇪 Dúo belga-griego que ocupó el puesto #3 en DJ Mag 2024 y son embajadores oficiales de Tomorrowland.",
+      "medium": "🎆 Su track \"Tremor\" con Martin Garrix cumplió 10 años en 2024 y sigue siendo un himno de festival.",
+      "easy": "👥 Son hermanos y han sido el dúo mejor rankeado en DJ Mag por más de una década."
+    }
   },
   {
     "name": "Don Diablo",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660830/djs_siluetas/silueta_don_diablo.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662105/djs_images/don_diablo.jpg",
-    "aliases": ["don", "diablo", "dondiablo"]
+    "aliases": ["don", "diablo", "dondiablo"],
+    "clues": {
+      "hard": "🇳🇱 DJ holandés conocido como el \"King of Future House\" y pionero del género.",
+      "medium": "🎵 Su track \"On My Mind\" definió el sonido del future house moderno.",
+      "easy": "🦹 Su alter ego es un personaje de cómic y usa una máscara distintiva en sus presentaciones."
+    }
   },
   {
     "name": "fisher",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660831/djs_siluetas/silueta_fisher.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662106/djs_images/fisher.jpg",
-    "aliases": ["paul fisher", "fish", "dj fisher"]
+    "aliases": ["paul fisher", "fish", "dj fisher"],
+    "clues": {
+      "hard": "🇦🇺 DJ australiano que subió dramáticamente al puesto #8 en DJ Mag 2024 (+12 posiciones).",
+      "medium": "🎵 Su track \"Losing It\" se convirtió en un himno del tech house mundial.",
+      "easy": "🏄 Es ex-surfista profesional que se convirtió en una de las fuerzas más grandes del tech house."
+    }
   },
   {
     "name": "Hardwell",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662098/djs_siluetas/silueta_hardwell.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662107/djs_images/hardwell.jpg",
-    "aliases": ["robbert van de corput", "dj hardwell"]
+    "aliases": ["robbert van de corput", "dj hardwell"],
+    "clues": {
+      "hard": "🇳🇱 DJ holandés que regresó al top ranking tras su comeback y es leyenda del big room.",
+      "medium": "🎵 Su track \"Spaceman\" es considerado uno de los himnos más grandes del EDM.",
+      "easy": "🚀 Se retiró temporalmente en 2018 pero regresó con fuerza renovada en 2022."
+    }
   },
   {
     "name": "KSHMR",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660832/djs_siluetas/silueta_kshmr.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662108/djs_images/kshmr.jpg",
-    "aliases": ["niles hollowell-dhar", "kashimir"]
+    "aliases": ["niles hollowell-dhar", "kashimir"],
+    "clues": {
+      "hard": "🇺🇸 DJ estadounidense de origen indio conocido por fusionar sonidos orientales con EDM.",
+      "medium": "🎵 Su track \"Secrets\" con Tiësto fue un éxito mundial del big room.",
+      "easy": "🎬 Su nombre real es Niles Hollowell-Dhar y fue parte del dúo hip-hop The Cataracs."
+    }
   },
   {
     "name": "martin garrix",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660832/djs_siluetas/silueta_martin_garrix.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662108/djs_images/martin_garrix.jpg",
-    "aliases": ["garrix", "martijn garritsen", "grx"]
+    "aliases": ["garrix", "martijn garritsen", "grx"],
+    "clues": {
+      "hard": "🎧 DJ y productor holandés que fue #1 en DJ Mag Top 100 en 2024, superando a David Guetta.",
+      "medium": "🎵 Su track más famoso \"Animals\" lo catapultó al estrellato mundial cuando tenía solo 17 años.",
+      "easy": "➕ Su logo distintivo es una cruz o símbolo de \"más\" que aparece en todas sus producciones."
+    }
   },
   {
     "name": "Peggy Gou",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660833/djs_siluetas/silueta_peggy_gou.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662109/djs_images/peggy_gou.jpg",
-    "aliases": ["gou", "peggy", "dj peggy gou"]
+    "aliases": ["gou", "peggy", "dj peggy gou"],
+    "clues": {
+      "hard": "🇰🇷 DJ coreana que debutó en el top 10 de DJ Mag 2024 y es icono del tech house.",
+      "medium": "🎵 Su track \"(It Goes Like) Nanana\" se convirtió en un éxito viral masivo.",
+      "easy": "👗 Es también diseñadora de moda y fundó su propia marca de ropa \"Kirin\"."
+    }
   },
   {
     "name": "Steve Aoki",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660834/djs_siluetas/silueta_steve_aoki.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662110/djs_images/steve_aoki.jpg",
-    "aliases": ["aoki", "dj aoki"]
+    "aliases": ["aoki", "dj aoki"],
+    "clues": {
+      "hard": "🇺🇸 DJ estadounidense de origen japonés famoso por sus shows energéticos y lanzar pasteles.",
+      "medium": "🎂 Su marca registrada es lanzar pasteles al público durante sus presentaciones.",
+      "easy": "🎮 Ha colaborado con artistas como Linkin Park y tiene una línea de NFTs."
+    }
   },
   {
     "name": "Timmy Trumpet",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660834/djs_siluetas/silueta_timmy_trumpet.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662111/djs_images/timmy_trumpet.jpg",
-    "aliases": ["timmy", "trumpet", "dj timmy trumpet"]
+    "aliases": ["timmy", "trumpet", "dj timmy trumpet"],
+    "clues": {
+      "hard": "🇦🇺 DJ australiano que subió al puesto #5 en DJ Mag 2024 y es famoso por tocar la trompeta en vivo.",
+      "medium": "🎺 Su hit \"Freaks\" se convirtió en un himno mundial del hardstyle y big room.",
+      "easy": "🎵 Colaboró con Dimitri Vegas & Like Mike en \"Move Your Body\" que debutó en Tomorrowland 2024."
+    }
   },
   {
     "name": "Vintage Culture",
     "silhouetteUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752660835/djs_siluetas/silueta_vintage_culture.jpg",
     "imageUrl": "https://res.cloudinary.com/amadodedios/image/upload/v1752662112/djs_images/vintage_culture.jpg",
-    "aliases": ["lukas ruiz", "vintage", "dj vintage culture"]
+    "aliases": ["lukas ruiz", "vintage", "dj vintage culture"],
+    "clues": {
+      "hard": "🇧🇷 DJ brasileño que entró al top 10 de DJ Mag 2024 y es líder del house brasileño.",
+      "medium": "🎵 Su remix de \"Blue\" de The Sifters lo catapultó al reconocimiento internacional.",
+      "easy": "🎨 Su nombre real es Lukas Ruiz y comenzó su carrera en el underground de São Paulo."
+    }
   }
 ]
