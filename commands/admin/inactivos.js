@@ -21,11 +21,13 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'Este comando es solo para administradores del grupo.' }, { quoted: m });
         }
 
-        const allUsersInGroup = await User.find({ groupId: chatId });
-        const activeUserJids = allUsersInGroup.map(u => u.jid);
-
         const allParticipantJids = groupMetadata.participants.map(p => p.id);
         
+        // Find users in the DB for this group who have interacted (bank > 0)
+        const activeUsers = await User.find({ groupId: chatId, 'economy.bank': { $gt: 0 } });
+        const activeUserJids = activeUsers.map(u => u.jid);
+
+        // Inactive jids are all participants minus active users
         const inactiveJids = allParticipantJids.filter(jid => !activeUserJids.includes(jid));
 
         if (inactiveJids.length === 0) {
@@ -33,15 +35,17 @@ module.exports = {
         }
 
         let mentions = [];
-        let text = '😴 ';
+        let mentionsText = '😴 ';
         for (const jid of inactiveJids) {
             mentions.push(jid);
-            text += `@${jid.split('@')[0]} `;
+            mentionsText += `@${jid.split('@')[0]} `;
         }
 
-        text += `\n\n¿Siguen dormidos? ¡La ciudad está viva y ustedes no existen aún!  
+        const messageText = `¿Siguen dormidos? ¡La ciudad está viva y ustedes no existen aún!  
 Activen su perfil con \`.iniciar\` o serán considerados fantasmas 👻  
 No te quedes mirando. Empieza tu historia ahora. 💥`;
+
+        const text = `${messageText}\n\n${mentionsText.trim()}`;
 
         await sock.sendMessage(chatId, { text, mentions }, { quoted: m });
     },
