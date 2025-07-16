@@ -1,10 +1,12 @@
 const User = require('../../models/User');
+const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'inactivos',
     description: 'Menciona a los miembros inactivos (solo para admins).',
     category: 'admin',
-    async execute(sock, m, args) {
+    async execute(m, args) {
+        const sock = getSocket();
         const chatId = m.key.remoteJid;
         if (!chatId.endsWith('@g.us')) {
             return sock.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' }, { quoted: m });

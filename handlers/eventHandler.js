@@ -114,7 +114,7 @@ async function handleMessage(message, commands) {
     logger.info({ command: commandName, user: userJid }, `Ejecutando comando`);
 
     try {
-        await command.execute(message, args, commands);
+        await command.execute(message, args);
         logger.info({ command: commandName, user: userJid }, `Comando ejecutado exitosamente`);
     } catch (error) {
         logger.error({ err: error, command: commandName, user: userJid }, `Falló la ejecución del comando`);
