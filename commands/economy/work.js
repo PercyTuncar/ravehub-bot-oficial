@@ -9,7 +9,7 @@ module.exports = {
   description: "Ganar dinero y XP, pero aumenta el estrés.",
   usage: ".work",
   category: "economy",
-  async execute(message) {
+  async execute(message, args, commands) {
     const sock = getSocket();
     const senderJid = message.key.participant || message.key.remoteJid;
     const chatId = message.key.remoteJid;
