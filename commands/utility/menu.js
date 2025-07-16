@@ -95,6 +95,65 @@ module.exports = {
 
         menuText += `\n_Para ver cómo se usa un comando, escribe .help <comando>_`;
 
+        const menu = `
+*Menú de Comandos de RaveHub*
+
+*Admin*
+- !kick <@usuario>
+- !antilink <on/off>
+- !welcome <on/off>
+- !inactivos <días>
+- !resetwarns <@usuario>
+- !setcurrency <símbolo>
+
+*Economía*
+- !balance / !b
+- !shop
+- !buy <item>
+- !deposit <cantidad> / !dep
+- !retirar <cantidad>
+- !ricos
+- !give <@usuario> <cantidad>
+- !transfer <@usuario> <cantidad>
+- !transfer-bank <@usuario> <cantidad>
+- !work
+- !rob <@usuario>
+- !prestamo
+- !pagar
+- !deuda
+- !sbs
+- !plinear
+- !yapear <@usuario> <cantidad>
+
+*Juegos*
+- !slot
+- !ruleta <color> <cantidad>
+- !carta-mayor <cantidad>
+- !silueta
+- !pista
+
+*Love*
+- !propose <@usuario>
+- !divorce
+- !parejas
+- !estado
+- !compatibilidad <@usuario1> <@usuario2>
+- !historial
+
+*Roleplay*
+- !iniciar
+- !renacer
+- !me
+- !comer
+- !beber
+- !relajarse
+
+*Utilidad*
+- !estadisticas
+- !trabajos
+- !menu
+`;
+
         await sock.sendMessage(chatId, { text: menuText.trim() });
     },
 };
