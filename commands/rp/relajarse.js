@@ -52,6 +52,6 @@ module.exports = {
         user.lastInteraction = Date.now();
         await user.save();
 
-        await sock.sendMessage(chatId, { text: `¡Salud! 🍻 Has usado ${itemToUse.name} para relajarte. Tu estrés ha bajado en ${stressReduction} puntos y ahora es de ${user.status.stress}%.${user.status.health === 100 ? ' ¡Te sientes como nuevo y tu salud se ha restaurado por completo!' : ''}` });
+        await sock.sendMessage(chatId, { text: `¡Salud! 🍻 \n\n¡@${senderJid.split('@')[0]}! Has usado ${itemToUse.name} para relajarte. Tu estrés ha bajado en ${stressReduction} puntos y ahora es de ${user.status.stress}%.${user.status.health === 100 ? ' ¡Te sientes como nuevo y tu salud se ha restaurado por completo!' : ''}` });
     },
 };
