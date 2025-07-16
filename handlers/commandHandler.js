@@ -19,6 +19,13 @@ function loadCommands(dir) {
                 const command = require(fullPath);
                 if (command.name && command.execute) {
                     commandMap.set(command.name, command);
+                    // --- INICIO DE LA CORRECCIÓN: REGISTRAR ALIAS ---
+                    if (command.aliases && Array.isArray(command.aliases)) {
+                        command.aliases.forEach(alias => {
+                            commandMap.set(alias, command);
+                        });
+                    }
+                    // --- FIN DE LA CORRECCIÓN ---
                 } 
             } catch (error) {
                 console.error(`Error al cargar el comando ${fullPath}:`, error);
