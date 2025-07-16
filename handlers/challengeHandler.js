@@ -1,7 +1,12 @@
 const activeChallenges = new Map();
 
 function notify(client, chatId, message, options = {}) {
-    client.sendMessage(chatId, message, options);
+    // Baileys send message syntax is different
+    if (options.media) {
+        client.sendMessage(chatId, { image: { url: options.media }, caption: message });
+    } else {
+        client.sendMessage(chatId, { text: message });
+    }
 }
 
 module.exports = {
@@ -16,14 +21,11 @@ module.exports = {
             clueCosts: { hard: 300, medium: 500, easy: 700 },
             cluesBought: 0,
             incorrectGuesses: new Set(),
-            timeout: setTimeout(() => {
+            timeout: setTimeout(async () => {
                 const timeoutMessage = `⌛ ¡Tiempo agotado! Nadie adivinó. La respuesta era *${djData.name}*.`;
                 notify(client, chatId, timeoutMessage);
-                // Reveal image on timeout
-                const { MessageMedia } = require('whatsapp-web.js');
-                MessageMedia.fromUrl(djData.revealedImageUrl, { unsafeMime: true }).then(media => {
-                    notify(client, chatId, media);
-                });
+                // Reveal image on timeout using Baileys syntax
+                await client.sendMessage(chatId, { image: { url: djData.revealedImageUrl } });
                 this.endChallenge(chatId);
             }, 180000) // 3 minutos
         };
