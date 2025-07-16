@@ -5,8 +5,8 @@ const logger = require('./config/logger'); // Usar el logger centralizado
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./config/database');
-const { handleMessage, handleWelcomeMessage } = require('./handlers/eventHandler');
-const loadCommands = require('./handlers/commandHandler');
+const commandHandler = require('./handlers/commandHandler'); // Importar el command handler
+const { handleWelcomeMessage } = require('./handlers/eventHandler');
 const { setSocket } = require('./bot');
 const { startChecking } = require('./handlers/statusHandler');
 const { addMessageToQueue } = require('./utils/messageQueue');
@@ -23,9 +23,6 @@ if (process.argv.includes('--clear-session')) {
 
 let sock;
 let firstConnection = true;
-
-// Cargar todos los comandos y sus alias 
-const commands = loadCommands();
 
 async function connectToWhatsApp() {
     // Usar el gestor de autenticación oficial de Baileys
@@ -46,26 +43,14 @@ async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
 
     // Desacoplar el procesamiento de mensajes para no bloquear el event loop
-    sock.ev.on('messages.upsert', (msg) => {
-        if (msg.messages && msg.messages.length > 0) {
-            const message = msg.messages[0];
-            // Asegurarse de que el mensaje tiene contenido antes de procesarlo
-            if (message.message) {
-                setImmediate(() => {
-                    handleMessage(message, commands).catch(err => {
-                        logger.error(err, 'Error al manejar el mensaje');
-                        // Si el error es de desencriptación, podría ser una sesión corrupta.
-                        if (err.message && err.message.includes('Bad MAC')) {
-                            logger.warn('Error de "Bad MAC" detectado. Forzando limpieza de sesión y reinicio.');
-                            const sessionsDir = path.join(__dirname, 'sessions');
-                            if (fs.existsSync(sessionsDir)) {
-                                fs.rmSync(sessionsDir, { recursive: true, force: true });
-                            }
-                            // Forzar el cierre de la conexión para que el manejador 'connection.update' inicie la reconexión.
-                            sock.end(new Error('Forzando reconexión por Bad MAC'));
-                        }
-                    });
-                });
+    sock.ev.on('messages.upsert', async (m) => {
+        const message = m.messages[0];
+        if (message && message.message && !message.key.fromMe) {
+            try {
+                // Llamar directamente al commandHandler
+                await commandHandler(sock, message);
+            } catch (err) {
+                logger.error(err, 'Error al manejar el mensaje desde commandHandler');
             }
         }
     });
