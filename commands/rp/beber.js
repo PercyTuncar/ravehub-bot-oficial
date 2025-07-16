@@ -1,7 +1,6 @@
-const User = require('../../models/User');
-const ShopItem = require('../../models/ShopItem'); // Importar el modelo de la tienda
+const { findOrCreateUser, updateHealth } = require('../../utils/userUtils');
+const ShopItem = require('../../models/ShopItem');
 const { getSocket } = require('../../bot');
-const { updateHealth } = require('../../utils/userUtils'); // Importar updateHealth
 
 module.exports = {
     name: 'beber',
@@ -12,66 +11,84 @@ module.exports = {
         const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
+        const pushName = message.pushName || '';
 
         if (args.length === 0) {
-            return sock.sendMessage(chatId, { text: 'Debes especificar qué quieres beber. Ejemplo: `.beber cerveza`' });
+            return sock.sendMessage(chatId, { text: 'Debes especificar qué quieres beber. Ejemplo: `.beber cerveza heladita`' });
         }
-        
+
+        const itemName = args.join(' ').toLowerCase();
+
         try {
             const user = await findOrCreateUser(senderJid, chatId, pushName);
 
-            // Buscar el item en el inventario
-            const itemIndex = user.inventory.findIndex(item => item.name.toLowerCase() === itemName && item.quantity > 0);
-
-            if (itemIndex === -1) {
-                return sock.sendMessage(chatId, { text: `No tienes "${itemName}" en tu inventario para beber.` });
+            if (user.status.isDead) {
+                return sock.sendMessage(chatId, { text: '👻 No puedes hacer nada, estás muerto.' });
             }
 
-            // --- Lógica de Bebidas Personalizadas ---
-            const drinkActions = {
-                'cerveza heladita': {
-                    messages: [
-                        `¡Salud! @${senderJid.split('@')[0]} se está refrescando con una cerveza heladita. 🍻`,
-                        `¡Qué buena está! @${senderJid.split('@')[0]} disfruta de una cerveza heladita.`,
-                        `Un momento de relax para @${senderJid.split('@')[0]} con una cerveza heladita.`,
-                        `¡A tu salud, @${senderJid.split('@')[0]}! Disfruta esa cerveza heladita.`
-                    ]
-                },
-                'pisco': {
-                    messages: [
-                        `¡Un brindis con peruanidad! @${senderJid.split('@')[0]} prepara y disfruta un Pisco Sour. 🍸`,
-                        `¡Para el alma! @${senderJid.split('@')[0]} se sirve un Pisco Sour.`,
-                        `Con la receta secreta, @${senderJid.split('@')[0]} se deleita con un Pisco Sour. 🍸`
-                    ]
-                }
-                // Se pueden añadir más bebidas aquí
-            };
+            const itemInInventoryIndex = user.inventory.findIndex(item => item.name.toLowerCase() === itemName && item.quantity > 0);
 
-            const action = drinkActions[itemName];
-
-            if (!action) {
-                return sock.sendMessage(chatId, { text: `No puedes beber "${itemName}".` });
+            if (itemInInventoryIndex === -1) {
+                return sock.sendMessage(chatId, { text: `No tienes "${itemName}" en tu inventario.` });
             }
 
-            // Si la bebida es válida, proceder a consumirla
-            user.inventory[itemIndex].quantity -= 1;
+            const itemInInventory = user.inventory[itemInInventoryIndex];
+            
+            // Fallback por si el item no tiene `itemId` (datos antiguos)
+            if (!itemInInventory.itemId) {
+                return sock.sendMessage(chatId, { text: `❌ El item "${itemName}" en tu inventario es antiguo y no puede ser consumido. Contacta a un admin.` });
+            }
 
-            if (user.inventory[itemIndex].quantity === 0) {
-                user.inventory.splice(itemIndex, 1);
+            const shopItem = await ShopItem.findById(itemInInventory.itemId);
+
+            if (!shopItem) {
+                return sock.sendMessage(chatId, { text: `❌ Error: No se encontró la definición del item "${itemName}". Contacta a un admin.` });
+            }
+
+            if (shopItem.type !== 'drink') {
+                return sock.sendMessage(chatId, { text: `No puedes beber un(a) "${shopItem.name}".` });
+            }
+
+            // Aplicar efectos
+            const oldStatus = { ...user.status };
+            user.status.thirst = Math.min(100, user.status.thirst + (shopItem.effects.thirst || 0));
+            user.status.stress = Math.max(0, user.status.stress - (shopItem.effects.stress || 0));
+
+            // Actualizar salud general
+            updateHealth(user);
+
+            // Consumir item
+            itemInInventory.quantity -= 1;
+            if (itemInInventory.quantity === 0) {
+                user.inventory.splice(itemInInventoryIndex, 1);
             }
 
             await user.save();
 
-            const randomMessage = action.messages[Math.floor(Math.random() * action.messages.length)];
+            // Construir mensaje de respuesta
+            let effectsMessage = '';
+            if (shopItem.effects.thirst > 0) {
+                effectsMessage += `\n💧 Tu sed ha disminuido.`;
+            }
+            if (shopItem.effects.stress > 0) {
+                effectsMessage += `\n😌 Te sientes más relajado/a.`;
+            }
+            if (user.status.health > oldStatus.health) {
+                effectsMessage += `\n❤️ Tu salud ha mejorado.`;
+            } else if (user.status.health < oldStatus.health) {
+                effectsMessage += `\n💔 Tu salud ha empeorado.`;
+            }
+
+            const responseMessage = `*¡Salud!* 🍻\n\n@${senderJid.split('@')[0]} ha bebido *un(a) ${shopItem.name}*.${effectsMessage}`;
 
             return sock.sendMessage(chatId, {
-                text: randomMessage,
+                text: responseMessage,
                 mentions: [senderJid]
             });
 
         } catch (error) {
             console.error('Error en el comando beber:', error);
-            return sock.sendMessage(chatId, { text: 'Ocurrió un error al intentar beber el item.' });
+            return sock.sendMessage(chatId, { text: '❌ Ocurrió un error al procesar tu acción.' });
         }
     },
 };
