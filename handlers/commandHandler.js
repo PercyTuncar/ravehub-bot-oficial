@@ -29,21 +29,32 @@ function loadCommands(dir) {
 loadCommands(path.join(__dirname, '../commands'));
 
 const commandHandler = async (client, message) => {
-    // Lógica para obtener el cuerpo del mensaje y el ID del chat desde la estructura de Baileys
     const body = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
     const chatId = message.key.remoteJid;
     const userId = message.key.participant || message.key.remoteJid;
-    const prefix = '.';
+    
+    // Asegurarse de que el mensaje y el remitente existan
+    if (!body || !userId) {
+        return;
+    }
 
-    // --- LÓGICA DEL DESAFÍO DE LA SILUETA ---
-    // Si hay un desafío activo y el mensaje no es un comando, lo procesamos como una respuesta
-    if (challengeHandler.isChallengeActive(chatId) && body && !body.startsWith(prefix)) {
-        challengeHandler.handleAnswer({ body, key: message.key }, client);
-        return; // Detenemos la ejecución para no procesarlo como un comando normal
+    const prefix = await getPrefix(chatId);
+
+    // --- LÓGICA DEL DESAFÍO ---
+    if (challengeHandler.isChallengeActive(chatId) && !body.startsWith(prefix)) {
+        // Pasamos el objeto de mensaje completo para tener más contexto si es necesario
+        challengeHandler.handleAnswer({
+            body: body,
+            key: message.key,
+            // Añadimos más detalles del mensaje por si se necesitan en el futuro
+            participant: userId, 
+            pushName: message.pushName || ''
+        }, client);
+        return; // Detener la ejecución para no procesar como un comando
     }
     // --- FIN LÓGICA DESAFÍO ---
 
-    if (!body || !body.startsWith(prefix)) return;
+    if (!body.startsWith(prefix)) return;
 
     const args = body.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();

@@ -1,3 +1,4 @@
+const User = require('../models/User');
 const activeChallenges = new Map();
 
 function notify(client, chatId, message, options = {}) {
@@ -10,7 +11,7 @@ function notify(client, chatId, message, options = {}) {
 }
 
 module.exports = {
-    startSilhouetteChallenge(client, chatId, djData) {
+    startSilhouetteChallenge(client, chatId, djData, currency) {
         if (this.isChallengeActive(chatId)) return null;
 
         const challenge = {
@@ -19,6 +20,7 @@ module.exports = {
             chatId,
             dj: djData,
             prize: 500, // Premio estándar para silueta
+            currency: currency, // Guardar la divisa en el desafío
             timeout: setTimeout(async () => {
                 const timeoutMessage = `⌛ ¡Tiempo agotado! Nadie adivinó. La respuesta era *${djData.name}*.`;
                 notify(client, chatId, timeoutMessage);
@@ -49,7 +51,7 @@ module.exports = {
         }
     },
 
-    handleAnswer(message, client) {
+    async handleAnswer(message, client) {
         const chatId = message.key.remoteJid;
         const challenge = this.getChallenge(chatId);
 
@@ -63,10 +65,15 @@ module.exports = {
 
         if (isCorrect) {
             const winnerId = message.key.participant || message.key.remoteJid;
-            // Lógica para dar el premio al ganador (necesitarás tu sistema de economía)
-            // Por ejemplo: await economy.add(winnerId, challenge.prize);
+            
+            // Incrementar la billetera del usuario
+            await User.findOneAndUpdate(
+                { id: winnerId },
+                { $inc: { wallet: challenge.prize } },
+                { upsert: true, new: true }
+            );
 
-            const successMessage = `🎉 ¡Correcto, @${winnerId.split('@')[0]}! La respuesta era *${dj.name}*. Has ganado ${challenge.prize} monedas.`;
+            const successMessage = `🎉 ¡Correcto, @${winnerId.split('@')[0]}! La respuesta era *${dj.name}*. Has ganado ${challenge.currency} ${challenge.prize} en tu billetera.`;
             notify(client, chatId, successMessage, { mentions: [winnerId] });
 
             // Revelar la imagen normal
@@ -75,9 +82,6 @@ module.exports = {
             }
 
             this.endChallenge(chatId);
-        } else {
-            // Opcional: penalizar o simplemente ignorar respuestas incorrectas
-            // notify(client, chatId, 'Respuesta incorrecta. ¡Sigue intentando!');
         }
     }
 };

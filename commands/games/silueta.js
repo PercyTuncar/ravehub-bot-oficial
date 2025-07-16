@@ -1,5 +1,6 @@
 const challengeHandler = require('../../handlers/challengeHandler');
-const siluetas = require('../../games/silueta/siluetas.json'); // Cargar el JSON local
+const siluetas = require('../../games/silueta/siluetas.json');
+const { getGroupSettings } = require('../../utils/groupUtils');
 
 module.exports = {
     name: 'silueta',
@@ -13,6 +14,9 @@ module.exports = {
             return client.sendMessage(chatId, { text: 'Ya hay un desafío de silueta en curso en este chat. ¡Intenta adivinar!' });
         }
 
+        const groupSettings = await getGroupSettings(chatId);
+        const currency = groupSettings.currency;
+
         if (!siluetas || siluetas.length === 0) {
             return client.sendMessage(chatId, { text: 'No hay DJs cargados para el juego de la silueta. El administrador debe configurar el archivo `siluetas.json`.' });
         }
@@ -24,13 +28,13 @@ module.exports = {
              return client.sendMessage(chatId, { text: 'El DJ seleccionado no tiene toda la información necesaria. Por favor, avisa a un administrador.' });
         }
 
-        // Iniciar el desafío a través del handler
-        const challenge = challengeHandler.startSilhouetteChallenge(client, chatId, dj);
+        // Iniciar el desafío a través del handler, pasando la divisa
+        const challenge = challengeHandler.startSilhouetteChallenge(client, chatId, dj, currency);
         
         try {
-            const caption = `🔥 *¡Nuevo Desafío de la Silueta!* 🔥\n\n¿Quién es este DJ? Adivina y gana el premio. ¡Cualquier mensaje que no sea un comando contará como tu respuesta!\n\n🏆 *Premio:* ${challenge.prize} monedas\n\nEscribe el nombre del DJ para adivinar.`;
+            const caption = `🔥 *¡Nuevo Desafío de la Silueta!* 🔥\n\n¿Quién es este DJ? Adivina y gana el premio. ¡Cualquier mensaje que no sea un comando contará como tu respuesta!\n\n🏆 *Premio:* ${currency} ${challenge.prize}\n\nEscribe el nombre del DJ para adivinar.`;
             await client.sendMessage(chatId, { 
-                image: { url: dj.silhouetteUrl }, // Usar la URL de la silueta del JSON
+                image: { url: dj.silhouetteUrl },
                 caption: caption 
             });
         } catch (error) {
