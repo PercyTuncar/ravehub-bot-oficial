@@ -34,43 +34,58 @@ const commandHandler = async (client, message) => {
     const chatId = message.key.remoteJid;
     const userId = message.key.participant || message.key.remoteJid;
     
+    console.log(`[DEBUG] Mensaje recibido en: ${chatId} | De: ${userId} | Contenido: "${body}"`);
+
     // Asegurarse de que el mensaje y el remitente existan
     if (!body || !userId) {
+        console.log('[DEBUG] Mensaje ignorado: sin cuerpo o sin ID de usuario.');
         return;
     }
 
     // Obtener el prefijo usando getGroupSettings
     const groupSettings = await getGroupSettings(chatId);
-    const prefix = groupSettings ? groupSettings.prefix : '.'; // Usar '.' como prefijo por defecto
+    const prefix = groupSettings ? groupSettings.prefix : '.';
+    console.log(`[DEBUG] Prefijo para el chat ${chatId}: "${prefix}"`);
 
     // --- LÓGICA DEL DESAFÍO ---
-    if (challengeHandler.isChallengeActive(chatId) && !body.startsWith(prefix)) {
-        // Pasamos el objeto de mensaje completo para tener más contexto si es necesario
-        challengeHandler.handleAnswer({
-            body: body,
-            key: message.key,
-            // Añadimos más detalles del mensaje por si se necesitan en el futuro
-            participant: userId, 
-            pushName: message.pushName || ''
-        }, client);
-        return; // Detener la ejecución para no procesar como un comando
+    if (challengeHandler.isChallengeActive(chatId)) {
+        console.log(`[DEBUG] Hay un desafío activo en ${chatId}.`);
+        if (!body.startsWith(prefix)) {
+            console.log('[DEBUG] El mensaje no es un comando, procesando como respuesta al desafío.');
+            challengeHandler.handleAnswer({
+                body: body,
+                key: message.key,
+                participant: userId, 
+                pushName: message.pushName || ''
+            }, client);
+            return;
+        } else {
+            console.log('[DEBUG] El mensaje es un comando, se procesará normalmente.');
+        }
     }
     // --- FIN LÓGICA DESAFÍO ---
 
-    if (!body.startsWith(prefix)) return;
+    if (!body.startsWith(prefix)) {
+        console.log(`[DEBUG] Mensaje ignorado: no comienza con el prefijo "${prefix}".`);
+        return;
+    }
 
     const args = body.slice(prefix.length).trim().split(/ +/);
     const commandName = args.shift().toLowerCase();
     const command = commandMap.get(commandName);
+    console.log(`[DEBUG] Comando intentado: "${commandName}" | Argumentos: ${args}`);
 
     if (command) {
         try {
+            console.log(`[DEBUG] Ejecutando comando: "${commandName}"`);
             // Pasamos el cliente de baileys a la ejecución del comando
             await command.execute(message, args, client);
         } catch (error) {
             console.error(error);
             await client.sendMessage(chatId, { text: 'Hubo un error al ejecutar ese comando.' });
         }
+    } else {
+        console.log(`[DEBUG] Comando no encontrado: "${commandName}"`);
     }
 };
 

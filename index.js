@@ -46,6 +46,12 @@ async function connectToWhatsApp() {
     // Desacoplar el procesamiento de mensajes para no bloquear el event loop
     sock.ev.on('messages.upsert', async (m) => {
         const message = m.messages[0];
+        
+        // --- DEBUGGER DE MENSAJES ---
+        console.log('--- NUEVO MENSAJE RECIBIDO ---');
+        console.log(JSON.stringify(m, null, 2));
+        console.log('------------------------------');
+
         if (message && message.message && !message.key.fromMe) {
             try {
                 // Llamar directamente al commandHandler
