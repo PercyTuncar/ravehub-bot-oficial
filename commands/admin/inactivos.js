@@ -4,46 +4,43 @@ module.exports = {
     name: 'inactivos',
     description: 'Menciona a los miembros inactivos (solo para admins).',
     category: 'admin',
-    async execute(message, args, client) {
-        const chat = await message.getChat();
-        if (!chat.isGroup) {
-            return message.reply('Este comando solo se puede usar en grupos.');
+    async execute(sock, m, args) {
+        const chatId = m.key.remoteJid;
+        if (!chatId.endsWith('@g.us')) {
+            return sock.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' }, { quoted: m });
         }
 
-        const author = await message.getContact();
-        const authorId = author.id._serialized;
-        const participant = chat.participants.find(p => p.id._serialized === authorId);
+        const groupMetadata = await sock.groupMetadata(chatId);
+        const senderId = m.key.participant;
+        
+        const participant = groupMetadata.participants.find(p => p.id === senderId);
 
-        if (!participant || !participant.isAdmin) {
-            return message.reply('Este comando es solo para administradores del grupo.');
+        if (!participant || !participant.admin) {
+            return sock.sendMessage(chatId, { text: 'Este comando es solo para administradores del grupo.' }, { quoted: m });
         }
 
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const allUsersInGroup = await User.find({ groupId: chat.id._serialized });
+        const allUsersInGroup = await User.find({ groupId: chatId });
         const activeUserJids = allUsersInGroup.map(u => u.jid);
 
-        const allParticipantJids = chat.participants.map(p => p.id._serialized);
+        const allParticipantJids = groupMetadata.participants.map(p => p.id);
         
         const inactiveJids = allParticipantJids.filter(jid => !activeUserJids.includes(jid));
 
         if (inactiveJids.length === 0) {
-            return message.reply('No hay miembros inactivos en este grupo.');
+            return sock.sendMessage(chatId, { text: 'No hay miembros inactivos en este grupo.' }, { quoted: m });
         }
 
         let mentions = [];
         let text = '😴 ';
         for (const jid of inactiveJids) {
-            const contact = await client.getContactById(jid);
-            mentions.push(contact);
-            text += `@${contact.id.user} `;
+            mentions.push(jid);
+            text += `@${jid.split('@')[0]} `;
         }
 
         text += `\n\n¿Siguen dormidos? ¡La ciudad está viva y ustedes no existen aún!  
 Activen su perfil con \`.iniciar\` o serán considerados fantasmas 👻  
 No te quedes mirando. Empieza tu historia ahora. 💥`;
 
-        await chat.sendMessage(text, { mentions });
+        await sock.sendMessage(chatId, { text, mentions }, { quoted: m });
     },
 };
