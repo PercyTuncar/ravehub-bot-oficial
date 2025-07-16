@@ -26,30 +26,33 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: '👻 No puedes hacer nada, estás muerto.' });
             }
 
-            const itemInInventoryIndex = user.inventory.findIndex(item => item.name.toLowerCase() === itemName && item.quantity > 0);
-
-            if (itemInInventoryIndex === -1) {
-                return sock.sendMessage(chatId, { text: `No tienes "${itemName}" en tu inventario.` });
-            }
-
-            const itemInInventory = user.inventory[itemInInventoryIndex];
-            
-            // Fallback por si el item no tiene `itemId` (datos antiguos)
-            if (!itemInInventory.itemId) {
-                return sock.sendMessage(chatId, { text: `❌ El item "${itemName}" en tu inventario es antiguo y no puede ser consumido. Contacta a un admin.` });
-            }
-
-            const shopItem = await ShopItem.findById(itemInInventory.itemId);
+            // 1. Buscar el ShopItem en la base de datos por nombre o alias
+            const searchPattern = itemName.replace(/s$/, '(s)?'); // Maneja plurales simples
+            const shopItem = await ShopItem.findOne({
+                $or: [
+                    { name: new RegExp(`^${searchPattern}$`, 'i') },
+                    { aliases: new RegExp(`^${searchPattern}$`, 'i') }
+                ]
+            });
 
             if (!shopItem) {
-                return sock.sendMessage(chatId, { text: `❌ Error: No se encontró la definición del item "${itemName}". Contacta a un admin.` });
+                return sock.sendMessage(chatId, { text: `No existe un item bebible llamado "${itemName}" en el bar.` });
             }
 
             if (shopItem.type !== 'drink') {
                 return sock.sendMessage(chatId, { text: `No puedes beber un(a) "${shopItem.name}".` });
             }
 
-            // Aplicar efectos
+            // 2. Verificar si el usuario tiene ese item en su inventario
+            const itemInInventoryIndex = user.inventory.findIndex(item => item.itemId && item.itemId.toString() === shopItem._id.toString() && item.quantity > 0);
+
+            if (itemInInventoryIndex === -1) {
+                return sock.sendMessage(chatId, { text: `No tienes "${shopItem.name}" en tu inventario.` });
+            }
+            
+            const itemInInventory = user.inventory[itemInInventoryIndex];
+
+            // 3. Aplicar efectos y consumir
             const oldStatus = { ...user.status };
             user.status.thirst = Math.min(100, user.status.thirst + (shopItem.effects.thirst || 0));
             user.status.stress = Math.max(0, user.status.stress - (shopItem.effects.stress || 0));
@@ -65,7 +68,7 @@ module.exports = {
 
             await user.save();
 
-            // Construir mensaje de respuesta
+            // 4. Construir mensaje de respuesta
             let effectsMessage = '';
             if (shopItem.effects.thirst > 0) {
                 effectsMessage += `\n💧 Tu sed ha disminuido.`;
