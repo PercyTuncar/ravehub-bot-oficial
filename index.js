@@ -44,7 +44,7 @@ async function connectToWhatsApp() {
     sock.ev.on('creds.update', saveCreds);
 
     // Desacoplar el procesamiento de mensajes para no bloquear el event loop
-    sock.ev.on('messages.upsert', async (m) => {
+    sock.ev.on('messages.upsert', (m) => {
         const message = m.messages[0];
         
         // --- DEBUGGER DE MENSAJES ---
@@ -53,12 +53,9 @@ async function connectToWhatsApp() {
         console.log('------------------------------');
 
         if (message && message.message && !message.key.fromMe) {
-            try {
-                // Llamar directamente al commandHandler
-                await commandHandler(sock, message);
-            } catch (err) {
+            commandHandler(sock, message).catch(err => {
                 logger.error(err, 'Error al manejar el mensaje desde commandHandler');
-            }
+            });
         }
     });
 

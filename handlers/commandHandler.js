@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const challengeHandler = require('./challengeHandler');
 const User = require('../models/User');
@@ -6,27 +6,25 @@ const User = require('../models/User');
 const commandMap = new Map();
 const commandCooldowns = new Map();
 
-function loadCommands(dir) {
-    const commandFiles = fs.readdirSync(dir, { withFileTypes: true });
+async function loadCommands(dir) {
+    const commandFiles = await fs.readdir(dir);
     for (const file of commandFiles) {
-        const fullPath = path.join(dir, file.name);
-        if (file.isDirectory()) {
-            loadCommands(fullPath);
-        } else if (file.name.endsWith('.js')) {
+        const fullPath = path.join(dir, file);
+        const stat = await fs.lstat(fullPath);
+        if (stat.isDirectory()) {
+            await loadCommands(fullPath);
+        } else if (file.endsWith('.js')) {
             try {
-                // Forzar la re-lectura del archivo eliminando la caché de require
                 delete require.cache[require.resolve(fullPath)];
                 const command = require(fullPath);
                 if (command.name && command.execute) {
                     commandMap.set(command.name, command);
-                    // --- INICIO DE LA CORRECCIÓN: REGISTRAR ALIAS ---
                     if (command.aliases && Array.isArray(command.aliases)) {
                         command.aliases.forEach(alias => {
                             commandMap.set(alias, command);
                         });
                     }
-                    // --- FIN DE LA CORRECCIÓN ---
-                } 
+                }
             } catch (error) {
                 console.error(`Error al cargar el comando ${fullPath}:`, error);
             }
@@ -34,9 +32,13 @@ function loadCommands(dir) {
     }
 }
 
-loadCommands(path.join(__dirname, '../commands'));
+// Cargar comandos y luego exportar el handler
+const commandsLoaded = loadCommands(path.join(__dirname, '../commands'));
 
 const commandHandler = async (client, message) => {
+    // Asegurarse de que los comandos se hayan cargado antes de procesar un mensaje
+    await commandsLoaded;
+
     const body = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
     const chatId = message.key.remoteJid;
     const userId = message.key.participant || message.key.remoteJid;
