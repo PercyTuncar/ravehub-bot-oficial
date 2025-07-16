@@ -17,70 +17,61 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'Debes especificar qué quieres beber. Ejemplo: `.beber cerveza`' });
         }
         
-        const user = await User.findOne({ jid: senderJid, groupId: chatId });
+        try {
+            const user = await findOrCreateUser(senderJid, chatId, pushName);
 
-        if (!user) {
-            return sock.sendMessage(chatId, { text: 'No tienes un perfil. Usa `.iniciar` para crear uno.' });
-        }
-        if (user.status.isDead) {
-            return sock.sendMessage(chatId, { text: 'Estás muerto 💀. No puedes beber.' });
-        }
+            // Buscar el item en el inventario
+            const itemIndex = user.inventory.findIndex(item => item.name.toLowerCase() === itemName && item.quantity > 0);
 
-        const itemName = args.join(' ').toLowerCase();
+            if (itemIndex === -1) {
+                return sock.sendMessage(chatId, { text: `No tienes "${itemName}" en tu inventario para beber.` });
+            }
 
-        // 1. Buscar el item en la tienda por nombre o alias
-        const shopItem = await ShopItem.findOne({
-            $or: [
-                { name: new RegExp(`^${itemName}$`, 'i') },
-                { aliases: new RegExp(`^${itemName}$`, 'i') }
-            ]
-        });
+            // --- Lógica de Bebidas Personalizadas ---
+            const drinkActions = {
+                'cerveza heladita': {
+                    messages: [
+                        `¡Salud! @${senderJid.split('@')[0]} se está refrescando con una cerveza heladita. 🍻`,
+                        `¡Qué buena está! @${senderJid.split('@')[0]} disfruta de una cerveza heladita.`,
+                        `Un momento de relax para @${senderJid.split('@')[0]} con una cerveza heladita.`,
+                        `¡A tu salud, @${senderJid.split('@')[0]}! Disfruta esa cerveza heladita.`
+                    ]
+                },
+                'pisco': {
+                    messages: [
+                        `¡Un brindis con peruanidad! @${senderJid.split('@')[0]} prepara y disfruta un Pisco Sour. 🍸`,
+                        `¡Para el alma! @${senderJid.split('@')[0]} se sirve un Pisco Sour.`,
+                        `Con la receta secreta, @${senderJid.split('@')[0]} se deleita con un Pisco Sour. 🍸`
+                    ]
+                }
+                // Se pueden añadir más bebidas aquí
+            };
 
-        // 2. Validar si el item existe y es una bebida
-        if (!shopItem || shopItem.type !== 'drink') {
-            return sock.sendMessage(chatId, { 
-                text: `El item "${itemName}" no es una bebida o no existe.`,
+            const action = drinkActions[itemName];
+
+            if (!action) {
+                return sock.sendMessage(chatId, { text: `No puedes beber "${itemName}".` });
+            }
+
+            // Si la bebida es válida, proceder a consumirla
+            user.inventory[itemIndex].quantity -= 1;
+
+            if (user.inventory[itemIndex].quantity === 0) {
+                user.inventory.splice(itemIndex, 1);
+            }
+
+            await user.save();
+
+            const randomMessage = action.messages[Math.floor(Math.random() * action.messages.length)];
+
+            return sock.sendMessage(chatId, {
+                text: randomMessage,
                 mentions: [senderJid]
             });
+
+        } catch (error) {
+            console.error('Error en el comando beber:', error);
+            return sock.sendMessage(chatId, { text: 'Ocurrió un error al intentar beber el item.' });
         }
-
-        // 3. Buscar el item en el inventario del usuario usando el ID
-        const itemToDrink = user.inventory.find(item => item.itemId && item.itemId.equals(shopItem._id));
-
-        if (!itemToDrink || itemToDrink.quantity <= 0) {
-            return sock.sendMessage(chatId, { 
-                text: `@${senderJid.split('@')[0]}, no tienes "${shopItem.name}" en tu inventario.`,
-                mentions: [senderJid]
-            });
-        }
-
-        // 4. Aplicar efectos desde la base de datos
-        const initialStatus = { ...user.status };
-        user.status.thirst = Math.min(100, user.status.thirst + (shopItem.effects.thirst || 0));
-        user.status.stress = Math.max(0, user.status.stress + (shopItem.effects.stress || 0));
-        user.status.hunger = Math.min(100, user.status.hunger + (shopItem.effects.hunger || 0)); // Por si la bebida también da algo de energía
-
-        // 5. Actualizar inventario
-        itemToDrink.quantity -= 1;
-        if (itemToDrink.quantity <= 0) {
-            user.inventory = user.inventory.filter(invItem => !invItem._id.equals(itemToDrink._id));
-        }
-        
-        updateHealth(user); // Actualizar la salud del usuario
-        user.lastInteraction = Date.now();
-        await user.save();
-
-        const messages = [
-            `¡Salud! @${senderJid.split('@')[0]} se está refrescando con una cerveza heladita. 🍻`,
-            `¡Qué buena está! @${senderJid.split('@')[0]} disfruta de una cerveza heladita.`,
-            `Un momento de relax para @${senderJid.split('@')[0]} con una cerveza heladita.`,
-            `¡A tu salud, @${senderJid.split('@')[0]}! Disfruta esa cerveza heladita.`
-        ];
-        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
-
-        return sock.sendMessage(chatId, {
-            text: randomMessage,
-            mentions: [senderJid]
-        });
     },
 };
