@@ -10,14 +10,14 @@ module.exports = {
     category: 'rp',
     async execute(message, args) {
         const sock = getSocket();
-        const senderId = message.key.participant || message.key.remoteJid;
+        const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
         if (args.length === 0) {
             return sock.sendMessage(chatId, { text: 'Debes especificar qué quieres beber. Ejemplo: `.beber cerveza`' });
         }
         
-        const user = await User.findOne({ jid: senderId, groupId: chatId });
+        const user = await User.findOne({ jid: senderJid, groupId: chatId });
 
         if (!user) {
             return sock.sendMessage(chatId, { text: 'No tienes un perfil. Usa `.iniciar` para crear uno.' });
@@ -40,7 +40,7 @@ module.exports = {
         if (!shopItem || shopItem.type !== 'drink') {
             return sock.sendMessage(chatId, { 
                 text: `El item "${itemName}" no es una bebida o no existe.`,
-                mentions: [senderId]
+                mentions: [senderJid]
             });
         }
 
@@ -49,8 +49,8 @@ module.exports = {
 
         if (!itemToDrink || itemToDrink.quantity <= 0) {
             return sock.sendMessage(chatId, { 
-                text: `@${senderId.split('@')[0]}, no tienes "${shopItem.name}" en tu inventario.`,
-                mentions: [senderId]
+                text: `@${senderJid.split('@')[0]}, no tienes "${shopItem.name}" en tu inventario.`,
+                mentions: [senderJid]
             });
         }
 
@@ -70,19 +70,17 @@ module.exports = {
         user.lastInteraction = Date.now();
         await user.save();
 
-        // 6. Mensaje de confirmación detallado
-        let effectsMessage = `¡Salud! 🍻 \n\n¡@${senderJid.split('@')[0]}! Te tomaste un ${shopItem.name}.`;
-        if (user.status.thirst > initialStatus.thirst) {
-            effectsMessage += `\nTu sed ahora es ${user.status.thirst}%.`;
-        }
-        if (user.status.stress < initialStatus.stress) {
-            effectsMessage += `\nTu estrés se ha reducido a ${user.status.stress}%.`;
-        }
-        if (user.status.hunger > initialStatus.hunger) {
-            effectsMessage += `\nTu hambre ahora es ${user.status.hunger}%.`;
-        }
-        effectsMessage += `\n\nTu salud ahora es del *${user.status.health}%*.`;
+        const messages = [
+            `¡Salud! @${senderJid.split('@')[0]} se está refrescando con una cerveza heladita. 🍻`,
+            `¡Qué buena está! @${senderJid.split('@')[0]} disfruta de una cerveza heladita.`,
+            `Un momento de relax para @${senderJid.split('@')[0]} con una cerveza heladita.`,
+            `¡A tu salud, @${senderJid.split('@')[0]}! Disfruta esa cerveza heladita.`
+        ];
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
 
-        await sock.sendMessage(chatId, { text: effectsMessage });
+        return sock.sendMessage(chatId, {
+            text: randomMessage,
+            mentions: [senderJid]
+        });
     },
 };
