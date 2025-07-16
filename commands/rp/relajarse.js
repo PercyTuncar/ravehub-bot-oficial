@@ -20,46 +20,20 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'Estás muerto 💀. No puedes relajarte.' });
         }
 
-        // Si el usuario especifica un item
-        if (args.length > 0) {
-            const itemName = args.join(' ').toLowerCase();
-            const itemToUse = user.inventory.find(item => 
-                item.name.toLowerCase() === itemName
-            );
+        // Definir los items que se pueden usar para relajarse
+        const relaxingItemNames = ['cerveza heladita', 'pisco sour'];
+        
+        // Buscar si el usuario tiene alguno de los items relajantes en su inventario
+        const itemToUse = user.inventory.find(item => 
+            relaxingItemNames.includes(item.name.toLowerCase()) && item.quantity > 0
+        );
 
-            if (!itemToUse || itemToUse.quantity <= 0) {
-                return sock.sendMessage(chatId, { text: `No tienes "${itemName}".` });
-            }
-
-            // Se verifica si el item es relajante por sus efectos o por su nombre
-            const isRelaxing = (itemToUse.itemId && itemToUse.itemId.effects && itemToUse.itemId.effects.stress < 0) || 
-                               ['cerveza heladita', 'pisco sour'].includes(itemName);
-
-            if (!isRelaxing) {
-                return sock.sendMessage(chatId, { text: `"${itemToUse.name}" no tiene efectos relajantes.` });
-            }
-
-            // Reducción de estrés aleatoria entre 10 y 20
-            const stressReduction = Math.floor(Math.random() * (20 - 10 + 1)) + 10;
-            user.status.stress = Math.max(0, user.status.stress - stressReduction);
-            
-            // Si el estrés llega a 0, restaurar la salud al 100%
-            if (user.status.stress === 0) {
-                user.status.health = 100;
-            }
-
-            itemToUse.quantity -= 1;
-
-            if (itemToUse.quantity <= 0) {
-                user.inventory = user.inventory.filter(invItem => invItem._id.toString() !== itemToUse._id.toString());
-            }
-            
-            await user.save();
-            return sock.sendMessage(chatId, { text: `¡Salud! 🍻 Has usado ${itemToUse.name} para relajarte. Tu estrés ha bajado en ${stressReduction} puntos y ahora es de ${user.status.stress}%.${user.status.health === 100 ? ' ¡Te sientes como nuevo y tu salud se ha restaurado por completo!' : ''}` });
+        if (!itemToUse) {
+            return sock.sendMessage(chatId, { text: 'Necesitas una bebida para poder relajarte. ¡Ve a la tienda y compra una "Cerveza Heladita" o un "Pisco Sour" usando `.comprar`!' });
         }
 
-        // Acción por defecto sin item
-        const stressReduction = 20;
+        // Reducción de estrés aleatoria entre 10 y 20
+        const stressReduction = Math.floor(Math.random() * (20 - 10 + 1)) + 10;
         user.status.stress = Math.max(0, user.status.stress - stressReduction);
         
         // Si el estrés llega a 0, restaurar la salud al 100%
@@ -67,9 +41,17 @@ module.exports = {
             user.status.health = 100;
         }
 
+        // Consumir el item
+        itemToUse.quantity -= 1;
+
+        // Si la cantidad del item llega a 0, se elimina del inventario
+        if (itemToUse.quantity <= 0) {
+            user.inventory = user.inventory.filter(invItem => invItem._id.toString() !== itemToUse._id.toString());
+        }
+        
         user.lastInteraction = Date.now();
         await user.save();
 
-        await sock.sendMessage(chatId, { text: `Te tomas un momento para respirar. Tu estrés ha bajado a ${user.status.stress}%.${user.status.health === 100 ? ' ¡Te sientes completamente renovado y tu salud está al máximo!' : ''} Para un mayor efecto, usa un item como cerveza o pisco: \`.relajarse [nombre del item]\`` });
+        await sock.sendMessage(chatId, { text: `¡Salud! 🍻 Has usado ${itemToUse.name} para relajarte. Tu estrés ha bajado en ${stressReduction} puntos y ahora es de ${user.status.stress}%.${user.status.health === 100 ? ' ¡Te sientes como nuevo y tu salud se ha restaurado por completo!' : ''}` });
     },
 };
