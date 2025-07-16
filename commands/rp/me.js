@@ -12,17 +12,17 @@ module.exports = {
     name: 'me',
     description: 'Muestra tu perfil de jugador.',
     aliases: ['profile', 'perfil'],
-    async execute(message, args, client) {
-        const senderId = message.author || message.from;
-        const groupId = message.to;
+    async execute(sock, m, args) {
+        const senderId = m.key.participant || m.key.remoteJid;
+        const groupId = m.key.remoteJid;
         const user = await User.findOne({ jid: senderId, groupId }).populate('inventory.itemId');
 
         if (!user) {
-            return message.reply('No tienes un perfil. Usa `.iniciar` para crear uno.');
+            return sock.sendMessage(groupId, { text: 'No tienes un perfil. Usa `.iniciar` para crear uno.' }, { quoted: m });
         }
 
         if (user.status.isDead) {
-            return message.reply('Estás muerto 💀. Usa `.renacer` para volver a la vida.');
+            return sock.sendMessage(groupId, { text: 'Estás muerto 💀. Usa `.renacer` para volver a la vida.' }, { quoted: m });
         }
 
         const levelInfo = getLevelInfo(user.xp);
@@ -67,6 +67,6 @@ ${inventoryList}
 -----------------------------------
         `;
 
-        message.reply(profileMessage);
+        await sock.sendMessage(groupId, { text: profileMessage, mentions: [senderId] }, { quoted: m });
     },
 };
