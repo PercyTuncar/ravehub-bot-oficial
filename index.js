@@ -24,6 +24,9 @@ if (process.argv.includes('--clear-session')) {
 
 let sock;
 let firstConnection = true;
+let reconnectionAttempts = 0;
+const MAX_RECONNECT_ATTEMPTS = 5;
+const BASE_RECONNECT_DELAY = 5000; // 5 segundos
 
 async function connectToWhatsApp() {
     // Usar el gestor de autenticación oficial de Baileys
@@ -83,28 +86,34 @@ async function connectToWhatsApp() {
             const reason = (lastDisconnect.error instanceof Boom)?.output?.statusCode;
             const shouldReconnect = reason !== DisconnectReason.loggedOut && reason !== DisconnectReason.connectionReplaced;
 
-            logger.info(`Conexión cerrada. Razón: ${reason}, reconectando: ${shouldReconnect}`);
+            logger.info(`Conexión cerrada. Razón: ${reason || 'Desconocida'}, reconectando: ${shouldReconnect}`);
 
-            if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut || lastDisconnect.error?.message?.includes('Forzando reconexión')) {
-                const message = reason === DisconnectReason.badSession 
-                    ? 'Sesión corrupta. Limpiando y reconectando...' 
-                    : 'Dispositivo desvinculado. Limpiando y reiniciando.';
-                logger.warn(message);
-                
+            if (reason === DisconnectReason.loggedOut) {
+                logger.error('Dispositivo desvinculado. No se puede reconectar. Limpiando sesión y terminando.');
                 const sessionsDir = path.join(__dirname, 'sessions');
                 if (fs.existsSync(sessionsDir)) {
                     fs.rmSync(sessionsDir, { recursive: true, force: true });
                 }
-                // Retrasar antes de reiniciar para evitar bucles rápidos
-                setTimeout(connectToWhatsApp, 5000);
-            } else if (shouldReconnect) {
-                // Añadir un retardo antes de intentar reconectar
-                setTimeout(connectToWhatsApp, 5000); // Espera 5 segundos
+                process.exit(1); // Salir del proceso
+            }
+
+            if (shouldReconnect) {
+                reconnectionAttempts++;
+                if (reconnectionAttempts > MAX_RECONNECT_ATTEMPTS) {
+                    logger.fatal(`Se superó el número máximo de reintentos (${MAX_RECONNECT_ATTEMPTS}). El bot se detendrá.`);
+                    process.exit(1);
+                }
+
+                const delay = BASE_RECONNECT_DELAY * Math.pow(2, reconnectionAttempts - 1);
+                logger.info(`Intento de reconexión ${reconnectionAttempts}/${MAX_RECONNECT_ATTEMPTS}. Esperando ${delay / 1000} segundos...`);
+                
+                setTimeout(connectToWhatsApp, delay);
             } else {
                 logger.info('No se requiere reconexión automática.');
             }
         } else if (connection === 'open') {
             logger.info('Conexión abierta y establecida.');
+            reconnectionAttempts = 0; // Reiniciar el contador de reintentos al conectar exitosamente
           //  startChecking(sock); // Iniciar el chequeo de estado del jugador
             if (firstConnection) {
                 let menu = `╭───≽ *BOT CONECTADO* ≼───╮
