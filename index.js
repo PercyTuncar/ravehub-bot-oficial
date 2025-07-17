@@ -35,10 +35,22 @@ async function connectToWhatsApp() {
     sock = makeWASocket({
         auth: state,
         logger: logger.child({ level: 'silent' }), // Nivel 'silent' para Baileys para reducir el ruido
-        browser: Browsers.windows('Desktop'), // Cambiado a Windows
+        browser: Browsers.windows('Desktop'),
         printQRInTerminal: false, // El QR se maneja manualmente.
-        syncFullHistory: false, // No sincronizar historial completo
-        maxMsgHistory: 5, // Mantener un historial de mensajes más pequeño
+
+        // --- OPTIMIZACIONES DE RENDIMIENTO Y ESTABILIDAD ---
+        // 1. No marcar como "en línea" al conectar. Reduce el tráfico de red.
+        markOnlineOnConnect: false,
+        
+        // 2. No sincronizar el historial completo. Reduce drásticamente la carga inicial.
+        syncFullHistory: false,
+
+        // 3. Ignorar mensajes antiguos. Si el bot estuvo offline, no intentará procesar lo que perdió.
+        //    Esto es CRUCIAL para evitar los bucles de desencriptación y la lentitud.
+        getMessage: async (key) => undefined,
+
+        // 4. Evitar timeouts en consultas, útil para conexiones inestables.
+        defaultQueryTimeoutMs: undefined,
     });
 
     setSocket(sock);
