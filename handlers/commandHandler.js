@@ -82,17 +82,24 @@ const commandHandler = async (client, message) => {
     const command = commandMap.get(commandName);
     console.log(`[DEBUG] Comando intentado: "${commandName}" | Argumentos: ${args}`);
 
-    if (command) {
-        try {
-            console.log(`[DEBUG] Ejecutando comando: "${commandName}"`);
-            // Pasamos el cliente de baileys a la ejecución del comando
-            await command.execute(message, args, client);
-        } catch (error) {
-            console.error(error);
-            await client.sendMessage(chatId, { text: 'Hubo un error al ejecutar ese comando.' });
-        }
-    } else {
+    if (!command) {
         console.log(`[DEBUG] Comando no encontrado: "${commandName}"`);
+        return; // Salir si el comando no existe
+    }
+
+    try {
+        console.log(`[DEBUG] Ejecutando comando: "${command.name}" para el usuario ${userId}`);
+        await command.execute(message, args, client);
+        console.log(`[DEBUG] Comando "${command.name}" ejecutado exitosamente.`);
+    } catch (error) {
+        console.error(`[ERROR] Ocurrió un error al ejecutar el comando "${command.name}":`, error);
+        try {
+            await client.sendMessage(chatId, { text: '🤖 ¡Ups! Hubo un error al intentar ejecutar ese comando. Por favor, intenta de nuevo.' });
+        } catch (sendError) {
+            console.error(`[ERROR] No se pudo enviar el mensaje de error al chat ${chatId}:`, sendError);
+        }
+    } finally {
+        console.log(`[DEBUG] Finalizó el procesamiento del comando "${commandName}" para el usuario ${userId}.`);
     }
 };
 

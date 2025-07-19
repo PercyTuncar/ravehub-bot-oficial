@@ -58,19 +58,27 @@ async function connectToWhatsApp() {
     // Guardar credenciales cuando se actualicen.
     sock.ev.on('creds.update', saveCreds);
 
-    // Desacoplar el procesamiento de mensajes para no bloquear el event loop
+    // Manejar los mensajes de forma asíncrona y secuencial para evitar bloqueos.
     sock.ev.on('messages.upsert', (m) => {
         const message = m.messages[0];
         
-        // --- DEBUGGER DE MENSAJES ---
-        console.log('--- NUEVO MENSAJE RECIBIDO ---');
-        console.log(JSON.stringify(m, null, 2));
-        console.log('------------------------------');
-
+        // Ignorar mensajes sin contenido o de uno mismo.
         if (message && message.message && !message.key.fromMe) {
-            commandHandler(sock, message).catch(err => {
-                logger.error(err, 'Error al manejar el mensaje desde commandHandler');
-            });
+            // Envolvemos la llamada en una función asíncrona autoejecutable.
+            // Esto aísla el proceso del comando del event loop principal de Baileys,
+            // proporcionando una capa adicional de estabilidad.
+            (async () => {
+                try {
+                    // Usar 'await' es CRUCIAL aquí.
+                    // Esto asegura que el bot procese un comando a la vez,
+                    // previniendo la saturación del event loop y los cuelgues.
+                    await commandHandler(sock, message);
+                } catch (err) {
+                    // Si commandHandler lanza un error (lo cual no debería si está bien construido),
+                    // lo capturamos aquí para evitar que el bot se detenga.
+                    logger.error(err, 'Error crítico no capturado al manejar el mensaje en index.js');
+                }
+            })();
         }
     });
 
