@@ -6,7 +6,7 @@ module.exports = {
     name: 'compatibilidad',
     description: 'Calcula la compatibilidad entre dos usuarios.',
     category: 'love',
-    aliases: ['compatibility'],
+    aliases: ['compatibility', 'comp'],
     async execute(message, args) {
         const sock = getSocket();
         const from = message.key.remoteJid;

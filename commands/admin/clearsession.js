@@ -4,6 +4,7 @@ const path = require('path');
 module.exports = {
     name: 'clearsession',
     description: 'Limpia la sesión del bot eliminando la carpeta de sesión.',
+    aliases: ['nuevasesion', 'cleansession'],
     async execute(message, args) {
         const sessionDir = path.join(__dirname, '..', '..', 'sessions');
         

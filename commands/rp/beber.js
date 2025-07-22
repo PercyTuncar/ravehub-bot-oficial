@@ -4,7 +4,7 @@ const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'beber',
-    aliases: ['tomar'],
+    aliases: ['tomar', 'drink'],
     description: 'Bebe un item de tu inventario para saciar la sed y reducir el estrés.',
     category: 'rp',
     async execute(message, args) {

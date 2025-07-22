@@ -9,7 +9,7 @@ module.exports = {
     name: 'proponer',
     description: 'Propone una relación a otro usuario.',
     category: 'love',
-    aliases: ['propose'],
+    aliases: ['propose', 'pedir'],
     async execute(message, args) {
         const sock = getSocket();
         const from = message.key.remoteJid;

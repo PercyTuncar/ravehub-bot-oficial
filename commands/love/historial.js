@@ -8,7 +8,7 @@ module.exports = {
     name: 'historial',
     description: 'Muestra el historial de relaciones de un usuario.',
     category: 'love',
-    aliases: ['lovehistory'],
+    aliases: ['lovehistory', 'historialamor'],
     async execute(message, args) {
         const sock = getSocket();
         const from = message.key.remoteJid;

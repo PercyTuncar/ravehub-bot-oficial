@@ -5,7 +5,7 @@ module.exports = {
     name: 'divorcio',
     description: 'Termina una relación activa.',
     category: 'love',
-    aliases: ['divorce'],
+    aliases: ['divorce', 'separar'],
     async execute(message, args) {
         const sock = getSocket();
         const from = message.key.remoteJid;

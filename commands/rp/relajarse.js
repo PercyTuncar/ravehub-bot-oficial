@@ -8,7 +8,7 @@ const STRESS_REDUCTION = 5;
 module.exports = {
     name: 'relajarse',
     description: `Tómate un respiro para reducir tu estrés. No requiere items. Tiene un cooldown de ${RELAX_COOLDOWN_MINUTES} minutos.`,
-    aliases: ['relax'],
+    aliases: ['relax', 'descansar'],
     category: 'rp',
     async execute(message, args) {
         const sock = getSocket();

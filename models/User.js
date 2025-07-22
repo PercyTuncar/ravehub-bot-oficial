@@ -10,7 +10,8 @@ const userSchema = new mongoose.Schema({
     work: { type: Date, default: null },
     rob: { type: Date, default: null },
     relax: { type: Date, default: null },
-    slot: { type: Date, default: null }, // Cooldown para el juego de slot
+    slot: { type: Date, default: null },
+    daily: { type: Date, default: null }, // Cooldown para recompensa diaria
   },
   economy: {
     wallet: { type: Number, default: 0 },

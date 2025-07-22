@@ -1,11 +1,12 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const { getSocket } = require('../../bot');
+const User = require('../../models/User');
 
 module.exports = {
     name: 'retirar',
     description: 'Retira 💵 del banco.',
-    aliases: ['withdraw'],
+    aliases: ['withdraw', 'retiro'],
     usage: '.retirar <cantidad|all>',
     category: 'economy',
     async execute(message, args) {
@@ -18,7 +19,7 @@ module.exports = {
             const user = await findOrCreateUser(jid, chatId, message.pushName);
 
             if (args.length === 0) {
-                return sock.sendMessage(chatId, { text: `❌ Debes especificar la cantidad a retirar. Uso: \`.retirar <cantidad|all>\`` });
+                return sock.sendMessage(chatId, { text: `❌ Debes especificar la cantidad a retirar. Uso: `.retirar <cantidad|all>`` });
             }
 
             const amountToWithdrawStr = args[0].toLowerCase();
@@ -40,12 +41,17 @@ module.exports = {
                 }
             }
 
-            user.economy.bank -= amountToWithdraw;
-            user.economy.wallet += amountToWithdraw;
+            const updatedUser = await User.findOneAndUpdate(
+                { _id: user._id, 'economy.bank': { $gte: amountToWithdraw } },
+                { $inc: { 'economy.bank': -amountToWithdraw, 'economy.wallet': amountToWithdraw } },
+                { new: true }
+            );
 
-            await user.save();
+            if (!updatedUser) {
+                return sock.sendMessage(chatId, { text: 'Hubo un error durante el retiro, tus fondos podrían haber cambiado. Inténtalo de nuevo.' });
+            }
 
-            const successMessage = `✅ Has retirado *${currency} ${amountToWithdraw.toLocaleString()}* de tu banco.\\n\\n*Balance actual:*\r\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()}`;
+            const successMessage = `✅ Has retirado *${currency} ${amountToWithdraw.toLocaleString()}* de tu banco.\n\n*Balance actual:*\r\n> *Cartera:* ${currency} ${updatedUser.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${updatedUser.economy.bank.toLocaleString()}`;
             await sock.sendMessage(chatId, { text: successMessage });
 
         } catch (error) {
@@ -54,4 +60,3 @@ module.exports = {
         }
     }
 };
-

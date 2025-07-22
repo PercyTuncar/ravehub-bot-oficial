@@ -1,14 +1,14 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const { getSocket } = require('../../bot');
-const Debt = require('../../models/Debt'); // Importar el modelo de Deuda
+const User = require('../../models/User');
 
 module.exports = {
     name: 'transfer-bank',
     description: 'Transfiere 💵.',
     usage: '.transfer-bank <monto> @usuario',
     category: 'economy',
-    aliases: ['tbank'],
+    aliases: ['tbank', 'transferbanco'],
     async execute(message, args) {
         const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
@@ -29,41 +29,26 @@ module.exports = {
 
         try {
             const sender = await findOrCreateUser(senderJid, chatId, message.pushName);
+            const target = await findOrCreateUser(mentionedJid, chatId);
+
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${currency}${sender.economy.bank.toFixed(2)}` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco. Saldo actual: ${currency}${sender.economy.bank.toLocaleString()}` });
             }
 
-            const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
-            const target = await findOrCreateUser(mentionedJid, chatId, targetName);
+            const ops = [
+                { updateOne: { filter: { _id: sender._id, 'economy.bank': { $gte: amount } }, update: { $inc: { 'economy.bank': -amount } } } },
+                { updateOne: { filter: { _id: target._id }, update: { $inc: { 'economy.bank': amount } } } }
+            ];
 
-            // --- Lógica de Deuda (Igual que en plinear.js) ---
-            let debtMessage = '';
-            const debtToTarget = await Debt.findOne({ borrower: sender._id, lender: target._id, groupId: chatId });
+            const result = await User.bulkWrite(ops);
 
-            if (debtToTarget) {
-                const paymentForDebt = Math.min(amount, debtToTarget.amount);
-                debtToTarget.amount -= paymentForDebt;
-
-                if (debtToTarget.amount <= 0) {
-                    await Debt.findByIdAndDelete(debtToTarget._id);
-                    sender.debts.pull(debtToTarget._id);
-                    target.loans.pull(debtToTarget._id);
-                    debtMessage = `\n\nℹ️ Con esta transferencia, has saldado completamente tu deuda de *${currency} ${paymentForDebt.toFixed(2)}* con @${target.jid.split('@')[0]}.`;
-                } else {
-                    await debtToTarget.save();
-                    debtMessage = `\n\nℹ️ De este monto, *${currency} ${paymentForDebt.toFixed(2)}* se usaron para pagar tu deuda con @${target.jid.split('@')[0]}. Deuda restante: *${currency} ${debtToTarget.amount.toFixed(2)}*.`;
-                }
+            if (result.modifiedCount < 2) {
+                return sock.sendMessage(chatId, { text: `No tienes fondos suficientes para transferir ${currency} ${amount.toLocaleString()}.` });
             }
 
-            // --- Transacción Única ---
-            sender.economy.bank -= amount;
-            target.economy.bank += amount;
-
-            await sender.save();
-            await target.save();
-
+            const updatedSender = await User.findById(sender._id);
             await sock.sendMessage(chatId, {
-                text: `✅ Transferencia bancaria exitosa de *${currency} ${amount.toFixed(2)}* a @${mentionedJid.split('@')[0]}.${debtMessage}\n\n*Tu nuevo saldo en banco:* ${currency} ${sender.economy.bank.toFixed(2)}`,
+                text: `✅ Transferencia bancaria exitosa de *${currency} ${amount.toLocaleString()}* a @${mentionedJid.split('@')[0]}.\n\n*Tu nuevo saldo en banco:* ${currency} ${updatedSender.economy.bank.toLocaleString()}`,
                 mentions: [senderJid, mentionedJid]
             });
 

@@ -1,6 +1,5 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const User = require('../../models/User');
-const Debt = require('../../models/Debt');
 const { getCurrency } = require('../../utils/groupUtils');
 const { getSocket } = require('../../bot');
 
@@ -30,47 +29,25 @@ module.exports = {
 
         try {
             const sender = await findOrCreateUser(senderJid, chatId, message.pushName);
+            const target = await findOrCreateUser(mentionedJid, chatId);
 
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco para plinear esa cantidad. Saldo actual: ${currency} ${sender.economy.bank.toFixed(2)}` });
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu banco para plinear esa cantidad. Saldo actual: ${currency} ${sender.economy.bank.toLocaleString()}` });
             }
 
-            const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
-            const target = await findOrCreateUser(mentionedJid, chatId, targetName);
+            const ops = [
+                { updateOne: { filter: { _id: sender._id, 'economy.bank': { $gte: amount } }, update: { $inc: { 'economy.bank': -amount } } } },
+                { updateOne: { filter: { _id: target._id }, update: { $inc: { 'economy.bank': amount } } } }
+            ];
 
-            // --- Lógica de Deuda Refactorizada (usando la de yapear.js) ---
-            let debtMessage = '';
-            const debtToTarget = await Debt.findOne({ borrower: sender._id, lender: target._id, groupId: chatId });
+            const result = await User.bulkWrite(ops);
 
-            if (debtToTarget) {
-                const paymentForDebt = Math.min(amount, debtToTarget.amount);
-                debtToTarget.amount -= paymentForDebt;
-
-                debtMessage = `\n\nℹ️ De tu Plin, se usaron *${currency} ${paymentForDebt.toLocaleString()}* para pagar tu deuda.`;
-
-                if (debtToTarget.amount <= 0.01) { // Umbral para comparación de flotantes
-                    await Debt.findByIdAndDelete(debtToTarget._id);
-                    sender.debts.pull(debtToTarget._id);
-                    debtMessage += `\n¡Felicidades! Has saldado tu deuda por completo. 🎉`;
-                } else {
-                    await debtToTarget.save();
-                    debtMessage += `\nDeuda restante: *${currency} ${debtToTarget.amount.toLocaleString()}*.`;
-                }
+            if (result.modifiedCount < 2) {
+                return sock.sendMessage(chatId, { text: `No tienes fondos suficientes para plinear ${currency} ${amount.toLocaleString()}.` });
             }
 
-            // --- Transacción Única ---
-            sender.economy.bank -= amount;
-            target.economy.bank += amount;
-
-            await sender.save();
-            await target.save();
-
-            const finalMessage = `✅ Plin exitoso de *${currency} ${amount.toLocaleString()}* a @${target.jid.split('@')[0]}.${debtMessage}`;
-
-            await sock.sendMessage(chatId, { 
-                text: finalMessage,
-                mentions: [senderJid, mentionedJid]
-            });
+            const finalMessage = `✅ Plin exitoso de *${currency} ${amount.toLocaleString()}* a @${target.jid.split('@')[0]}.`;
+            await sock.sendMessage(chatId, { text: finalMessage, mentions: [senderJid, mentionedJid] });
 
         } catch (error) {
             console.error('Error en el plineo:', error);

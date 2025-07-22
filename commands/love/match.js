@@ -9,7 +9,7 @@ module.exports = {
     name: 'match',
     description: 'Inicia un match aleatorio en el grupo.',
     category: 'love',
-    aliases: [],
+    aliases: ['matchme', 'encontrar'],
     async execute(message, args) {
         const sock = getSocket();
         const from = message.key.remoteJid;

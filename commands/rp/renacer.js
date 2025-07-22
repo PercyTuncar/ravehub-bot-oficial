@@ -6,6 +6,7 @@ module.exports = {
     name: 'renacer',
     description: 'Revive a tu personaje después de la muerte.',
     category: 'rp',
+    aliases: ['rebirth', 'revivir'],
     async execute(message, args) {
         const sock = getSocket();
         const senderId = message.key.participant || message.key.remoteJid;

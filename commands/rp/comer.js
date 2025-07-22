@@ -6,6 +6,7 @@ module.exports = {
     name: 'comer',
     description: 'Come un item de tu inventario para saciar el hambre y reducir el estrés.',
     category: 'rp',
+    aliases: ['eat', 'alimentar'],
     async execute(message, args) {
         const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;

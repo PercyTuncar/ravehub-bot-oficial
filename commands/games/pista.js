@@ -4,6 +4,7 @@ const User = require('../../models/User');
 module.exports = {
     name: 'pista',
     description: 'Compra una pista durante el Desafío de la Silueta.',
+    aliases: ['clue', 'hint'],
     async execute(message, args, client) { // Pasamos el cliente de baileys
         const chatId = message.key.remoteJid;
         const userId = message.key.participant || message.key.remoteJid;

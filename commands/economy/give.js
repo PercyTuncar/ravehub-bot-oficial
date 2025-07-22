@@ -5,7 +5,7 @@ const { getSocket } = require('../../bot');
 module.exports = {
     name: 'give',
     description: 'Regala un item.',
-    aliases: ['dar'],
+    aliases: ['dar', 'regalar'],
     usage: '.give @usuario <cantidad> <nombre del item>',
     category: 'economy',
     async execute(message, args) {

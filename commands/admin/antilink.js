@@ -4,6 +4,7 @@ const { getSocket } = require('../../bot');
 module.exports = {
     name: 'antilink',
     description: 'Activa o desactiva la función anti-link en este grupo.',
+    aliases: ['anti-link', 'nolinks'],
     category: 'admin',
     usage: '.antilink <on|off>',
     async execute(message, args) {

@@ -5,6 +5,7 @@ const { getSocket } = require('../../bot');
 module.exports = {
     name: 'welcome',
     description: 'Configura un mensaje de bienvenida.',
+    aliases: ['bienvenida', 'setwelcome'],
     category: 'admin',
     cooldown: 5,
     async execute(message, args) {

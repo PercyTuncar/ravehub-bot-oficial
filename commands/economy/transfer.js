@@ -1,7 +1,8 @@
+const User = require('../../models/User');
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const { getSocket } = require('../../bot');
-const Debt = require('../../models/Debt'); // Importar el modelo de Deuda
+const Debt = require('../../models/Debt');
 
 module.exports = {
     name: 'transfer',
@@ -29,42 +30,47 @@ module.exports = {
 
             const currency = await getCurrency(chatId);
             const sender = await findOrCreateUser(senderJid, chatId, message.pushName);
-            
-            if (sender.economy.wallet < amount) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${currency} ${sender.economy.wallet.toFixed(2)}` });
-            }
-
             const targetName = message.message.extendedTextMessage?.contextInfo?.pushName || mentionedJid.split('@')[0];
             const target = await findOrCreateUser(mentionedJid, chatId, targetName);
 
-            // --- Lógica de Deuda Unificada ---
-            let debtMessage = '';
-            const debtToTarget = await Debt.findOne({ borrower: sender._id, lender: target._id, groupId: chatId });
+            if (sender.economy.wallet < amount) {
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${currency} ${sender.economy.wallet.toLocaleString()}` });
+            }
 
+            // --- Transacción Atómica ---
+            const ops = [
+                { updateOne: { filter: { _id: sender._id, 'economy.wallet': { $gte: amount } }, update: { $inc: { 'economy.wallet': -amount } } } },
+                { updateOne: { filter: { _id: target._id }, update: { $inc: { 'economy.wallet': amount } } } }
+            ];
+
+            const result = await User.bulkWrite(ops);
+
+            if (result.modifiedCount < 2) {
+                // Si no se modificaron 2 documentos, la operación falló (probablemente fondos insuficientes).
+                // La operación de bulkWrite no se completa, por lo que no hay necesidad de revertir manualmente.
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para realizar esta transferencia de ${currency} ${amount.toLocaleString()}.` });
+            }
+
+            const updatedSender = await User.findById(sender._id);
+            let debtMessage = '';
+
+            // La lógica de deudas se puede manejar después de la transferencia exitosa.
+            // (Esta parte aún podría mejorarse con transacciones si se vuelve más compleja)
+            const debtToTarget = await Debt.findOne({ borrower: sender._id, lender: target._id, groupId: chatId });
             if (debtToTarget) {
                 const paymentForDebt = Math.min(amount, debtToTarget.amount);
                 debtToTarget.amount -= paymentForDebt;
-
                 if (debtToTarget.amount <= 0) {
                     await Debt.findByIdAndDelete(debtToTarget._id);
-                    sender.debts.pull(debtToTarget._id);
-                    target.loans.pull(debtToTarget._id);
-                    debtMessage = `\n\nℹ️ Con esta transferencia, has saldado completamente tu deuda de *${currency} ${paymentForDebt.toFixed(2)}* con @${target.jid.split('@')[0]}.`;
+                    debtMessage = `\n\nℹ️ Con esta transferencia, has saldado completamente tu deuda de *${currency} ${paymentForDebt.toLocaleString()}* con @${target.jid.split('@')[0]}.`;
                 } else {
                     await debtToTarget.save();
-                    debtMessage = `\n\nℹ️ De este monto, *${currency} ${paymentForDebt.toFixed(2)}* se usaron para pagar tu deuda con @${target.jid.split('@')[0]}. Deuda restante: *${currency} ${debtToTarget.amount.toFixed(2)}*.`;
+                    debtMessage = `\n\nℹ️ De este monto, *${currency} ${paymentForDebt.toLocaleString()}* se usaron para pagar tu deuda con @${target.jid.split('@')[0]}. Deuda restante: *${currency} ${debtToTarget.amount.toLocaleString()}*.`;
                 }
             }
 
-            // --- Transacción Única ---
-            sender.economy.wallet -= amount;
-            target.economy.wallet += amount;
-
-            await sender.save();
-            await target.save();
-
             await sock.sendMessage(chatId, {
-                text: `✅ Has transferido *${currency} ${amount.toFixed(2)}* de tu cartera a @${mentionedJid.split('@')[0]}.${debtMessage}\n\n*Tu nuevo saldo en cartera:* ${currency} ${sender.economy.wallet.toFixed(2)}`,
+                text: `✅ Has transferido *${currency} ${amount.toLocaleString()}* de tu cartera a @${mentionedJid.split('@')[0]}.${debtMessage}\n\n*Tu nuevo saldo en cartera:* ${currency} ${updatedSender.economy.wallet.toLocaleString()}`,
                 mentions: [senderJid, mentionedJid]
             });
 

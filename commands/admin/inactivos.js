@@ -4,6 +4,7 @@ const { getSocket } = require('../../bot');
 module.exports = {
     name: 'inactivos',
     description: 'Menciona a los miembros inactivos (solo para admins).',
+    aliases: ['inactive', 'fantasmas'],
     category: 'admin',
     async execute(m, args) {
         const sock = getSocket();

@@ -6,7 +6,7 @@ module.exports = {
     name: 'parejas',
     description: 'Lista todas las parejas activas del grupo.',
     category: 'love',
-    aliases: ['couples'],
+    aliases: ['couples', 'relaciones'],
     async execute(message, args) {
         const sock = getSocket();
         const from = message.key.remoteJid;

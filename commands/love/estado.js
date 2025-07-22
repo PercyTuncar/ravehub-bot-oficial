@@ -6,7 +6,7 @@ module.exports = {
     name: 'estado',
     description: 'Muestra tu estado sentimental.',
     category: 'love',
-    aliases: ['status'],
+    aliases: ['status', 'mystatus'],
     async execute(message, args) {
         const sock = getSocket();
         const from = message.key.remoteJid;

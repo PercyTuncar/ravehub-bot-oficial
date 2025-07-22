@@ -3,6 +3,7 @@ const DjChallenge = require('../../models/DjChallenge');
 module.exports = {
     name: 'add-dj',
     description: 'Añade un nuevo DJ al Desafío de la Silueta.',
+    aliases: ['adddj', 'djadd'],
     adminOnly: true,
 
     async execute(message, args) {

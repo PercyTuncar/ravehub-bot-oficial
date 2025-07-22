@@ -7,7 +7,7 @@ const { getSocket } = require('../../bot');
 module.exports = {
     name: 'deuda',
     description: 'Ver tus deudas pendientes.',
-    aliases: ['debts'],
+    aliases: ['debts', 'deudas'],
     usage: '.deuda',
     category: 'economy',
     async execute(message) {

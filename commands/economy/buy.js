@@ -20,7 +20,6 @@ module.exports = {
             return sock.sendMessage(chatId, { text: 'Debes especificar el item que quieres comprar. Uso: .buy <cantidad> <nombre del item>' });
         }
 
-        // --- Lógica para parsear cantidad y nombre ---
         let quantity = 1;
         let itemNameInput = args.join(' ').toLowerCase();
         const quantityArg = args.find(arg => !isNaN(parseInt(arg)));
@@ -30,24 +29,6 @@ module.exports = {
             itemNameInput = args.filter(arg => arg !== quantityArg).join(' ').toLowerCase();
         }
 
-        let finalItemName = itemNameInput;
-        let purchaseUnit = 'unidad(es)';
-        const beerName = 'cerveza heladita';
-
-        // Lógica para "media caja", "caja" o "cajas"
-        if (itemNameInput.includes(beerName)) {
-            if (itemNameInput.includes('media caja')) {
-                quantity = 6;
-                finalItemName = beerName;
-                purchaseUnit = 'media caja';
-            } else if (itemNameInput.includes('caja')) {
-                const cajas = quantity;
-                quantity = cajas * 12;
-                finalItemName = beerName;
-                purchaseUnit = cajas > 1 ? 'cajas' : 'caja';
-            }
-        }
-
         if (quantity <= 0 || !Number.isInteger(quantity)) {
             return sock.sendMessage(chatId, { text: 'La cantidad debe ser un número entero y positivo.' });
         }
@@ -55,16 +36,10 @@ module.exports = {
         try {
             await findOrCreateUser(senderJid, chatId, message.pushName);
 
-            const cleanedItemName = finalItemName.replace(/caja(s)?\sde\s/,'').trim();
-            const searchPattern = cleanedItemName.split(' ').map(word => {
-                if (word.endsWith('s')) return `${word.slice(0, -1)}(s)?`;
-                return word;
-            }).join(' ');
-
-            const itemToBuy = await ShopItem.findOne({
+            const itemToBuy = await ShopItem.findOne({ 
                 $or: [
-                    { name: new RegExp(`^${searchPattern}, 'i') },
-                    { aliases: new RegExp(`^${searchPattern}, 'i') }
+                    { name: new RegExp(`^${itemNameInput.trim()}$`, 'i') }, 
+                    { aliases: new RegExp(`^${itemNameInput.trim()}$`, 'i') } 
                 ]
             });
 
@@ -78,104 +53,62 @@ module.exports = {
 
             const user = await User.findOne({ jid: senderJid, groupId: chatId });
 
-            if (user.judicialDebt > 0) {
-                if (user.economy.wallet < totalPrice) {
-                    return sock.sendMessage(chatId, { text: `ℹ️ Tienes una deuda judicial y no tienes suficiente dinero en efectivo para esta compra.\n\nNecesitas ${currency} ${totalPrice.toLocaleString()} y tienes ${currency} ${user.economy.wallet.toLocaleString()} en la cartera.` });
-                }
+            if (user.economy.wallet + user.economy.bank < totalPrice) {
+                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar *${quantity} ${itemToBuy.name}*. Necesitas ${currency} ${totalPrice.toLocaleString()}.` });
+            }
+
+            if (user.economy.wallet >= totalPrice) {
                 updatedUser = await User.findOneAndUpdate(
-                    { jid: senderJid, groupId: chatId, 'economy.wallet': { $gte: totalPrice } },
+                    { _id: user._id, 'economy.wallet': { $gte: totalPrice } },
                     { $inc: { 'economy.wallet': -totalPrice } },
                     { new: true }
                 );
-                if (updatedUser) paymentMessage = `Has pagado en efectivo *${currency} ${totalPrice.toLocaleString()}*.`;
-
+                if(updatedUser) paymentMessage = `Has pagado en efectivo *${currency} ${totalPrice.toLocaleString()}*.`;
             } else {
-                if (user.economy.wallet + user.economy.bank < totalPrice) {
-                    return sock.sendMessage(chatId, { text: `No tienes suficiente dinero para comprar *${quantity} ${itemToBuy.name}*. Necesitas ${currency} ${totalPrice.toLocaleString()}.` });
-                }
+                const fromBank = totalPrice - user.economy.wallet;
+                const fromWallet = user.economy.wallet;
+                
+                updatedUser = await User.findOneAndUpdate(
+                    { _id: user._id, 'economy.bank': { $gte: fromBank } },
+                    { $inc: { 'economy.bank': -fromBank, 'economy.wallet': -fromWallet } },
+                    { new: true }
+                );
 
-                if (user.economy.wallet >= totalPrice) {
-                    updatedUser = await User.findOneAndUpdate(
-                        { jid: senderJid, groupId: chatId, 'economy.wallet': { $gte: totalPrice } },
-                        { $inc: { 'economy.wallet': -totalPrice } },
-                        { new: true }
-                    );
-                    if (updatedUser) paymentMessage = `Has pagado en efectivo *${currency} ${totalPrice.toLocaleString()}*.`;
-                } else {
-                    const fromBank = totalPrice - user.economy.wallet;
-                    const fromWallet = user.economy.wallet;
-                    
-                    updatedUser = await User.findOneAndUpdate(
-                        { jid: senderJid, groupId: chatId, 'economy.bank': { $gte: fromBank } },
-                        { $inc: { 'economy.bank': -fromBank, 'economy.wallet': -fromWallet } },
-                        { new: true }
-                    );
-
-                    if (updatedUser) {
-                        const paymentMethods = ['yapeaste', 'plineaste', 'transferiste'];
-                        const randomMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
-                        if (fromWallet > 0) {
-                            paymentMessage = `Pagaste *${currency} ${fromWallet.toLocaleString()}* en efectivo y ${randomMethod} *${currency} ${fromBank.toLocaleString()}* desde tu banco.`;
-                        } else {
-                            paymentMessage = `Has ${randomMethod} *${currency} ${totalPrice.toLocaleString()}* desde tu banco.`;
-                        }
+                if (updatedUser) {
+                    const paymentMethods = ['yapeaste', 'plineaste', 'transferiste'];
+                    const randomMethod = paymentMethods[Math.floor(Math.random() * paymentMethods.length)];
+                    if (fromWallet > 0) {
+                        paymentMessage = `Pagaste *${currency} ${fromWallet.toLocaleString()}* en efectivo y ${randomMethod} *${currency} ${fromBank.toLocaleString()}* desde tu banco.`;
+                    } else {
+                        paymentMessage = `Has ${randomMethod} *${currency} ${totalPrice.toLocaleString()}* desde tu banco.`;
                     }
                 }
             }
 
             if (!updatedUser) {
-                return sock.sendMessage(chatId, { text: '❌ Hubo un problema con el pago. Fondos insuficientes o error inesperado.' });
+                return sock.sendMessage(chatId, { text: '❌ Hubo un problema con el pago. Es posible que tus fondos hayan cambiado. Inténtalo de nuevo.' });
             }
 
-            // Actualizar inventario atómicamente
-            await User.updateOne(
-                { jid: senderJid, groupId: chatId, 'inventory.itemId': itemToBuy._id },
-                { $inc: { 'inventory.$.quantity': quantity } }
-            );
+            // Lógica de inventario corregida y segura
+            const existingItem = updatedUser.inventory.find(invItem => invItem.itemId.toString() === itemToBuy._id.toString());
 
-            await User.updateOne(
-                { jid: senderJid, groupId: chatId, 'inventory.itemId': { $ne: itemToBuy._id } },
-                { $push: { inventory: { itemId: itemToBuy._id, name: itemToBuy.name, quantity: quantity } } }
-            );
-
-            // --- Mensaje de Compra Personalizado ---
-            const itemNameLower = itemToBuy.name.toLowerCase();
-            const mentions = [senderJid];
-            let purchaseDescription = '';
-
-            if (purchaseUnit === 'media caja' && itemNameLower === 'cerveza heladita') {
-                purchaseDescription = `*media caja de Cervezas Heladitas*`;
-            } else if (purchaseUnit.includes('caja') && itemNameLower === 'cerveza heladita') {
-                const cajas = quantity / 12;
-                purchaseDescription = `*${cajas} ${purchaseUnit} de Cervezas Heladitas*`;
-            } else if (purchaseUnit === 'media caja') {
-                purchaseDescription = `*media caja de ${itemToBuy.name}s*`;
-            } else if (purchaseUnit.includes('caja')) {
-                const cajas = quantity / 12;
-                purchaseDescription = `*${cajas} ${purchaseUnit} de ${itemToBuy.name}s*`;
+            if (existingItem) {
+                existingItem.quantity += quantity;
             } else {
-                purchaseDescription = `*${quantity} ${itemToBuy.name}${quantity > 1 ? 's' : ''}*`;
+                updatedUser.inventory.push({
+                    itemId: itemToBuy._id,
+                    name: itemToBuy.name,
+                    quantity: quantity,
+                });
             }
 
-            if (itemNameLower === 'ramo de rosas') {
-                const roseImages = [
-                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/ramo-de-24-rosas-rojas-en-papel-koreano_hn2muy.jpg',
-                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/WhatsApp-Image-2024-05-16-at-11.04.59_srlrbs.jpg',
-                    'https://res.cloudinary.com/amadodedios/image/upload/v1751338565/DSC02967_tolmkw.jpg'
-                ];
-                const randomImage = roseImages[Math.floor(Math.random() * roseImages.length)];
-                const successMessage = `🌹 *¡Un detalle especial para alguien especial!* 🌹\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado un *Ramo de rosas*.\n\n${paymentMessage}`;
+            await updatedUser.save();
 
-                await sock.sendMessage(chatId, { image: { url: randomImage }, caption: successMessage, mentions });
-
-            } else if (itemNameLower === 'cerveza heladita') {
-                const successMessage = `🍻 *¡Salud por esa compra!* 🍻\n\n¡Felicidades, @${senderJid.split('@')[0]}! Has comprado ${purchaseDescription}.\n\n${paymentMessage}`;
-
-                await sock.sendMessage(chatId, { image: { url: 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751939301/images_byic4s.jpg' }, caption: successMessage, mentions });
-
-            } else {
-                await sock.sendMessage(chatId, { text: `🛍️ *¡Compra exitosa!* 🛍️\n\n¡@${senderJid.split('@')[0]}! Has comprado ${purchaseDescription}.\n\n${paymentMessage}`, mentions });
-            }
+            const purchaseDescription = `*${quantity} ${itemToBuy.name}${quantity > 1 ? 's' : ''}*`;
+            await sock.sendMessage(chatId, {
+                text: `🛍️ *¡Compra exitosa!* 🛍️\n\n¡@${senderJid.split('@')[0]}! Has comprado ${purchaseDescription}.\n\n${paymentMessage}`,
+                mentions: [senderJid]
+            });
 
         } catch (error) {
             console.error('Error en el comando buy:', error);

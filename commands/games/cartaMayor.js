@@ -8,7 +8,7 @@ const { MIN_BET, MAX_BET } = require('../../games/cartaMayor/constants');
 module.exports = {
     name: 'cartamayor',
     description: 'Jugar a la carta mayor.',
-    aliases: ['bet', 'carta-mayor', 'apostar'],
+    aliases: ['bet', 'carta-mayor', 'apostar', 'cm'],
     usage: '.cartamayor <cantidad> [lado]',
     category: 'game',
     async execute(message, args) {

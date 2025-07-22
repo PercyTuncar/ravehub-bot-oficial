@@ -14,7 +14,7 @@ const numbers = {
 
 module.exports = {
     name: 'ruleta',
-    aliases: ['roulette'],
+    aliases: ['roulette', 'ruleta'],
     category: 'games',
     description: 'Apuesta en la ruleta. Opciones: <rojo|negro|numero> <monto>',
     usage: '.ruleta <apuesta> <monto>',

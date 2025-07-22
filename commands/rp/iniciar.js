@@ -5,7 +5,7 @@ const leproso = 'https://i.imgur.com/7Vba322.jpeg';
 module.exports = {
     name: 'iniciar',
     description: 'Crea un perfil de jugador o muestra ayuda si ya existe.',
-    aliases: ['start'],
+    aliases: ['start', 'comenzar'],
     category: 'rp',
     async execute(message, args) {
         const sock = getSocket();

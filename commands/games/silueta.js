@@ -5,6 +5,7 @@ const { getGroupSettings } = require('../../utils/groupUtils');
 module.exports = {
     name: 'silueta',
     description: 'Adivina el DJ a partir de su silueta.',
+    aliases: ['silhouette', 'djguess'],
     category: 'games',
     cooldown: 10, // Reducir el cooldown para más dinamismo
     async execute(message, args, client) {

@@ -2,13 +2,14 @@ const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
 const { getSocket } = require('../../bot');
+const User = require('../../models/User');
 
 module.exports = {
     name: 'deposit',
     description: 'Depositar dinero.',
     usage: '.deposit <cantidad>',
     category: 'economy',
-    aliases: ['dep'],
+    aliases: ['dep', 'depositar'],
     async execute(message, args) {
         const sock = getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
@@ -16,7 +17,6 @@ module.exports = {
         const currency = await getCurrency(chatId);
 
         try {
-            // Refactorización: Usar la función centralizada para obtener el usuario.
             let user = await findOrCreateUser(senderJid, chatId, message.pushName);
 
             if (args.length === 0) {
@@ -28,7 +28,8 @@ module.exports = {
 
             if (amountToDepositStr === 'all') {
                 amountToDeposit = user.economy.wallet;
-            } else {
+            }
+            else {
                 amountToDeposit = parseInt(amountToDepositStr);
                 if (isNaN(amountToDeposit) || amountToDeposit <= 0) {
                     return sock.sendMessage(chatId, { text: 'Por favor, introduce una cantidad válida para depositar.', mentions: [senderJid] });
@@ -43,44 +44,24 @@ module.exports = {
                 return sock.sendMessage(chatId, { text: 'No tienes dinero en tu cartera para depositar.', mentions: [senderJid] });
             }
 
-            // Realizar la transacción de depósito
-            user.economy.wallet -= amountToDeposit;
-            user.economy.bank += amountToDeposit;
+            // Operación atómica
+            const updatedUser = await User.findOneAndUpdate(
+                { _id: user._id, 'economy.wallet': { $gte: amountToDeposit } },
+                { $inc: { 'economy.wallet': -amountToDeposit, 'economy.bank': amountToDeposit } },
+                { new: true }
+            );
 
-            let debtMessage = '';
-            let levelChangeMessage = '';
-
-            // Lógica de cobro de deuda judicial sobre el saldo del banco
-            if (user.judicialDebt > 0 && user.economy.bank > 0) {
-                const result = handleDebtPayment(user, user.economy.bank, currency);
-                
-                // handleDebtPayment ya modifica la deuda y XP del usuario, 
-                // ahora actualizamos el banco con el sobrante.
-                user.economy.bank = result.remainingAmount;
-                debtMessage = result.debtMessage;
-                levelChangeMessage = result.levelChangeMessage;
+            if (!updatedUser) {
+                return sock.sendMessage(chatId, { text: 'Hubo un error durante el depósito, tus fondos podrían haber cambiado. Inténtalo de nuevo.' });
             }
 
-            await user.save();
+            let responseText = `✅ @${senderJid.split('@')[0]}, depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.`;
+            responseText += `\n\n*Nuevo Balance:*\n> *Cartera:* ${currency} ${updatedUser.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${updatedUser.economy.bank.toLocaleString()} 🏦`;
 
-            let responseText = 
-`✅ @${senderJid.split('@')[0]}, depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.`;
+            await sock.sendMessage(chatId, { text: responseText, mentions: [senderJid] });
 
-            if (debtMessage) {
-                responseText += `\n\n${debtMessage}`;
-                if (levelChangeMessage) {
-                    responseText += `\n${levelChangeMessage}`;
-                }
-            }
-
-            responseText += `\n\n*Nuevo Balance:*\n> *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${user.economy.bank.toLocaleString()} 🏦`;
-
-            await sock.sendMessage(chatId, { 
-                text: responseText,
-                mentions: [senderJid]
-            });
-
-        } catch (error) {
+        }
+        catch (error) {
             console.error('Error en el comando de depósito:', error);
             await sock.sendMessage(chatId, { text: 'Ocurrió un error al procesar tu depósito.' });
         }
