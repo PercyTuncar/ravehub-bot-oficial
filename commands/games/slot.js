@@ -1,9 +1,7 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
-const { MIN_BET, MAX_BET, SYMBOLS } = require('../../games/slot/constants');
+const { MIN_BET, MAX_BET } = require('../../games/slot/constants');
 const slotGame = require('../../games/slot');
 const { getCurrency } = require('../../utils/groupUtils');
-
-const userCooldowns = new Map();
 
 module.exports = {
     name: 'slot',
@@ -21,11 +19,10 @@ module.exports = {
             return slotGame.getInfo(sock, chatId);
         }
 
-        // Cooldown check
-        if (userCooldowns.has(jid)) {
-            const lastTime = userCooldowns.get(jid);
+        // Cooldown check from database
+        if (user.cooldowns.slot) {
             const now = Date.now();
-            const diff = now - lastTime;
+            const diff = now - user.cooldowns.slot.getTime();
             if (diff < 10000) { // 10 seconds
                 const timeLeft = Math.ceil((10000 - diff) / 1000);
                 return sock.sendMessage(chatId, { text: `⏳ Espera ${timeLeft} segundos antes de volver a jugar.` });
@@ -53,16 +50,14 @@ module.exports = {
             });
         }
 
-        // Deduct bet immediately
+        // Deduct bet and set cooldown atomically
         user.economy.wallet -= betAmount;
-        await user.save();
-
-        // Set cooldown
-        userCooldowns.set(jid, Date.now());
+        user.cooldowns.slot = new Date();
 
         try {
+            await user.save(); // Save changes before playing
             await slotGame.play(sock, chatId, jid, user, betAmount);
-        } catch (error) {
+        } catch (error) { 
             console.error('Error en el juego de slot:', error);
             // Refund on error
             user.economy.wallet += betAmount;
