@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema({
     health: { type: Number, default: 100 },
     isDead: { type: Boolean, default: false },
   },
+  playtime: { type: Number, default: 0 }, // Tiempo de juego en milisegundos
   lastInteraction: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now },
 }, {

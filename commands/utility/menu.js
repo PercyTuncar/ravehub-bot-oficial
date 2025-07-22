@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'menu',
@@ -8,8 +7,7 @@ module.exports = {
     category: 'utility',
     aliases: ['help', 'commands'],
     usage: '.menu',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         let isSenderAdmin = false;
@@ -17,14 +15,14 @@ module.exports = {
         // 1. Verificar si el usuario es admin (solo si está en un grupo)
         if (chatId.endsWith('@g.us')) {
             try {
-                const groupMetadata = await sock.groupMetadata(chatId);
+                const groupMetadata = await client.groupMetadata(chatId);
                 const sender = groupMetadata.participants.find(p => p.id === senderJid);
                 if (sender && (sender.admin === 'admin' || sender.admin === 'superadmin')) {
                     isSenderAdmin = true;
                 }
             } catch (error) {
                 console.error('Error al obtener metadatos del grupo:', error);
-                return sock.sendMessage(chatId, { text: '❌ No pude verificar tus permisos en este grupo.' });
+                return client.sendMessage(chatId, { text: '❌ No pude verificar tus permisos en este grupo.' });
             }
         } else {
             // Si es un chat privado, se considera admin para ver todos los comandos (excepto los de grupo)
@@ -168,6 +166,6 @@ module.exports = {
 - !menu
 `;
 
-        await sock.sendMessage(chatId, { text: menuText.trim() });
+        await client.sendMessage(chatId, { text: menuText.trim() });
     },
 };

@@ -1,7 +1,7 @@
 const { findOrCreateUser, updateHealth } = require("../../utils/userUtils");
 const { getEligibleJobs, cooldownRanges } = require("../../utils/levels");
 const { getCurrency } = require("../../utils/groupUtils");
-const { getSocket } = require("../../bot");
+const bot = require("../../bot");
 const User = require("../../models/User");
 
 module.exports = {
@@ -11,7 +11,7 @@ module.exports = {
   usage: ".work",
   category: "economy",
   async execute(message, args, commands) {
-    const sock = getSocket();
+    const sock = bot.getSocket();
     const senderJid = message.key.participant || message.key.remoteJid;
     const chatId = message.key.remoteJid;
 
@@ -36,7 +36,7 @@ Necesitas relajarte un poco. Te recomendamos tomar algo para bajar ese estrés.
 - Pisco Sour
 - Cerveza Heladita
 
-Puedes ver la tienda con `.shop` y comprar con `.buy`.`;
+Puedes ver la tienda con \`.shop\` y comprar con \`.buy\`.`;
         return sock.sendMessage(chatId, { text: stressMessage, mentions: [senderJid] });
       }
 
@@ -85,16 +85,16 @@ Puedes ver la tienda con `.shop` y comprar con `.buy`.`;
 
       await updateHealth(updatedUser); // Actualizar salud después de cambiar el estrés
 
-      let workResponse = `
+      const workResponse = `
 *💼 ¡BUEN TRABAJO!* 💼
 🔨════════════ 🔨
 
 👤 @${senderJid.split("@")[0]}
 🧹 *Puesto:* _${job.name}_
 > 🤫 *Detalle:* _${job.description}_
-💰 *Salario:* `${currency} ${earnings.toLocaleString()}`
-🌟 *XP:* `+${xpGained}`
-😵 *Estrés:* `+${stressGained}%` (Total: ${updatedUser.status.stress}%)`;
+💰 *Salario:* ${currency} ${earnings.toLocaleString()}
+🌟 *XP:* +${xpGained}
+😵 *Estrés:* +${stressGained}% (Total: ${updatedUser.status.stress}%)`;
 
       await sock.sendMessage(chatId, { text: workResponse, mentions: [senderJid] });
 
@@ -111,13 +111,15 @@ No podrás volver a trabajar hasta que tu nivel de estrés baje.
 - Pisco Sour
 - Cerveza Heladita
 
-Usa `.shop` para ver la tienda y `.buy` para comprar algo que te ayude a relajarte.`;
+Usa \`.shop\` para ver la tienda y \`.buy\` para comprar algo que te ayude a relajarte.`;
         await sock.sendMessage(chatId, { text: stressWarning, mentions: [senderJid] });
       }
 
     } catch (error) {
       console.error("Error en el comando work:", error);
-      sock.sendMessage(chatId, { text: "Ocurrió un error al procesar el comando de trabajo." });
+      if (sock) {
+        sock.sendMessage(chatId, { text: "Ocurrió un error al procesar el comando de trabajo." });
+      }
     }
   },
 };

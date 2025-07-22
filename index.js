@@ -5,10 +5,9 @@ const logger = require('./config/logger'); // Usar el logger centralizado
 const fs = require('fs');
 const path = require('path');
 const connectDB = require('./config/database');
-const commandHandler = require('./handlers/commandHandler'); // Importar el command handler
-const { commandMap } = require('./handlers/commandHandler'); // Importar el mapa de comandos
+const { commandHandler, initialize: initializeCommands, commandMap } = require('./handlers/commandHandler'); // Importar el command handler
 const { handleWelcomeMessage } = require('./handlers/eventHandler');
-const { setSocket, disconnect } = require('./bot');
+const bot = require('./bot');
 const { startChecking } = require('./handlers/statusHandler');
 const { addMessageToQueue } = require('./utils/messageQueue');
 require('dotenv').config();
@@ -47,7 +46,7 @@ async function connectToWhatsApp() {
         getMessage: async (key) => undefined,
     });
 
-    setSocket(sock);
+    bot.setSocket(sock);
 
     // Guardar credenciales cuando se actualicen.
     sock.ev.on('creds.update', saveCreds);
@@ -165,8 +164,13 @@ async function connectToWhatsApp() {
     // eventHandler(); 
 }
 
-connectDB();
-connectToWhatsApp();
+async function startBot() {
+    await connectDB();
+    await initializeCommands();
+    connectToWhatsApp();
+}
+
+startBot();
 
 process.on('uncaughtException', (err) => {
     logger.fatal(err, 'Uncaught Exception');
@@ -181,7 +185,7 @@ process.on('unhandledRejection', (reason, promise) => {
 // Graceful Shutdown
 const cleanup = async () => {
     logger.info('Iniciando cierre seguro del bot...');
-    await disconnect();
+    await bot.disconnect();
     process.exit(0);
 };
 

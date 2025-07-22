@@ -1,25 +1,23 @@
 const User = require('../../models/User');
-const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'inactivos',
     description: 'Menciona a los miembros inactivos (solo para admins).',
     aliases: ['inactive', 'fantasmas'],
     category: 'admin',
-    async execute(m, args) {
-        const sock = getSocket();
-        const chatId = m.key.remoteJid;
+    async execute(message, args, client) {
+        const chatId = message.key.remoteJid;
         if (!chatId.endsWith('@g.us')) {
-            return sock.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' }, { quoted: m });
+            return client.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' }, { quoted: message });
         }
 
-        const groupMetadata = await sock.groupMetadata(chatId);
-        const senderId = m.key.participant;
+        const groupMetadata = await client.groupMetadata(chatId);
+        const senderId = message.key.participant;
         
         const participant = groupMetadata.participants.find(p => p.id === senderId);
 
         if (!participant || !participant.admin) {
-            return sock.sendMessage(chatId, { text: 'Este comando es solo para administradores del grupo.' }, { quoted: m });
+            return client.sendMessage(chatId, { text: 'Este comando es solo para administradores del grupo.' }, { quoted: message });
         }
 
         const allParticipantJids = groupMetadata.participants.map(p => p.id);
@@ -32,7 +30,7 @@ module.exports = {
         const inactiveJids = allParticipantJids.filter(jid => !activeUserJids.includes(jid));
 
         if (inactiveJids.length === 0) {
-            return sock.sendMessage(chatId, { text: 'No hay miembros inactivos en este grupo.' }, { quoted: m });
+            return client.sendMessage(chatId, { text: 'No hay miembros inactivos en este grupo.' }, { quoted: message });
         }
 
         let mentions = [];
@@ -48,6 +46,6 @@ No te quedes mirando. Empieza tu historia ahora. 💥`;
 
         const text = `${messageText}\n\n${mentionsText.trim()}`;
 
-        await sock.sendMessage(chatId, { text, mentions }, { quoted: m });
+        await client.sendMessage(chatId, { text, mentions }, { quoted: message });
     },
 };

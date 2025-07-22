@@ -8,7 +8,7 @@ module.exports = {
     aliases: ['stats', 'estadísticas'],
     usage: '.estadisticas <nombre del juego>',
     category: 'utility',
-    async execute(message, args) {
+    async execute(message, args, commands) {
         const sock = getSocket();
         const jid = message.key.remoteJid;
         const gameName = args.join(' ').toLowerCase().trim();

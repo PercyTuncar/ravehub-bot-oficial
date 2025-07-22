@@ -9,8 +9,8 @@ module.exports = {
     usage: '.transfer-bank <monto> @usuario',
     category: 'economy',
     aliases: ['tbank', 'transferbanco'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, commands) {
+        const sock = bot.getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);

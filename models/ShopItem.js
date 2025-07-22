@@ -12,6 +12,7 @@ const shopItemSchema = new mongoose.Schema({
     hunger: { type: Number, default: 0 },
     thirst: { type: Number, default: 0 },
     stress: { type: Number, default: 0 },
+    health: { type: Number, default: 0 },
   }
 });
 

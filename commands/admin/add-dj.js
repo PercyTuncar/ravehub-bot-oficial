@@ -1,12 +1,14 @@
 const DjChallenge = require('../../models/DjChallenge');
 
+const sock = require('../../bot').getSocket();
+
 module.exports = {
     name: 'add-dj',
     description: 'Añade un nuevo DJ al Desafío de la Silueta.',
     aliases: ['adddj', 'djadd'],
     adminOnly: true,
 
-    async execute(message, args) {
+    async execute(message, args, commands) {
         const fullArgs = args.join(' ');
         const parts = fullArgs.split('|').map(p => p.trim().replace(/"/g, ''));
 
@@ -33,14 +35,14 @@ module.exports = {
             });
 
             await newDj.save();
-            message.reply(`✅ Desafío para el DJ "${name}" añadido correctamente.`);
+            sock.sendMessage(message.key.remoteJid, { text: `✅ Desafío para el DJ "${name}" añadido correctamente.` });
 
         } catch (error) {
             if (error.code === 11000) {
-                message.reply(`❌ Error: El DJ "${name}" ya existe en la base de datos.`);
+                sock.sendMessage(message.key.remoteJid, { text: `❌ Error: El DJ "${name}" ya existe en la base de datos.` });
             } else {
                 console.error(error);
-                message.reply('❌ Hubo un error inesperado al guardar el desafío.');
+                sock.sendMessage(message.key.remoteJid, { text: '❌ Hubo un error inesperado al guardar el desafío.' });
             }
         }
     }

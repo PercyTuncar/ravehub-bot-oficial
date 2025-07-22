@@ -1,7 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
 const { handleDebtPayment } = require('../../utils/debtManager');
-const { getSocket } = require('../../bot');
 const User = require('../../models/User');
 
 module.exports = {
@@ -10,8 +9,7 @@ module.exports = {
     usage: '.deposit <cantidad>',
     category: 'economy',
     aliases: ['dep', 'depositar'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);
@@ -20,7 +18,7 @@ module.exports = {
             let user = await findOrCreateUser(senderJid, chatId, message.pushName);
 
             if (args.length === 0) {
-                return sock.sendMessage(chatId, { text: `Uso del comando:\n.deposit <cantidad>\n.deposit all`, mentions: [senderJid] });
+                return client.sendMessage(chatId, { text: `Uso del comando:\n.deposit <cantidad>\n.deposit all`, mentions: [senderJid] });
             }
 
             const amountToDepositStr = args[0].toLowerCase();
@@ -32,16 +30,16 @@ module.exports = {
             else {
                 amountToDeposit = parseInt(amountToDepositStr);
                 if (isNaN(amountToDeposit) || amountToDeposit <= 0) {
-                    return sock.sendMessage(chatId, { text: 'Por favor, introduce una cantidad válida para depositar.', mentions: [senderJid] });
+                    return client.sendMessage(chatId, { text: 'Por favor, introduce una cantidad válida para depositar.', mentions: [senderJid] });
                 }
             }
 
             if (user.economy.wallet < amountToDeposit) {
-                return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${currency} ${user.economy.wallet.toLocaleString()}`, mentions: [senderJid] });
+                return client.sendMessage(chatId, { text: `No tienes suficiente dinero en tu cartera. Saldo actual: ${currency} ${user.economy.wallet.toLocaleString()}`, mentions: [senderJid] });
             }
             
             if (amountToDeposit === 0) {
-                return sock.sendMessage(chatId, { text: 'No tienes dinero en tu cartera para depositar.', mentions: [senderJid] });
+                return client.sendMessage(chatId, { text: 'No tienes dinero en tu cartera para depositar.', mentions: [senderJid] });
             }
 
             // Operación atómica
@@ -52,18 +50,18 @@ module.exports = {
             );
 
             if (!updatedUser) {
-                return sock.sendMessage(chatId, { text: 'Hubo un error durante el depósito, tus fondos podrían haber cambiado. Inténtalo de nuevo.' });
+                return client.sendMessage(chatId, { text: 'Hubo un error durante el depósito, tus fondos podrían haber cambiado. Inténtalo de nuevo.' });
             }
 
             let responseText = `✅ @${senderJid.split('@')[0]}, depósito exitoso de *${currency} ${amountToDeposit.toLocaleString()}*.`;
             responseText += `\n\n*Nuevo Balance:*\n> *Cartera:* ${currency} ${updatedUser.economy.wallet.toLocaleString()}\n> *Banco:* ${currency} ${updatedUser.economy.bank.toLocaleString()} 🏦`;
 
-            await sock.sendMessage(chatId, { text: responseText, mentions: [senderJid] });
+            await client.sendMessage(chatId, { text: responseText, mentions: [senderJid] });
 
         }
         catch (error) {
             console.error('Error en el comando de depósito:', error);
-            await sock.sendMessage(chatId, { text: 'Ocurrió un error al procesar tu depósito.' });
+            await client.sendMessage(chatId, { text: 'Ocurrió un error al procesar tu depósito.' });
         }
     }
 };

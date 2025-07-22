@@ -1,18 +1,14 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { startGameSession, getGameSession, endGameSession } = require('../../utils/gameUtils');
 const { getCurrency } = require('../../utils/groupUtils');
-const { getSocket } = require('../../bot');
-const cartaMayor = require('../../games/cartaMayor');
-const { MIN_BET, MAX_BET } = require('../../games/cartaMayor/constants');
-
 module.exports = {
     name: 'cartamayor',
     description: 'Jugar a la carta mayor.',
     aliases: ['bet', 'carta-mayor', 'apostar', 'cm'],
     usage: '.cartamayor <cantidad> [lado]',
     category: 'game',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
+        const sock = client;
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 

@@ -30,12 +30,12 @@ module.exports = {
     aliases: ['setpais', 'setcountry'], // Mantener alias anteriores
     usage: '.setcurrency <país>',
     category: 'admin',
-    async execute(message, args, sock) { // Corregir el orden de los parámetros
-        const senderJid = message.key.fromMe ? sock.user.id.split(':')[0] + '@s.whatsapp.net' : (message.key.participant || message.key.remoteJid);
+    async execute(message, args, client) { 
+        const senderJid = message.key.fromMe ? client.user.id.split(':')[0] + '@s.whatsapp.net' : (message.key.participant || message.key.remoteJid);
         const chatId = message.key.remoteJid;
 
         if (!message.key.remoteJid.endsWith('@g.us')) {
-            return sock.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' });
+            return client.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' });
         }
 
         // --- Permission Check ---
@@ -44,7 +44,7 @@ module.exports = {
 
         if (!isOwner) {
             try {
-                const groupMetadata = await sock.groupMetadata(chatId);
+                const groupMetadata = await client.groupMetadata(chatId);
                 const senderParticipant = groupMetadata.participants.find(p => p.id === senderJid);
                 if (senderParticipant && (senderParticipant.admin === 'admin' || senderParticipant.admin === 'superadmin')) {
                     isAdmin = true;
@@ -55,19 +55,19 @@ module.exports = {
         }
 
         if (!isOwner && !isAdmin) {
-            return sock.sendMessage(chatId, { text: 'Este comando solo puede ser usado por el propietario del bot o un administrador del grupo.' });
+            return client.sendMessage(chatId, { text: 'Este comando solo puede ser usado por el propietario del bot o un administrador del grupo.' });
         }
 
         const countryName = args.join(' ').toLowerCase();
         if (!countryName) {
             const availableCountries = Object.keys(countryCurrencies).map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ');
-            return sock.sendMessage(chatId, { text: `Debes proporcionar un país. Países disponibles: ${availableCountries}` });
+            return client.sendMessage(chatId, { text: `Debes proporcionar un país. Países disponibles: ${availableCountries}` });
         }
 
         const currencyInfo = countryCurrencies[countryName];
         if (!currencyInfo) {
             const availableCountries = Object.keys(countryCurrencies).map(c => c.charAt(0).toUpperCase() + c.slice(1)).join(', ');
-            return sock.sendMessage(chatId, { text: `País no válido. Países disponibles: ${availableCountries}` });
+            return client.sendMessage(chatId, { text: `País no válido. Países disponibles: ${availableCountries}` });
         }
 
         try {
@@ -77,10 +77,10 @@ module.exports = {
                 { upsert: true, new: true }
             );
 
-            await sock.sendMessage(chatId, { text: `✅ La moneda del grupo se ha establecido a ${currencyInfo.name} (${currencyInfo.symbol})` });
+            await client.sendMessage(chatId, { text: `✅ La moneda del grupo se ha establecido a ${currencyInfo.name} (${currencyInfo.symbol})` });
         } catch (error) {
             console.error('Error al establecer la moneda:', error);
-            await sock.sendMessage(chatId, { text: '❌ Ocurrió un error al configurar la moneda.' });
+            await client.sendMessage(chatId, { text: '❌ Ocurrió un error al configurar la moneda.' });
         }
     },
 };

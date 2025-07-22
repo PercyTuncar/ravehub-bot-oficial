@@ -8,8 +8,8 @@ module.exports = {
     aliases: ['dar', 'regalar'],
     usage: '.give @usuario <cantidad> <nombre del item>',
     category: 'economy',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, commands) {
+        const sock = bot.getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const groupId = message.key.remoteJid;
 

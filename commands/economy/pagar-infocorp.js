@@ -8,8 +8,8 @@ module.exports = {
     aliases: ['pagarinfocorp', 'pagar infocorp'],
     usage: '.pagar infocorp <monto|all|todo>',
     category: 'economy',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, commands) {
+        const sock = bot.getSocket();
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);

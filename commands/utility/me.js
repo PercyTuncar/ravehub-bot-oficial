@@ -1,86 +1,30 @@
-const { findOrCreateUser } = require('../../utils/userUtils');
-const { getLevelName, xpTable } = require('../../utils/levels');
-const { applyInterestToAllDebts, getPaymentReputation } = require('../../utils/debtUtils');
-const { getCurrency } = require('../../utils/groupUtils');
-const User = require('../../models/User');
-const ShopItem = require('../../models/ShopItem'); // Importar el modelo de la tienda
-const { getSocket } = require('../../bot');
+const { findOrCreateUser } = require("../../utils/userUtils");
+const { getNextLevelXP } = require("../../utils/levels");
+const { getCurrency } = require("../../utils/groupUtils");
+const moment = require('moment');
+require('moment-duration-format');
 
-const getProgressBar = (value, max, length) => {
-    if (typeof value !== 'number' || typeof max !== 'number' || value < 0 || max <= 0) {
-        return '░'.repeat(length);
-    }
-    const percentage = value / max;
+function getProgressBar(current, max, length = 10) {
+    if (current < 0) current = 0;
+    if (current > max) current = max;
+    const percentage = current / max;
     const progress = Math.round(length * percentage);
     const empty = length - progress;
-    return '▓'.repeat(progress) + '░'.repeat(empty);
-};
+    return '▰'.repeat(progress) + '▱'.repeat(empty);
+}
 
 module.exports = {
-    name: 'me',
-    description: 'Ver tu perfil y stats.',
-    aliases: ['profile', 'yo'],
-    usage: '.me',
-    category: 'utility',
-    async execute(message) {
-        const sock = getSocket();
-        const jid = message.key.participant || message.key.remoteJid;
+    name: "me",
+    description: "Muestra tu perfil de usuario.",
+    async execute(message, args, client) {
+        const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
         try {
-            await applyInterestToAllDebts();
+            let user = await findOrCreateUser(senderJid, chatId, message.pushName);
             const currency = await getCurrency(chatId);
-            let user = await findOrCreateUser(jid, chatId, message.pushName);
-            user = await User.findById(user._id).populate('inventory.itemId').populate({ 
-                path: 'debts', 
-                populate: { path: 'lender', select: 'name jid groupId' } 
-            });
-
-            if (user.status && user.status.isDead) {
-                return sock.sendMessage(chatId, {
-                    text: `💀 @${jid.split("@")[0]}, estás muerto. Usa \`.renacer\` para volver al juego.`,
-                    mentions: [jid],
-                });
-            }
-
-            // Obtener todos los items de la tienda para mapear emojis
-            const allShopItems = await ShopItem.find({});
-            const emojiMap = allShopItems.reduce((map, item) => {
-                map[item.name.toLowerCase()] = item.emoji;
-                return map;
-            }, {});
-
-            // --- Lógica de Vivienda ---
-            const casaSanIsidro = user.inventory.find(item => item.name.toLowerCase() === 'casa en san isidro');
-            const casaSJL = user.inventory.find(item => item.name.toLowerCase() === 'casa en sjl');
-
-            let residence = "La calle 😢";
-            if (casaSanIsidro) {
-                residence = "San Isidro 🏡";
-            } else if (casaSJL) {
-                residence = "SJL 🏠";
-            }
-
-            // --- Inventario Detallado ---
-            let inventoryList = "Inventario vacío.";
-            if (user.inventory && user.inventory.length > 0) {
-                inventoryList = user.inventory
-                    .map((item) => {
-                        const emoji = emojiMap[item.name.toLowerCase()] || item.itemId?.emoji || "📦";
-                        const quantity = item.quantity > 1 ? `x${item.quantity}` : ''; 
-                        return `${emoji} *${item.name}* ${quantity}`;
-                    })
-                    .join("\n*│* │ \n*│* │ ");
-            }
-
-            const nextLevelXp = xpTable[user.level] || Infinity; // Evitar errores si el nivel es el máximo
-            const xpProgress = `${user.xp}/${nextLevelXp}`;
-            const reputation = getPaymentReputation(user);
-
-            // Solo muestra la reputación si el usuario es moroso
-            const reputationLine = reputation === '⚠️ Moroso' ? `> *Reputación:* \`${reputation}\`\n` : '';
-
-            const mentions = [jid];
+            const nextLevelXP = getNextLevelXP(user.level);
+            const xpBar = getProgressBar(user.xp, nextLevelXP, 10);
 
             // --- Barras de estado ---
             const health = user.status?.health ?? 100;
@@ -93,58 +37,51 @@ module.exports = {
             const thirstBar = getProgressBar(thirst, 100, 10);
             const stressBar = getProgressBar(stress, 100, 10);
 
-            // --- Obtener la foto de perfil ---
             let profilePicUrl;
             try {
-                profilePicUrl = await sock.profilePictureUrl(jid, 'image');
+                profilePicUrl = await client.profilePictureUrl(senderJid, 'image');
             } catch (e) {
-                profilePicUrl = 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751131351/portadasinfoto_gz9kk2.jpg'; // URL de imagen por defecto corregida
+                profilePicUrl = 'https://res.cloudinary.com/amadodedios/image/upload/fl_preserve_transparency/v1751131351/portadasinfoto_gz9kk2.jpg';
             }
 
-            const profileMessage = `*✨ PERFIL DE @${jid.split("@")[0]} ✨*
+            const playtime = moment.duration(user.playtime || 0).humanize();
 
-*👤 Nombre:* ${user.name}
-*📍 Vive en:* ${residence}
------------------------------------
-📊 *ESTADÍSTICAS*
-> *Nivel:* \`${getLevelName(user.level)}\`
-> *XP:* \`${xpProgress}\`
-${reputationLine}> *Deuda Judicial:* \`${currency} ${user.judicialDebt.toLocaleString()}\`
------------------------------------
-🩺 *ESTADO DE VIDA*
-> ❤️ Salud: ${healthBar} \`${health}%\`
-> 🍗 Hambre: ${hungerBar} \`${hunger}%\`
-> 🥤 Sed: ${thirstBar} \`${thirst}%\`
-> 😵 Estrés: ${stressBar} \`${stress}%\`
------------------------------------
-💰 *ECONOMÍA*
-> *Cartera:* \`${currency} ${user.economy.wallet.toLocaleString()}\`
-> *Banco:* \`${currency} ${user.economy.bank.toLocaleString()}\`
------------------------------------
-🧾 *DEUDAS*
-${user.debts && user.debts.length > 0 ?
-    user.debts.map((debt) => {
-        mentions.push(debt.lender.jid);
-        return `> 💸 Debes \`${currency} ${debt.amount.toLocaleString()}\` a @${debt.lender.jid.split('@')[0]}\n>    _${debt.interest * 100}% interés diario_`;
-    }).join('\n') :
-    '> ✅ _Sin deudas pendientes_'}
------------------------------------
-🎒 *INVENTARIO*
-*│* │ ${inventoryList}
-*│* ╰──────────────────≽`;
+            const profileMessage = `
+*PERFIL DE @${senderJid.split("@")[0]}*
+══════════════════
 
-            await sock.sendMessage(
-                chatId,
-                {
-                    image: { url: profilePicUrl },
-                    caption: profileMessage,
-                    mentions: [...new Set(mentions)]
-                }
-            );
+*─ Nivel:* ${user.level}
+*─ XP:* ${user.xp.toLocaleString()} / ${nextLevelXP.toLocaleString()}
+   ${xpBar}
+
+*─ Salud:* ${user.status.health}%
+   ${healthBar}
+*─ Hambre:* ${user.status.hunger}%
+   ${hungerBar}
+*─ Sed:* ${user.status.thirst}%
+   ${thirstBar}
+*─ Estrés:* ${user.status.stress}%
+   ${stressBar}
+
+*─ Billetera:* ${currency} ${user.economy.wallet.toLocaleString()}
+*─ Banco:* ${currency} ${user.economy.bank.toLocaleString()}
+*─ Valor Neto:* ${currency} ${(user.economy.wallet + user.economy.bank).toLocaleString()}
+
+*─ Trabajo:* ${user.job?.name || 'Desempleado'}
+*─ Salario:* ${currency} ${user.job?.salary ? user.job.salary.toLocaleString() : 0}
+
+*─ Tiempo jugado:* ${playtime}
+*─ Miembro desde:* ${moment(user.createdAt).format('DD/MM/YYYY')}
+*─ Estado:* ${user.status.isDead ? 'Muerto 💀' : 'Vivo'}
+`;
+
+            await client.sendMessage(chatId, { text: profileMessage, mentions: [senderJid] });
 
         } catch (error) {
-            console.error('Error al obtener el perfil:', error);
-            await sock.sendMessage(chatId, { text: 'Ocurrió un error al obtener tu perfil.' });
+            console.error("Error al obtener el perfil:", error);
+            if (client) {
+                client.sendMessage(chatId, { text: '🤖 ¡Ups! Hubo un error al obtener tu perfil.' });
+            }
         }
-    }
+    },
 };

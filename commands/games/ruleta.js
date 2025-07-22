@@ -1,6 +1,5 @@
 const User = require('../../models/User');
 const { getCurrency } = require('../../utils/groupUtils');
-const { getSocket } = require('../../bot');
 
 const ROULETTE_COOLDOWN = 15000; // 15 segundos
 
@@ -18,36 +17,35 @@ module.exports = {
     category: 'games',
     description: 'Apuesta en la ruleta. Opciones: <rojo|negro|numero> <monto>',
     usage: '.ruleta <apuesta> <monto>',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);
 
         if (args.length < 2) {
-            return sock.sendMessage(chatId, { text: `Uso: .ruleta <rojo|negro|numero> <monto>. Ejemplo: .ruleta rojo 100` });
+            return client.sendMessage(chatId, { text: `Uso: .ruleta <rojo|negro|numero> <monto>. Ejemplo: .ruleta rojo 100` });
         }
 
         const betType = args[0].toLowerCase();
         const betAmount = parseInt(args[1]);
 
         if (isNaN(betAmount) || betAmount <= 0) {
-            return sock.sendMessage(chatId, { text: 'El monto de la apuesta debe ser un número positivo.' });
+            return client.sendMessage(chatId, { text: 'El monto de la apuesta debe ser un número positivo.' });
         }
 
         const user = await User.findOne({ jid: senderJid, groupId: chatId });
 
         if (!user) {
-            return sock.sendMessage(chatId, { text: 'No estás registrado. Usa .iniciar para comenzar.' });
+            return client.sendMessage(chatId, { text: 'No estás registrado. Usa .iniciar para comenzar.' });
         }
 
         if (user.cooldowns.ruleta && (new Date() - user.cooldowns.ruleta) < ROULETTE_COOLDOWN) {
             const timeLeft = Math.ceil((ROULETTE_COOLDOWN - (new Date() - user.cooldowns.ruleta)) / 1000);
-            return sock.sendMessage(chatId, { text: `⏳ Debes esperar ${timeLeft} segundos para volver a jugar a la ruleta.` });
+            return client.sendMessage(chatId, { text: `⏳ Debes esperar ${timeLeft} segundos para volver a jugar a la ruleta.` });
         }
 
         if (user.economy.wallet < betAmount) {
-            return sock.sendMessage(chatId, { text: `No tienes suficiente dinero en la cartera para apostar ${currency} ${betAmount}.` });
+            return client.sendMessage(chatId, { text: `No tienes suficiente dinero en la cartera para apostar ${currency} ${betAmount}.` });
         }
 
         const winningNumber = Math.floor(Math.random() * 37);
@@ -67,7 +65,7 @@ module.exports = {
                 payout = betAmount * 35;
             }
         } else {
-            return sock.sendMessage(chatId, { text: `Apuesta inválida. Debes apostar a 'rojo', 'negro' o un número entre 0 y 36.` });
+            return client.sendMessage(chatId, { text: `Apuesta inválida. Debes apostar a 'rojo', 'negro' o un número entre 0 y 36.` });
         }
 
         let resultText = `La bola cayó en... *${winningNumber} ${winningColor.charAt(0).toUpperCase() + winningColor.slice(1)}*!\n\n`;
@@ -90,9 +88,9 @@ module.exports = {
         }
 
         if (!updateUser) {
-            return sock.sendMessage(chatId, { text: '❌ Ocurrió un error al actualizar tu saldo.' });
+            return client.sendMessage(chatId, { text: '❌ Ocurrió un error al actualizar tu saldo.' });
         }
 
-        await sock.sendMessage(chatId, { text: resultText, mentions: [senderJid] });
+        await client.sendMessage(chatId, { text: resultText, mentions: [senderJid] });
     },
 };

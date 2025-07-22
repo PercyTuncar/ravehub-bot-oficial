@@ -42,6 +42,12 @@ const performBulkUpdates = async () => {
                 }
             }]
         );
+
+        // 4. Incrementar el playtime de todos los usuarios activos
+        await User.updateMany(
+            { 'status.isDead': false },
+            { $inc: { 'playtime': STATUS_CHECK_INTERVAL } }
+        );
     } catch (error) {
         logger.error(error, 'Error durante las actualizaciones masivas de estado de usuario.');
     }

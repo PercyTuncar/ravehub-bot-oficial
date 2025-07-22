@@ -1,5 +1,4 @@
 const User = require('../../models/User');
-const { getSocket } = require('../../bot');
 const { getMentions } = require('../../utils/messageUtils');
 const { findOrCreateUser } = require('../../utils/userUtils');
 const moment = require('moment');
@@ -9,20 +8,19 @@ module.exports = {
     description: 'Muestra el historial de relaciones de un usuario.',
     category: 'love',
     aliases: ['lovehistory', 'historialamor'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const from = message.key.remoteJid;
         
         const mentions = await getMentions(message);
         const targetJid = mentions.length > 0 ? mentions[0] : (message.key.participant || message.key.remoteJid);
 
         try {
-            const groupMetadata = await sock.groupMetadata(from);
+            const groupMetadata = await client.groupMetadata(from);
             const targetInfo = groupMetadata.participants.find(p => p.id === targetJid);
             const user = await findOrCreateUser(targetJid, from, targetInfo.name || targetJid.split('@')[0]);
 
             if (!user) {
-                return sock.sendMessage(from, { text: 'No se encontró el perfil de este usuario.' }, { quoted: message });
+                return client.sendMessage(from, { text: 'No se encontró el perfil de este usuario.' }, { quoted: message });
             }
 
             let response = `📖 HISTORIAL DE RELACIONES DE @${user.name}:\n\n`;
@@ -44,11 +42,11 @@ module.exports = {
                 });
             }
 
-            sock.sendMessage(from, { text: response, mentions: [targetJid] });
+            client.sendMessage(from, { text: response, mentions: [targetJid] });
 
         } catch (error) {
             console.error('Error en el comando historial:', error);
-            sock.sendMessage(from, { text: 'Ocurrió un error al obtener el historial.' }, { quoted: message });
+            client.sendMessage(from, { text: 'Ocurrió un error al obtener el historial.' }, { quoted: message });
         }
     }
 };

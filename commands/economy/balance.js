@@ -1,6 +1,5 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
-const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'balance',
@@ -8,8 +7,7 @@ module.exports = {
     aliases: ['bal', 'saldo'],
     usage: '.balance',
     category: 'economy',
-    async execute(message) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 
@@ -19,13 +17,13 @@ module.exports = {
 
             const balanceMessage = `*╭───≽ 💰 TU BALANCE ≼───*\n*│*\n*│* 👤 @${senderJid.split('@')[0]}\n*│* 💵 *Cartera:* ${currency} ${user.economy.wallet.toLocaleString()}\n*│* 🏦 *Banco:* ${currency} ${user.economy.bank.toLocaleString()}\n*│*\n*│* 💰 *Total:* ${currency} ${(user.economy.wallet + user.economy.bank).toLocaleString()}\n*╰─────────────≽*`;
 
-            sock.sendMessage(chatId, {
+            client.sendMessage(chatId, {
                 text: balanceMessage,
                 mentions: [senderJid]
             });
         } catch (error) {
             console.error('Error en el comando balance:', error);
-            sock.sendMessage(chatId, { text: '❌ Ocurrió un error al consultar tu balance.' });
+            client.sendMessage(chatId, { text: '❌ Ocurrió un error al consultar tu balance.' });
         }
     },
 };

@@ -8,15 +8,14 @@ module.exports = {
     aliases: ['tragamonedas'],
     category: 'game',
     description: 'Juega al tragamonedas',
-    async execute(message, args, commands) {
-        const sock = require('../../bot').getSocket();
+    async execute(message, args, client) {
         const jid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const user = await findOrCreateUser(jid, chatId);
         const currency = await getCurrency(chatId);
 
         if (args[0]?.toLowerCase() === 'info') {
-            return slotGame.getInfo(sock, chatId);
+            return slotGame.getInfo(client, chatId);
         }
 
         // Cooldown check from database
@@ -25,7 +24,7 @@ module.exports = {
             const diff = now - user.cooldowns.slot.getTime();
             if (diff < 10000) { // 10 seconds
                 const timeLeft = Math.ceil((10000 - diff) / 1000);
-                return sock.sendMessage(chatId, { text: `⏳ Espera ${timeLeft} segundos antes de volver a jugar.` });
+                return client.sendMessage(chatId, { text: `⏳ Espera ${timeLeft} segundos antes de volver a jugar.` });
             }
         }
 
@@ -36,15 +35,15 @@ module.exports = {
         }
 
         if (betAmount < MIN_BET) {
-            return sock.sendMessage(chatId, { text: `La apuesta mínima es ${currency} ${MIN_BET}.` });
+            return client.sendMessage(chatId, { text: `La apuesta mínima es ${currency} ${MIN_BET}.` });
         }
 
         if (betAmount > MAX_BET) {
-            return sock.sendMessage(chatId, { text: `La apuesta máxima es ${currency} ${MAX_BET}.` });
+            return client.sendMessage(chatId, { text: `La apuesta máxima es ${currency} ${MAX_BET}.` });
         }
 
         if (user.economy.wallet < betAmount) {
-            return sock.sendMessage(chatId, { 
+            return client.sendMessage(chatId, { 
                 text: `💸 @${jid.split('@')[0]}, no tienes suficiente dinero para apostar ${currency} ${betAmount}.`,
                 mentions: [jid]
             });
@@ -56,13 +55,13 @@ module.exports = {
 
         try {
             await user.save(); // Save changes before playing
-            await slotGame.play(sock, chatId, jid, user, betAmount);
+            await slotGame.play(client, chatId, jid, user, betAmount);
         } catch (error) { 
             console.error('Error en el juego de slot:', error);
             // Refund on error
             user.economy.wallet += betAmount;
             await user.save();
-            sock.sendMessage(chatId, { text: 'Ocurrió un error inesperado al procesar el juego. Tu apuesta ha sido devuelta.' });
+            client.sendMessage(chatId, { text: 'Ocurrió un error inesperado al procesar el juego. Tu apuesta ha sido devuelta.' });
         }
     },
 };

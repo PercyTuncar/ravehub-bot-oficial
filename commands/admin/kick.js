@@ -1,42 +1,39 @@
-const { getSocket } = require('../../bot');
-
 module.exports = {
     name: 'kick',
     description: 'Expulsar a un miembro.',
     aliases: ['ban', 'expulsar'],
     usage: '.kick @usuario',
     category: 'admin',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const chatId = message.key.remoteJid;
         const senderId = message.key.participant || message.key.remoteJid;
 
         // Verificar si el comando se usa en un grupo
         if (!chatId.endsWith('@g.us')) {
-            return sock.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' });
+            return client.sendMessage(chatId, { text: 'Este comando solo se puede usar en grupos.' });
         }
 
         // Obtener metadatos del grupo para verificar permisos
-        const groupMetadata = await sock.groupMetadata(chatId);
+        const groupMetadata = await client.groupMetadata(chatId);
         const sender = groupMetadata.participants.find(p => p.id === senderId);
 
         // Verificar si el que ejecuta el comando es administrador
         if (sender.admin !== 'admin' && sender.admin !== 'superadmin') {
-            return sock.sendMessage(chatId, { text: 'No tienes permisos de administrador para usar este comando.' });
+            return client.sendMessage(chatId, { text: 'No tienes permisos de administrador para usar este comando.' });
         }
 
         // Verificar si se mencionó a alguien
         if (!message.message.extendedTextMessage?.contextInfo?.mentionedJid?.length) {
-            return sock.sendMessage(chatId, { text: 'Debes mencionar a uno o más usuarios para expulsarlos. Ejemplo: .kick @usuario1 @usuario2' });
+            return client.sendMessage(chatId, { text: 'Debes mencionar a uno o más usuarios para expulsarlos. Ejemplo: .kick @usuario1 @usuario2' });
         }
 
         const mentions = message.message.extendedTextMessage.contextInfo.mentionedJid;
-        const botId = sock.user.id.split(':')[0] + '@s.whatsapp.net';
+        const botId = client.user.id.split(':')[0] + '@s.whatsapp.net';
 
         // Verificar si el bot tiene permisos de administrador
         const bot = groupMetadata.participants.find(p => p.id === botId);
         if (!bot || (bot.admin !== 'admin' && bot.admin !== 'superadmin')) {
-            return sock.sendMessage(chatId, { text: 'Necesito ser administrador en este grupo para poder expulsar usuarios.' });
+            return client.sendMessage(chatId, { text: 'Necesito ser administrador en este grupo para poder expulsar usuarios.' });
         }
 
         const kickedUsers = [];
@@ -51,7 +48,7 @@ module.exports = {
             }
             
             try {
-                await sock.groupParticipantsUpdate(chatId, [mentionedId], 'remove');
+                await client.groupParticipantsUpdate(chatId, [mentionedId], 'remove');
                 kickedUsers.push(mentionedId);
             } catch (error) {
                 console.error(`Error al expulsar a ${mentionedId}:`, error);
@@ -68,7 +65,7 @@ module.exports = {
         }
 
         if (responseText) {
-            await sock.sendMessage(chatId, { 
+            await client.sendMessage(chatId, { 
                 text: responseText.trim(),
                 mentions: [...kickedUsers, ...failedToKick]
             });

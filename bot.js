@@ -1,23 +1,18 @@
-let sock = null;
-
-function setSocket(socket) {
-    sock = socket;
-}
-
-function getSocket() {
-    return sock;
-}
-
-async function disconnect() {
-    if (sock) {
-        console.log('Desconectando el bot y cerrando la sesión de forma segura...');
-        await sock.logout(); // Cierra la sesión de WhatsApp
-        console.log('Sesión cerrada. El bot se ha desconectado.');
+const bot = {
+    sock: null,
+    setSocket(socket) {
+        this.sock = socket;
+    },
+    getSocket() {
+        return this.sock;
+    },
+    async disconnect() {
+        if (this.sock) {
+            console.log('Desconectando el bot y cerrando la sesión de forma segura...');
+            await this.sock.logout(); // Cierra la sesión de WhatsApp
+            console.log('Sesión cerrada. El bot se ha desconectado.');
+        }
     }
-}
-
-module.exports = {
-    setSocket,
-    getSocket,
-    disconnect,
 };
+
+module.exports = bot;

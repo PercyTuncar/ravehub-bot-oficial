@@ -1,15 +1,13 @@
 const User = require('../../models/User');
 const { getCurrency } = require('../../utils/groupUtils');
-const { getSocket } = require('../../bot');
-
 module.exports = {
     name: 'ricos',
     description: 'Ver top de millonarios.',
     usage: '.ricos',
     category: 'economy',
     aliases: ['top', 'leaderboard'],
-    async execute(message) {
-        const sock = getSocket();
+    async execute(message, args, client) {
+        const sock = client;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);
 

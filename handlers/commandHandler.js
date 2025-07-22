@@ -32,14 +32,18 @@ async function loadCommands(dir) {
     }
 }
 
-// Cargar comandos y luego exportar el handler
-const commandsLoaded = loadCommands(path.join(__dirname, '../commands'));
+// Ya no se cargan los comandos automáticamente al importar el módulo.
+// const commandsLoaded = loadCommands(path.join(__dirname, '../commands'));
+
+const initialize = async () => {
+    await loadCommands(path.join(__dirname, '../commands'));
+    console.log('[INFO] Todos los comandos han sido cargados exitosamente.');
+};
 
 const commandHandler = async (client, message) => {
-    // Asegurarse de que los comandos se hayan cargado antes de procesar un mensaje
-    await commandsLoaded;
+    // La llamada a 'await commandsLoaded' ya no es necesaria aquí.
 
-    const body = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+    const body = message.conversation || message.message?.conversation || message.message?.extendedTextMessage?.text || '';
     const chatId = message.key.remoteJid;
     const userId = message.key.participant || message.key.remoteJid;
     
@@ -103,5 +107,8 @@ const commandHandler = async (client, message) => {
     }
 };
 
-module.exports = commandHandler;
-module.exports.commandMap = commandMap;
+module.exports = {
+    commandHandler,
+    initialize,
+    commandMap
+};

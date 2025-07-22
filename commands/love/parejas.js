@@ -1,5 +1,4 @@
 const User = require('../../models/User');
-const { getSocket } = require('../../bot');
 const moment = require('moment');
 
 module.exports = {
@@ -7,15 +6,14 @@ module.exports = {
     description: 'Lista todas las parejas activas del grupo.',
     category: 'love',
     aliases: ['couples', 'relaciones'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const from = message.key.remoteJid;
 
         try {
             const couples = await User.find({ 'loveInfo.relationshipStatus': 'En una relación' }).populate('loveInfo.partnerId');
 
             if (couples.length === 0) {
-                return sock.sendMessage(from, { text: 'No hay parejas en este grupo.' }, { quoted: message });
+                return client.sendMessage(from, { text: 'No hay parejas en este grupo.' }, { quoted: message });
             }
 
             let response = '💑 PAREJAS OFICIALES DEL GRUPO:\n\n';
@@ -35,11 +33,11 @@ module.exports = {
                 }
             });
 
-            sock.sendMessage(from, { text: response, mentions: mentionedJids });
+            client.sendMessage(from, { text: response, mentions: mentionedJids });
 
         } catch (error) {
             console.error('Error en el comando parejas:', error);
-            sock.sendMessage(from, { text: 'Ocurrió un error al listar las parejas.' }, { quoted: message });
+            client.sendMessage(from, { text: 'Ocurrió un error al listar las parejas.' }, { quoted: message });
         }
     }
 };

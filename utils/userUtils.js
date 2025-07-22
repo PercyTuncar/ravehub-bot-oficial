@@ -112,19 +112,32 @@ const updateHealth = (user) => {
 
     const { hunger, thirst, stress } = user.status;
 
-    // Aplicar la fórmula: Salud = (Hambre + Sed + (100 - Estrés)) / 3
-    const newHealth = Math.round((hunger + thirst + (100 - stress)) / 3);
+    // La salud base es 100. Se deducen puntos por hambre, sed y estrés.
+    let health = 100;
 
-    // Asegurarse de que la salud no sea menor que 0 ni mayor que 100
-    user.status.health = Math.max(0, Math.min(100, newHealth));
+    // Penalización por hambre: Si el hambre es menor a 20, se pierde salud.
+    if (hunger < 20) {
+        health -= (20 - hunger); // Pierde más salud cuanto más hambriento esté.
+    }
 
-    // Comprobar si el usuario ha muerto. Si la salud es 0 o menos, y no estaba muerto, se marca como muerto.
+    // Penalización por sed: Si la sed es menor a 20, se pierde salud.
+    if (thirst < 20) {
+        health -= (20 - thirst); // Pierde más salud cuanto más sediento esté.
+    }
+
+    // Penalización por estrés: El estrés reduce directamente la salud.
+    // Se puede ajustar el factor si se quiere que el estrés sea más o menos dañino.
+    health -= Math.round(stress * 0.5); // El estrés tiene un impacto medio.
+
+    // Asegurarse de que la salud no sea menor que 0.
+    user.status.health = Math.max(0, Math.min(100, health));
+
+    // Comprobar si el usuario ha muerto.
     if (user.status.health <= 0 && !user.status.isDead) {
         user.status.isDead = true;
-        console.log(`[Health] El usuario ${user.name} (${user.jid}) ha muerto debido a su estado crítico.`);
+        console.log(`[Health] El usuario ${user.name} (${user.jid}) ha muerto.`);
+        // Aquí se podría emitir un evento o enviar un mensaje si es necesario.
     }
-    // Nota: La resurrección (pasar de isDead: true a false) debe ser un evento manejado por un comando específico (ej. .revivir)
-    // y no ocurre automáticamente solo porque los stats cambien.
 };
 
 

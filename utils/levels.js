@@ -234,11 +234,23 @@ function getEligibleJobs(userLevel) {
   return jobs;
 }
 
+function getNextLevelXP(level) {
+    if (level > 0 && level < xpTable.length) {
+        return xpTable[level];
+    }
+    // If max level, return the last value
+    if (level >= xpTable.length) {
+        return xpTable[xpTable.length - 1];
+    }
+    return 0;
+}
+
 module.exports = {
   levelNames,
   xpTable,
   allJobs,
   getLevelName,
   getEligibleJobs,
+  getNextLevelXP,
   cooldownRanges,
 };

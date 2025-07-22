@@ -1,15 +1,13 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { jobsByLevel, getLevelName, allJobs } = require('../../utils/levels');
-const { getSocket } = require('../../bot');
-
 module.exports = {
   name: 'trabajos',
   description: 'Ver lista de trabajos.',
   aliases: ['jobs', 'joblist', 'empleos'],
   usage: '.trabajos',
   category: 'utility',
-  async execute(message) {
-    const sock = getSocket();
+  async execute(message, args, client) {
+    const sock = client;
     const senderJid = message.key.participant || message.key.remoteJid;
     const chatId = message.key.remoteJid;
 

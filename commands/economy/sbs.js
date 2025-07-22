@@ -2,7 +2,7 @@ const User = require('../../models/User');
 const Debt = require('../../models/Debt');
 const { applyInterestToAllDebts } = require('../../utils/debtUtils');
 const { getCurrency } = require('../../utils/groupUtils');
-const { getSocket } = require('../../bot');
+const bot = require('../../bot');
 
 module.exports = {
     name: 'sbs',
@@ -10,8 +10,8 @@ module.exports = {
     aliases: ['infocorp'],
     usage: '.sbs',
     category: 'economy',
-    async execute(message) {
-        const sock = getSocket();
+    async execute(message, args, commands) {
+        const sock = bot.getSocket();
         const chatId = message.key.remoteJid;
 
         try {

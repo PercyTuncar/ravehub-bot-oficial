@@ -1,24 +1,23 @@
 const User = require('../../models/User');
-const { getSocket } = require('../../bot');
 const moment = require('moment');
+const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
     name: 'estado',
     description: 'Muestra tu estado sentimental.',
     category: 'love',
     aliases: ['status', 'mystatus'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const from = message.key.remoteJid;
         const userJid = message.key.participant || message.key.remoteJid;
 
         try {
-            const groupMetadata = await sock.groupMetadata(from);
+            const groupMetadata = await client.groupMetadata(from);
             const userInfo = groupMetadata.participants.find(p => p.id === userJid);
             const user = await findOrCreateUser(userJid, from, userInfo.name || userJid.split('@')[0]);
 
             if (!user) {
-                return sock.sendMessage(from, { text: 'No se encontró tu perfil.' }, { quoted: message });
+                return client.sendMessage(from, { text: 'No se encontró tu perfil.' }, { quoted: message });
             }
 
             let response = '';
@@ -33,11 +32,11 @@ module.exports = {
                 response = '❤️ Tu estado: Soltero/a';
             }
 
-            sock.sendMessage(from, { text: response, mentions });
+            client.sendMessage(from, { text: response, mentions });
 
         } catch (error) {
             console.error('Error en el comando estado:', error);
-            sock.sendMessage(from, { text: 'Ocurrió un error al obtener tu estado.' }, { quoted: message });
+            client.sendMessage(from, { text: 'Ocurrió un error al obtener tu estado.' }, { quoted: message });
         }
     }
 };

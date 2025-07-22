@@ -1,20 +1,18 @@
 const { findOrCreateUser, updateHealth } = require('../../utils/userUtils');
 const ShopItem = require('../../models/ShopItem');
-const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'comer',
     description: 'Come un item de tu inventario para saciar el hambre y reducir el estrés.',
     category: 'rp',
     aliases: ['eat', 'alimentar'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const pushName = message.pushName || '';
 
         if (args.length === 0) {
-            return sock.sendMessage(chatId, { text: 'Debes especificar qué quieres comer. Ejemplo: `.comer pan`' });
+            return client.sendMessage(chatId, { text: 'Debes especificar qué quieres comer. Ejemplo: `.comer pan`' });
         }
 
         const itemName = args.join(' ').toLowerCase();
@@ -23,7 +21,7 @@ module.exports = {
             const user = await findOrCreateUser(senderJid, chatId, pushName);
 
             if (user.status.isDead) {
-                return sock.sendMessage(chatId, { text: '👻 No puedes hacer nada, estás muerto.' });
+                return client.sendMessage(chatId, { text: '👻 No puedes hacer nada, estás muerto.' });
             }
 
             // 1. Buscar el ShopItem en la base de datos por nombre o alias
@@ -36,18 +34,18 @@ module.exports = {
             });
 
             if (!shopItem) {
-                return sock.sendMessage(chatId, { text: `No existe un item comestible llamado "${itemName}" en la tienda.` });
+                return client.sendMessage(chatId, { text: `No existe un item comestible llamado "${itemName}" en la tienda.` });
             }
 
             if (shopItem.type !== 'food') {
-                return sock.sendMessage(chatId, { text: `No puedes comer un(a) "${shopItem.name}".` });
+                return client.sendMessage(chatId, { text: `No puedes comer un(a) "${shopItem.name}".` });
             }
 
             // 2. Verificar si el usuario tiene ese item en su inventario
             const itemInInventoryIndex = user.inventory.findIndex(item => item.itemId && item.itemId.toString() === shopItem._id.toString() && item.quantity > 0);
 
             if (itemInInventoryIndex === -1) {
-                return sock.sendMessage(chatId, { text: `No tienes "${shopItem.name}" en tu inventario.` });
+                return client.sendMessage(chatId, { text: `No tienes "${shopItem.name}" en tu inventario.` });
             }
             
             const itemInInventory = user.inventory[itemInInventoryIndex];
@@ -55,9 +53,11 @@ module.exports = {
             // 3. Aplicar efectos y consumir
             const oldStatus = { ...user.status };
             user.status.hunger = Math.min(100, user.status.hunger + (shopItem.effects.hunger || 0));
-            user.status.stress = Math.max(0, user.status.stress - (shopItem.effects.stress || 0));
+            user.status.stress = Math.max(0, user.status.stress - Math.abs(shopItem.effects.stress || 0));
+            // Aplicar efecto directo a la salud si existe
+            user.status.health = Math.max(0, Math.min(100, user.status.health + (shopItem.effects.health || 0)));
 
-            // Actualizar salud general
+            // Actualizar salud general basada en stats
             updateHealth(user);
 
             // Consumir item
@@ -71,27 +71,27 @@ module.exports = {
             // 4. Construir mensaje de respuesta
             let effectsMessage = '';
             if (shopItem.effects.hunger > 0) {
-                effectsMessage += `\n🍖 Tu hambre ha disminuido.`;
+                effectsMessage += `\n🍖 Tu hambre disminuyó (+${shopItem.effects.hunger}).`;
             }
             if (shopItem.effects.stress > 0) {
-                effectsMessage += `\n😌 Te sientes más relajado/a.`;
+                effectsMessage += `\n😌 Tu estrés se redujo (-${shopItem.effects.stress}).`;
             }
-            if (user.status.health > oldStatus.health) {
-                effectsMessage += `\n❤️ Tu salud ha mejorado.`;
-            } else if (user.status.health < oldStatus.health) {
-                effectsMessage += `\n💔 Tu salud ha empeorado.`;
+            if (shopItem.effects.health > 0) {
+                effectsMessage += `\n❤️ Tu salud mejoró (+${shopItem.effects.health}).`;
+            } else if (shopItem.effects.health < 0) {
+                effectsMessage += `\n💔 Tu salud empeoró (${shopItem.effects.health}).`;
             }
 
-            const responseMessage = `*¡Buen provecho!* 🍽️\n\n@${senderJid.split('@')[0]} ha comido *un(a) ${shopItem.name}*.${effectsMessage}`;
+            const responseMessage = `*¡Buen provecho!* 🍽️\n\n@${senderJid.split('@')[0]} ha comido *un(a) ${shopItem.name}*.${effectsMessage}\n\n*Salud actual:* ${user.status.health}%`;
 
-            return sock.sendMessage(chatId, {
+            return client.sendMessage(chatId, {
                 text: responseMessage,
                 mentions: [senderJid]
             });
 
         } catch (error) {
             console.error('Error en el comando comer:', error);
-            return sock.sendMessage(chatId, { text: '❌ Ocurrió un error al procesar tu acción.' });
+            return client.sendMessage(chatId, { text: '❌ Ocurrió un error al procesar tu acción.' });
         }
     },
 };

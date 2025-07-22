@@ -1,7 +1,6 @@
 const { findOrCreateUser } = require('../../utils/userUtils');
 const User = require('../../models/User');
 const { getCurrency } = require('../../utils/groupUtils');
-const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'yapear',
@@ -9,8 +8,7 @@ module.exports = {
     aliases: ['yape'],
     usage: '.yapear <monto> @usuario',
     category: 'economy',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);
@@ -20,11 +18,11 @@ module.exports = {
         const amount = amountStr ? parseInt(amountStr) : 0;
 
         if (!mentionedJid || amount <= 0) {
-            return sock.sendMessage(chatId, { text: 'Formato incorrecto. Para yapear, usa: .yapear <monto> @usuario' });
+            return client.sendMessage(chatId, { text: 'Formato incorrecto. Para yapear, usa: .yapear <monto> @usuario' });
         }
 
         if (senderJid === mentionedJid) {
-            return sock.sendMessage(chatId, { text: 'No te puedes yapear a ti mismo, ¡intenta con un amigo!' });
+            return client.sendMessage(chatId, { text: 'No te puedes yapear a ti mismo, ¡intenta con un amigo!' });
         }
 
         try {
@@ -32,7 +30,7 @@ module.exports = {
             const recipient = await findOrCreateUser(mentionedJid, chatId);
 
             if (sender.economy.bank < amount) {
-                return sock.sendMessage(chatId, { text: `🚫 No tienes suficiente dinero en tu banco para yapear.\n\nSaldo actual: *${currency} ${sender.economy.bank.toLocaleString()}*` });
+                return client.sendMessage(chatId, { text: `🚫 No tienes suficiente dinero en tu banco para yapear.\n\nSaldo actual: *${currency} ${sender.economy.bank.toLocaleString()}*` });
             }
 
             const ops = [
@@ -43,15 +41,15 @@ module.exports = {
             const result = await User.bulkWrite(ops);
 
             if (result.modifiedCount < 2) {
-                return sock.sendMessage(chatId, { text: `No tienes fondos suficientes para yapear ${currency} ${amount.toLocaleString()}.` });
+                return client.sendMessage(chatId, { text: `No tienes fondos suficientes para yapear ${currency} ${amount.toLocaleString()}.` });
             }
 
             const finalMessage = `✅ Has yapeado *${currency} ${amount.toLocaleString()}* a @${recipient.jid.split('@')[0]}.`;
-            await sock.sendMessage(chatId, { text: finalMessage, mentions: [senderJid, recipient.jid] });
+            await client.sendMessage(chatId, { text: finalMessage, mentions: [senderJid, recipient.jid] });
 
         } catch (error) {
             console.error('Error en el comando de yapeo:', error);
-            await sock.sendMessage(chatId, { text: 'Hubo un problema al procesar tu yapeo.' });
+            await client.sendMessage(chatId, { text: 'Hubo un problema al procesar tu yapeo.' });
         }
     }
 };

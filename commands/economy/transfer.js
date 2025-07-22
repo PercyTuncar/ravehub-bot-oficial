@@ -1,17 +1,14 @@
 const User = require('../../models/User');
 const { findOrCreateUser } = require('../../utils/userUtils');
 const { getCurrency } = require('../../utils/groupUtils');
-const { getSocket } = require('../../bot');
-const Debt = require('../../models/Debt');
-
 module.exports = {
     name: 'transfer',
     description: 'Transferir dinero a otro usuario.',
     aliases: ['transferir'],
     usage: '.transfer <monto> @usuario',
     category: 'economy',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
+        const sock = client;
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
 

@@ -1,4 +1,3 @@
-const { getSocket } = require('../../bot');
 const { getMentions } = require('../../utils/messageUtils');
 const { findOrCreateUser } = require('../../utils/userUtils');
 
@@ -7,8 +6,7 @@ module.exports = {
     description: 'Calcula la compatibilidad entre dos usuarios.',
     category: 'love',
     aliases: ['compatibility', 'comp'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const from = message.key.remoteJid;
         const mentions = await getMentions(message);
         const requesterJid = message.key.participant || message.key.remoteJid;
@@ -22,7 +20,7 @@ module.exports = {
             userA_jid = requesterJid;
             userB_jid = mentions[0];
         } else {
-            return sock.sendMessage(from, { text: 'Debes mencionar a una o dos personas.' }, { quoted: message });
+            return client.sendMessage(from, { text: 'Debes mencionar a una o dos personas.' }, { quoted: message });
         }
 
         const compatibility = Math.floor(Math.random() * 101);
@@ -127,6 +125,6 @@ module.exports = {
 ${description}
 🎶 Canción recomendada: ${song}`;
 
-        sock.sendMessage(from, { text, mentions: [userA_jid, userB_jid] });
+        client.sendMessage(from, { text, mentions: [userA_jid, userB_jid] });
     }
 };

@@ -1,13 +1,11 @@
 const User = require('../../models/User');
-const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'divorcio',
     description: 'Termina una relación activa.',
     category: 'love',
     aliases: ['divorce', 'separar'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const from = message.key.remoteJid;
         const userJid = message.key.participant || message.key.remoteJid;
 
@@ -15,7 +13,7 @@ module.exports = {
             const user = await User.findOne({ jid: userJid });
 
             if (!user || user.loveInfo.relationshipStatus !== 'En una relación') {
-                return sock.sendMessage(from, { text: 'No estás en una relación para poder divorciarte.' }, { quoted: message });
+                return client.sendMessage(from, { text: 'No estás en una relación para poder divorciarte.' }, { quoted: message });
             }
 
             const partnerJid = user.loveInfo.partnerJid;
@@ -50,11 +48,11 @@ module.exports = {
             const text = `💔 @${userJid.split('@')[0]} ha terminado su relación con @${partnerJid.split('@')[0]}.
 Que cada uno encuentre su camino... 😔`;
             
-            sock.sendMessage(from, { text, mentions: [userJid, partnerJid] });
+            client.sendMessage(from, { text, mentions: [userJid, partnerJid] });
 
         } catch (error) {
             console.error('Error en el comando divorcio:', error);
-            sock.sendMessage(from, { text: 'Ocurrió un error al procesar el divorcio.' }, { quoted: message });
+            client.sendMessage(from, { text: 'Ocurrió un error al procesar el divorcio.' }, { quoted: message });
         }
     }
 };

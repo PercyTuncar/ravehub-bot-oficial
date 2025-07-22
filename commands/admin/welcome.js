@@ -8,8 +8,8 @@ module.exports = {
     aliases: ['bienvenida', 'setwelcome'],
     category: 'admin',
     cooldown: 5,
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, commands) {
+        const sock = bot.getSocket();
         const { remoteJid } = message.key;
         const isGroup = remoteJid.endsWith('@g.us');
 

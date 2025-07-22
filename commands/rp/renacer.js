@@ -1,20 +1,18 @@
 const User = require('../../models/User');
 const { getLevelName } = require('../../utils/levels');
-const { getSocket } = require('../../bot');
 
 module.exports = {
     name: 'renacer',
     description: 'Revive a tu personaje después de la muerte.',
     category: 'rp',
     aliases: ['rebirth', 'revivir'],
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, client) {
         const senderId = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const user = await User.findOne({ jid: senderId, groupId: chatId });
 
         if (!user || !user.status.isDead) {
-            return sock.sendMessage(chatId, { text: 'No estás muerto. ¡Sigue con tu vida!' });
+            return client.sendMessage(chatId, { text: 'No estás muerto. ¡Sigue con tu vida!' });
         }
 
         const xpLoss = 550;
@@ -64,12 +62,12 @@ Has vuelto del más allá, pero con un costo.
 
         rebirthMessage += '\nTu perfil ha sido restaurado. ¡Bienvenido de nuevo!';
         
-        await sock.sendMessage(chatId, { text: rebirthMessage });
+        await client.sendMessage(chatId, { text: rebirthMessage });
         
         // Muestra el perfil actualizado
         const meCommand = require('../utility/me'); // Cargar directamente para evitar problemas de caché/referencia circular
         if (meCommand) {
-            await meCommand.execute(message, args);
+            await meCommand.execute(message, args, client);
         }
     },
 };

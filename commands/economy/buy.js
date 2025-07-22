@@ -1,7 +1,7 @@
 const User = require('../../models/User');
 const ShopItem = require('../../models/ShopItem');
 const { getCurrency } = require('../../utils/groupUtils');
-const { getSocket } = require('../../bot');
+const bot = require('../../bot');
 const { findOrCreateUser } = require('../../utils/userUtils');
 
 module.exports = {
@@ -10,8 +10,8 @@ module.exports = {
     aliases: ['comprar'],
     usage: '.buy <cantidad> <nombre del item>',
     category: 'economy',
-    async execute(message, args) {
-        const sock = getSocket();
+    async execute(message, args, commands) {
+        const sock = bot.getSocket();
         const senderJid = message.key.participant || message.key.remoteJid;
         const chatId = message.key.remoteJid;
         const currency = await getCurrency(chatId);

@@ -1,22 +1,20 @@
 const ShopItem = require("../../models/ShopItem");
 const { getCurrency } = require("../../utils/groupUtils");
 const User = require("../../models/User");
-const { getSocket } = require('../../bot');
 
 module.exports = {
   name: "shop",
   description: "Muestra los items disponibles en la tienda.",
   aliases: ["tienda"],
   category: "economy",
-  async execute(message, args) {
-    const sock = getSocket();
+  async execute(message, args, client) {
     const chatId = message.key.remoteJid;
     const currency = await getCurrency(chatId);
 
     try {
       const items = await ShopItem.find({});
       if (!items.length) {
-        return sock.sendMessage(chatId, { text: "La tienda está vacía en este momento." });
+        return client.sendMessage(chatId, { text: "La tienda está vacía en este momento." });
       }
 
       // Agrupar items por categoría
@@ -71,11 +69,11 @@ module.exports = {
 
       shopMessage += `*╰─ 🛍️ Usa \`.buy <item>\` para comprar ─*`;
 
-      await sock.sendMessage(chatId, { text: shopMessage });
+      await client.sendMessage(chatId, { text: shopMessage });
 
     } catch (error) {
       console.error("Error al mostrar la tienda:", error);
-      await sock.sendMessage(chatId, { text: "Hubo un error al intentar mostrar la tienda." });
+      await client.sendMessage(chatId, { text: "Hubo un error al intentar mostrar la tienda." });
     }
   },
 };
