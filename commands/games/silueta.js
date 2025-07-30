@@ -20,8 +20,7 @@ module.exports = {
         }
 
         const groupSettings = await getGroupSettings(chatId);
-        const currency = groupSettings?.currency || '
-;
+        const currency = groupSettings?.currency || '🪙';
 
         const user = await findOrCreateUser(senderJid, chatId, message.pushName);
 

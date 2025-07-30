@@ -1,7 +1,6 @@
 const { findOrCreateUser, updateHealth } = require("../../utils/userUtils");
 const { getEligibleJobs, cooldownRanges } = require("../../utils/levels");
 const { getCurrency } = require("../../utils/groupUtils");
-const bot = require("../../bot");
 const User = require("../../models/User");
 
 module.exports = {
@@ -10,8 +9,7 @@ module.exports = {
   aliases: ['chambear', 'trabajar'],
   usage: ".work",
   category: "economy",
-  async execute(message, args, commands) {
-    const sock = bot.getSocket();
+  async execute(message, args, client) {
     const senderJid = message.key.participant || message.key.remoteJid;
     const chatId = message.key.remoteJid;
 
@@ -20,24 +18,24 @@ module.exports = {
       const currency = await getCurrency(chatId);
 
       if (user.status && user.status.isDead) {
-        return sock.sendMessage(chatId, { text: `💀 @${senderJid.split("@")[0]}, los muertos no trabajan.`, mentions: [senderJid] });
+        return client.sendMessage(chatId, { text: `💀 @${senderJid.split("@")[0]}, los muertos no trabajan.`, mentions: [senderJid] });
       }
 
       if (user.status.stress >= 100) {
         const stressMessage = `
-😵 *¡DEMASIADO ESTRÉS!* 😵
-══════════════════
+    😵 *¡DEMASIADO ESTRÉS!* 😵
+    ══════════════════
 
-@${senderJid.split("@")[0]}, tu nivel de estrés ha llegado al límite. No puedes trabajar así.
+    @${senderJid.split("@")[0]}, tu nivel de estrés ha llegado al límite. No puedes trabajar así.
 
-Necesitas relajarte un poco. Te recomendamos tomar algo para bajar ese estrés.
+    Necesitas relajarte un poco. Te recomendamos tomar algo para bajar ese estrés.
 
-*Sugerencias:*
-- Pisco Sour
-- Cerveza Heladita
+    *Sugerencias:*
+    - Pisco Sour
+    - Cerveza Heladita
 
-Puedes ver la tienda con \`.shop\` y comprar con \`.buy\`.`;
-        return sock.sendMessage(chatId, { text: stressMessage, mentions: [senderJid] });
+    Puedes ver la tienda con ".shop" y comprar con ".buy".`;
+      return client.sendMessage(chatId, { text: stressMessage, mentions: [senderJid] });
       }
 
       if (user.cooldowns.work && user.cooldowns.work > new Date()) {
@@ -45,12 +43,12 @@ Puedes ver la tienda con \`.shop\` y comprar con \`.buy\`.`;
         const minutes = Math.floor(timeLeft / 60);
         const seconds = Math.ceil(timeLeft % 60);
         let timeString = `${minutes > 0 ? `${minutes}m ` : ""}${seconds}s`;
-        return sock.sendMessage(chatId, { text: `⏳ @${senderJid.split("@")[0]}, debes esperar ${timeString} para volver a trabajar.`, mentions: [senderJid] });
+        return client.sendMessage(chatId, { text: `⏳ @${senderJid.split("@")[0]}, debes esperar ${timeString} para volver a trabajar.`, mentions: [senderJid] });
       }
 
       const eligibleJobs = getEligibleJobs(user.level);
       if (eligibleJobs.length === 0) {
-        return sock.sendMessage(chatId, { text: "No hay trabajos disponibles para tu nivel actual." });
+        return client.sendMessage(chatId, { text: "No hay trabajos disponibles para tu nivel actual." });
       }
 
       const job = eligibleJobs[Math.floor(Math.random() * eligibleJobs.length)];
@@ -80,7 +78,7 @@ Puedes ver la tienda con \`.shop\` y comprar con \`.buy\`.`;
       );
 
       if (!updatedUser) {
-        return sock.sendMessage(chatId, { text: 'No pudiste trabajar esta vez, probablemente debido al estrés. Inténtalo de nuevo.' });
+        return client.sendMessage(chatId, { text: 'No pudiste trabajar esta vez, probablemente debido al estrés. Inténtalo de nuevo.' });
       }
 
       await updateHealth(updatedUser); // Actualizar salud después de cambiar el estrés
@@ -96,7 +94,7 @@ Puedes ver la tienda con \`.shop\` y comprar con \`.buy\`.`;
 🌟 *XP:* +${xpGained}
 😵 *Estrés:* +${stressGained}% (Total: ${updatedUser.status.stress}%)`;
 
-      await sock.sendMessage(chatId, { text: workResponse, mentions: [senderJid] });
+      await client.sendMessage(chatId, { text: workResponse, mentions: [senderJid] });
 
       if (updatedUser.status.stress >= 100) {
         const stressWarning = `
@@ -112,13 +110,13 @@ No podrás volver a trabajar hasta que tu nivel de estrés baje.
 - Cerveza Heladita
 
 Usa \`.shop\` para ver la tienda y \`.buy\` para comprar algo que te ayude a relajarte.`;
-        await sock.sendMessage(chatId, { text: stressWarning, mentions: [senderJid] });
+        await client.sendMessage(chatId, { text: stressWarning, mentions: [senderJid] });
       }
 
     } catch (error) {
       console.error("Error en el comando work:", error);
-      if (sock) {
-        sock.sendMessage(chatId, { text: "Ocurrió un error al procesar el comando de trabajo." });
+      if (client) {
+        client.sendMessage(chatId, { text: "Ocurrió un error al procesar el comando de trabajo." });
       }
     }
   },
