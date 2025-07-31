@@ -1,74 +1,62 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  jid: { type: String, required: true, index: true },
-  groupId: { type: String, required: true, index: true },
-  name: { type: String, required: true },
-  level: { type: Number, default: 1 },
-  xp: { type: Number, default: 0 },
-  cooldowns: {
-    work: { type: Date, default: null },
-    rob: { type: Date, default: null },
-    relax: { type: Date, default: null },
-    slot: { type: Date, default: null },
-    daily: { type: Date, default: null }, // Cooldown para recompensa diaria
-  },
-  economy: {
-    wallet: { type: Number, default: 0 },
-    bank: { type: Number, default: 0 },
-    bankCapacity: { type: Number, default: 1000 }
-  },
-  gameStats: {
-    cartaMayor: {
-      gamesPlayed: { type: Number, default: 0 },
-      wins: { type: Number, default: 0 },
-      losses: { type: Number, default: 0 },
-      ties: { type: Number, default: 0 },
-      moneyWon: { type: Number, default: 0 },
-      moneyLost: { type: Number, default: 0 }
-    }
-  },
-  debts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Debt' }],
-  judicialDebt: { type: Number, default: 0 },
-  inventory: [{
-    itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'ShopItem' },
-    name: { type: String, required: true },
-    quantity: { type: Number, required: true, default: 1 },
-  }],
-  paymentHistory: { 
-    paidOnTime: { type: Number, default: 0 },
-    paidLate: { type: Number, default: 0 },
-  },
-  warnings: { type: Number, default: 0 },
-  lastWorked: { type: Date, default: null },
-  isBanned: { type: Boolean, default: false },
-  loveInfo: {
-    partnerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-    partnerJid: { type: String, default: null },
-    relationshipStatus: { type: String, enum: ['Soltero/a', 'En una relación'], default: 'Soltero/a' },
-    loveHistory: [
-      {
-        partnerName: String,
-        startDate: Date,
-        endDate: { type: Date, default: null }
-      }
-    ]
-  },
-  status: {
-    hunger: { type: Number, default: 100 },
-    thirst: { type: Number, default: 100 },
-    stress: { type: Number, default: 0 },
-    health: { type: Number, default: 100 },
-    isDead: { type: Boolean, default: false },
-  },
-  playtime: { type: Number, default: 0 }, // Tiempo de juego en milisegundos
-  lastInteraction: { type: Date, default: Date.now },
-  createdAt: { type: Date, default: Date.now },
-}, {
-  timestamps: true,
+    jid: { type: String, required: true, unique: true },
+    name: { type: String, default: '' },
+    level: { type: Number, default: 1 },
+    xp: { type: Number, default: 0 },
+    groups: [{
+        chatId: { type: String, required: true },
+        joinedAt: { type: Date, default: Date.now }
+    }],
+    economy: {
+        wallet: { type: Number, default: 1000 },
+        bank: { type: Number, default: 0 }
+    },
+    inventory: [{
+        itemId: { type: mongoose.Schema.Types.ObjectId, ref: 'ShopItem' },
+        name: String,
+        quantity: Number,
+        description: String,
+        type: String,
+        effects: mongoose.Schema.Types.Mixed,
+        purchasedAt: { type: Date, default: Date.now }
+    }],
+    cooldowns: {
+        work: { type: Date, default: null },
+        rob: { type: Date, default: null },
+        crime: { type: Date, default: null },
+        relax: { type: Date, default: null }
+    },
+    status: {
+        health: { type: Number, default: 100 },
+        hunger: { type: Number, default: 100 },
+        thirst: { type: Number, default: 100 },
+        stress: { type: Number, default: 0 },
+        isDead: { type: Boolean, default: false }
+    },
+    loveInfo: {
+        relationshipStatus: { type: String, default: 'Soltero/a' },
+        partnerJid: { type: String, default: null },
+        partnerName: { type: String, default: null },
+        relationshipStartDate: { type: Date, default: null },
+        marriageCount: { type: Number, default: 0 },
+        divorceCount: { type: Number, default: 0 },
+        loveHistory: [{
+            partnerName: String,
+            status: String, // 'married', 'divorced'
+            startDate: Date,
+            endDate: Date
+        }]
+    },
+    job: {
+        name: { type: String, default: 'Desempleado' },
+        salary: { type: Number, default: 0 }
+    },
+    playtime: { type: Number, default: 0 },
+    lastInteraction: { type: Date, default: Date.now },
+    createdAt: { type: Date, default: Date.now }
 });
-
-userSchema.index({ jid: 1, groupId: 1 }, { unique: true });
 
 const User = mongoose.model('User', userSchema);
 
